@@ -7,7 +7,8 @@ public class UTF8Reader extends AnyReader {
 
 	public UTF8Reader(byte[] content) {
 		super(content);
-		if (3 <= content.length && content[0] == 0xEF && content[1] == 0xBB && content[2] == 0xBF) {
+		if (3 <= content.length && content[0]  == -17 && content[1] == -69 && content[2] == -65) {
+			// EF BB BF (BOM)
 			_i = 3;
 		}
 	}

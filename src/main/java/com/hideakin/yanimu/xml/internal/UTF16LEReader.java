@@ -8,7 +8,8 @@ public class UTF16LEReader extends AnyReader {
 
 	public UTF16LEReader(byte[] content) {
 		super(content);
-		if (2 <= content.length && content[0] == 0xFF && content[1] == 0xFE) {
+		if (2 <= content.length && content[0] == -1 && content[1] == -2) {
+			// FF FE (BOM)
 			_i = 2;
 		}
 	}
