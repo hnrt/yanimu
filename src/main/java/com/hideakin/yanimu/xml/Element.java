@@ -55,9 +55,25 @@ public class Element extends Token {
 
 	public String innerText() {
 		if (children.length > 0) {
-			if (children[0].code == CHAR_DATA) {
-				return children[0].toString();
+			StringBuilder buffer = new StringBuilder();
+			for (Token child : children) {
+				switch (child.code) {
+				case CHAR_DATA:
+					buffer.append(child.toString());
+					break;
+				case ENTITY_REF:
+					break;
+				case CHAR_REF:
+					buffer.appendCodePoint(((CharRef)child).codepoint);
+					break;
+				case CD_SECT:
+					buffer.append(((CDATASection)child).innerText);
+					break;
+				default:
+					break;
+				}
 			}
+			return buffer.toString();
 		}
 		return null;
 	}

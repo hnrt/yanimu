@@ -8,7 +8,7 @@ public class CDATASection extends Token {
 
 	public CDATASection(int start, int end, byte[] sequence) {
 		super(CD_SECT, start, end, sequence);
-		this.innerText = new String(Arrays.copyOfRange(sequence, 9, sequence.length - 3));
+		this.innerText = new String(Arrays.copyOfRange(sequence, 10, sequence.length - 3));
 	}
 
 }

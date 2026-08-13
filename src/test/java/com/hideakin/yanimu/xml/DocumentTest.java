@@ -171,6 +171,7 @@ public class DocumentTest {
 			assertEquals("2", elements.get(0).innerText());
 			assertEquals("30", elements.get(1).innerText());
 			assertEquals("400", elements.get(2).innerText());
+			assertEquals("void func(int x) {\n\treturn x < 100 ? x * 4 : x * 2;\n}", doc.root().getElements("code").get(0).innerText());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
