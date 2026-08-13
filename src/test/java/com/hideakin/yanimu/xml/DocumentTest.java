@@ -147,4 +147,33 @@ public class DocumentTest {
 		}
 	}
 
+	@Test
+	void test8() {
+		String source = "<?xml version=\"1.0\" ?>\r\n"
+				+ "<greeting>\r\n"
+				+ "  <code><![CDATA[[void func(int x) {\n"
+				+ "\treturn x < 100 ? x * 4 : x * 2;\n"
+				+ "}]]></code>\r\n"
+				+ "  <tests>\r\n"
+				+ "    <test id='2'>2</test>\r\n"
+				+ "    <test id='3'>30</test>\r\n"
+				+ "    <test id='4'>400</test>\r\n"
+				+ "  </tests>\r\n"
+				+ "</greeting>\r\n";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			List<Element> elements = doc.root().getElements("test");
+			assertEquals(3, elements.size());
+			assertEquals("2", elements.get(0).attribute("id"));
+			assertEquals("3", elements.get(1).attribute("id"));
+			assertEquals("4", elements.get(2).attribute("id"));
+			assertEquals("2", elements.get(0).innerText());
+			assertEquals("30", elements.get(1).innerText());
+			assertEquals("400", elements.get(2).innerText());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 }
