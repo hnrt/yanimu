@@ -62,6 +62,7 @@ public class Element extends Token {
 					buffer.append(child.toString());
 					break;
 				case ENTITY_REF:
+					buffer.append(((EntityRef)child).translated);
 					break;
 				case CHAR_REF:
 					buffer.appendCodePoint(((CharRef)child).codepoint);

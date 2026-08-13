@@ -3,6 +3,7 @@ package com.hideakin.yanimu.xml.internal;
 import com.hideakin.yanimu.xml.Attribute;
 import com.hideakin.yanimu.xml.DocumentTypeDeclaration;
 import com.hideakin.yanimu.xml.Element;
+import com.hideakin.yanimu.xml.EntityRef;
 import com.hideakin.yanimu.xml.ExternalEntityDefinition;
 import com.hideakin.yanimu.xml.ExternalParameterEntityDefinition;
 import com.hideakin.yanimu.xml.ExternalIdentifiers;
@@ -31,7 +32,6 @@ public class Processor {
 	private Lexer _lexer;
 	private final Deque<List<Token>> _ttt = new ArrayDeque<>();
 	private List<Token> _tt;
-	private boolean _ttEnabled;
 	private Token _t;
 	private final Map<String, Object> _entities = new HashMap<>();
 	private final List<String> _warnings = new ArrayList<>();
@@ -47,15 +47,12 @@ public class Processor {
 	public Token[] parse() throws Exception {
 		_lexer = new Lexer(_content);
 		_tt = new ArrayList<>();
-		_ttEnabled = true;
 		_t = _lexer.read();
 		installPredefinedEntities();
 		parseProlog();
-		Element root = parseElement(null);
-		_tt.add(root);
-		Token t;
-		while ((t = parseMisc()) != null) {
-			_tt.add(t);
+		parseElement(null);
+		while (parseMisc()) {
+			continue;
 		}
 		if (_t.code == EOF) {
 			return _tt.toArray(new Token[_tt.size()]);
@@ -65,24 +62,21 @@ public class Processor {
 	}
 
 	private void parseProlog() throws Exception {
-		Token t;
 		if (_t.code == XML_START) {
-			t = parseXmlDeclaration();
-			_tt.add(t);
+			parseXmlDeclaration();
 		}
-		while ((t = parseMisc()) != null) {
-			_tt.add(t);
+		while (parseMisc()) {
+			continue;
 		}
 		if (_t.code == DOCTYPE_DECL) {
-			t = parseDoctypeDeclaration();
-			_tt.add(t);
-			while ((t = parseMisc()) != null) {
-				_tt.add(t);
+			parseDoctypeDeclaration();
+			while (parseMisc()) {
+				continue;
 			}
 		}
 	}
 
-	private XmlDeclaration parseXmlDeclaration() throws Exception {
+	private void parseXmlDeclaration() throws Exception {
 		String name;
 		String version;
 		String encoding = null;
@@ -193,30 +187,24 @@ public class Processor {
 		} else {
 			throw new ParseException("?> is expected.", _t.start);
 		}
-		return new XmlDeclaration(pop(), version, encoding, standalone);
+		XmlDeclaration t = new XmlDeclaration(pop(), version, encoding, standalone); 
+		_tt.add(t);
 	}
 
-	private Token parseMisc() throws Exception {
-		Token t;
+	private boolean parseMisc() throws Exception {
 		if (_t.code == COMMENT) {
-			t = _t;
-			suspend();
 			read();
-			resume();
 		} else if (_t.code == PI_START) {
-			t = parseProcessingInstruction();
+			parseProcessingInstruction();
 		} else if (_t.code == SP) {
-			t = _t;
-			suspend();
 			read();
-			resume();
 		} else {
-			t = null;
+			return false;
 		}
-		return t;
+		return true;
 	}
 
-	private DocumentTypeDeclaration parseDoctypeDeclaration() throws Exception {
+	private void parseDoctypeDeclaration() throws Exception {
 		String name;
 		push();
 		read();
@@ -273,7 +261,8 @@ public class Processor {
 		} else {
 			throw new ParseException("> is expected.", _t.start);
 		}
-		return new DocumentTypeDeclaration(pop(), name);
+		DocumentTypeDeclaration t = new DocumentTypeDeclaration(pop(), name); 
+		_tt.add(t);
 	}
 
 	private void parseElementDecl() throws Exception {
@@ -814,7 +803,7 @@ public class Processor {
 		}
 	}
 
-	private ProcessingInstruction parseProcessingInstruction() throws Exception {
+	private void parseProcessingInstruction() throws Exception {
 		String name;
 		String body;
 		push();
@@ -840,10 +829,11 @@ public class Processor {
 		} else {
 			throw new ParseException("PI end is expected.", _t.start);
 		}
-		return new ProcessingInstruction(pop(), name, body);
+		ProcessingInstruction t = new ProcessingInstruction(pop(), name, body); 
+		_tt.add(t);
 	}
 
-	private Element parseElement(Element parent) throws Exception {
+	private void parseElement(Element parent) throws Exception {
 		String name;
 		List<Attribute> attributes = new ArrayList<>();
 		if (_t.code == STAG_START) {
@@ -892,7 +882,9 @@ public class Processor {
 		}
 		if (_t.code == EETAG_END) {
 			read();
-			return new Element(pop(), name, attributes, parent);
+			Element t = new Element(pop(), name, attributes, parent);
+			_tt.add(t);
+			return;
 		}
 		if (_t.code == TAG_END) {
 			read();
@@ -923,7 +915,8 @@ public class Processor {
 		} else {
 			throw new ParseException("ETag end is expected.", _t.start);
 		}
-		return new Element(element, children, pop());
+		Element t = new Element(element, children, pop());
+		_tt.add(t);
 	}
 
 	private List<Token> parseContent(Element parent) throws Exception {
@@ -933,15 +926,18 @@ public class Processor {
 		}
 		while (true) {
 			if (_t.code == STAG_START) {
-				_tt.add(parseElement(parent));
+				parseElement(parent);
 			} else if (_t.code == ENTITY_REF) {
+				EntityRef er = (EntityRef)_t;
+				String value = getEntity(er.name);
+				_t = new EntityRef(er, value != null ? value : er.toString());
 				read();
 			} else if (_t.code == CHAR_REF) {
 				read();
 			} else if (_t.code == CD_SECT) {
 				read();
 			} else if (_t.code == PI_START) {
-				_tt.add(parseProcessingInstruction());
+				parseProcessingInstruction();
 			} else if (_t.code == COMMENT) {
 				read();
 			} else {
@@ -966,22 +962,12 @@ public class Processor {
 		return last;
 	}
 
-	private void suspend() {
-		_ttEnabled = false;
-	}
-
-	private void resume() {
-		_ttEnabled = true;
-	}
-
 	private Token read() {
 		return read(0);
 	}
 
 	private Token read(int preferred) {
-		if (_ttEnabled) {
-			_tt.add(_t);
-		}
+		_tt.add(_t);
 		boolean sp = _t.code == SP;
 		_t = _lexer.read(preferred);
 		while (_t.code == EOF && !_lexers.isEmpty()) {

@@ -129,6 +129,7 @@ public class DocumentTest {
 		try {
 			doc.load(source.getBytes(StandardCharsets.UTF_8));
 			assertEquals("Hello, world!", doc.root().innerText());
+			print("test6", doc.layout());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -150,10 +151,13 @@ public class DocumentTest {
 	@Test
 	void test8() {
 		String source = "<?xml version=\"1.0\" ?>\r\n"
+				+ "<!DOCTYPE greeting [\r\n"
+				+ "  <!ENTITY single-line-comment '//'>\r\n"
+				+ "]>\r\n"
 				+ "<greeting>\r\n"
 				+ "  <code><![CDATA[[void func(int x) {\n"
 				+ "\treturn x < 100 ? x * 4 : x * 2;\n"
-				+ "}]]></code>\r\n"
+				+ "}]]>&single-line-comment;&#60;&gt;&bogus;<!--@@@--></code>\r\n"
 				+ "  <tests>\r\n"
 				+ "    <test id='2'>2</test>\r\n"
 				+ "    <test id='3'>30</test>\r\n"
@@ -171,9 +175,39 @@ public class DocumentTest {
 			assertEquals("2", elements.get(0).innerText());
 			assertEquals("30", elements.get(1).innerText());
 			assertEquals("400", elements.get(2).innerText());
-			assertEquals("void func(int x) {\n\treturn x < 100 ? x * 4 : x * 2;\n}", doc.root().getElements("code").get(0).innerText());
+			assertEquals("void func(int x) {\n\treturn x < 100 ? x * 4 : x * 2;\n}//<>&bogus;", doc.root().getElements("code").get(0).innerText());
+			print("test8", doc.layout());
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+	}
+
+	private void print(String header, Token[] tokens) {
+		for (Token token : tokens) {
+			if (token.code == Token.SP) {
+				System.out.printf("%s:", header);
+				for (byte c : token.sequence) {
+					System.out.printf(" %s",
+							c == ' ' ? "SP" :
+							c == 9 ? "HT" :
+							c == 10 ? "LF" :
+							c == 13 ? "CR" :
+							"?");
+				}
+				System.out.printf("\n");
+			} else if (token.code == Token.ELEMENT) {
+				System.out.printf("%s: %s\n", header, token);
+				Element element = (Element)token;
+				if (element.endLayout != null) {
+					print(header + ":ELEMENT:S", element.startLayout);
+					print(header + ":ELEMENT:C", element.children);
+					print(header + ":ELEMENT:E", element.endLayout);
+				}
+			} else if (token.code == Token.CHAR_DATA) {
+				System.out.printf("%s: %s\n", header, token.toString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("\t", "\\t"));
+			} else {
+				System.out.printf("%s: %s\n", header, token);
+			}
 		}
 	}
 
