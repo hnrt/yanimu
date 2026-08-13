@@ -1,69 +1,89 @@
 package com.hideakin.yanimu.xml.internal;
 
 import com.hideakin.yanimu.xml.Attribute;
-import com.hideakin.yanimu.xml.CharData;
+import com.hideakin.yanimu.xml.Document;
+import com.hideakin.yanimu.xml.DocumentTypeDeclaration;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.ParseException;
 import com.hideakin.yanimu.xml.ProcessingInstruction;
+import com.hideakin.yanimu.xml.QuotedString;
 import com.hideakin.yanimu.xml.Token;
 import com.hideakin.yanimu.xml.XmlDeclaration;
+import com.hideakin.yanimu.xml.ParameterEntityReference;
 
 import static com.hideakin.yanimu.xml.Token.*;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 
-public class Parser {
+public class Processor {
 
-	private final byte[] _contents;
-	private final List<Object> _list = new ArrayList<>();
-	private Element _root;
+	private final byte[] _content;
+	private Deque<Lexer> _lexers;
 	private Lexer _lexer;
+	private Deque<List<Token>> _ttt;
+	private List<Token> _tt;
+	private boolean _ttEnabled;
 	private Token _t;
+	private Document _document;
 
-	public Parser(byte[] contents) {
-		_contents = contents;
+	public Processor(byte[] content) {
+		_content = content;
 	}
 
-	public Element root() {
-		return _root;
-	}
-
-	public void run() throws Exception {
-		_lexer = new Lexer(_contents);
+	public void parse(Document document) throws Exception {
+		_lexers = new ArrayDeque<>();
+		_lexer = new Lexer(_content);
+		_ttt = new ArrayDeque<>();
+		_tt = new ArrayList<>();
+		_ttEnabled = true;
+		_document = document;
 		_t = _lexer.read();
+		installPredefinedEntities();
 		parseProlog();
-		_root = parseElement();
-		_list.add(_root);
-		parseMisc();
-		if (_t.code != EOF) {
+		Element root = parseElement(null, document);
+		_tt.add(root);
+		Token t;
+		while ((t = parseMisc()) != null) {
+			_tt.add(t);
+		}
+		if (_t.code == EOF) {
+			document.setLayout(_tt);
+			if (_tt.get(0) instanceof XmlDeclaration xmlDeclaration) {
+				document.setXmlDeclaration(xmlDeclaration);
+			}
+			document.setRoot(root);
+		} else {
 			throw new ParseException("Extra data exist.", _t.start);
 		}
 	}
 
 	private void parseProlog() throws Exception {
-		if (_t.code == XML) {
-			XmlDeclaration xml = parseXmlDeclaration();
-			_list.add(xml);
+		Token t;
+		if (_t.code == XML_START) {
+			t = parseXmlDeclaration();
+			_tt.add(t);
 		}
-		while (parseMisc()) {
-			continue;
+		while ((t = parseMisc()) != null) {
+			_tt.add(t);
 		}
-		if (_t.code == DOCTYPE) {
-			parseDoctypeDeclaration();
-			while (parseMisc()) {
-				continue;
+		if (_t.code == DOCTYPE_DECL) {
+			t = parseDoctypeDeclaration();
+			_tt.add(t);
+			while ((t = parseMisc()) != null) {
+				_tt.add(t);
 			}
 		}
 	}
 
 	private XmlDeclaration parseXmlDeclaration() throws Exception {
-		XmlDeclaration xml;
-		int start = _t.start;
 		String name;
 		String version;
 		String encoding = null;
 		String standalone = null;
+		push();
 		read();
 		if (_t.code == SP) {
 			read();
@@ -71,7 +91,7 @@ public class Parser {
 			throw new ParseException("White space is expected.", _t.start);
 		}
 		if (_t.code == NAME) {
-			name = text();
+			name = _t.toString();
 		} else {
 			throw new ParseException("version is expected.", _t.start);
 		}
@@ -91,19 +111,20 @@ public class Parser {
 		if (_t.code == SP) {
 			read();
 		}
-		if (_t.code == ATTVALUE) {
-			version = text();
-			if (!version.substring(1, version.length() - 1).matches("1\\.[0-9]+")) {
+		if (_t.code == ATT_VALUE) {
+			version = stripQuote(_t.toString());
+			if (!version.matches("1\\.[0-9]+")) {
 				throw new ParseException("Malformed version number.", _t.start);
 			}
 			read();
 		} else {
 			throw new ParseException("version number is expected.", _t.start);
 		}
+		name = null;
 		if (_t.code == SP) {
 			read();
 			if (_t.code == NAME) {
-				name = text();
+				name = _t.toString();
 				if (name.equals("encoding")) {
 					read();
 					if (_t.code == SP) {
@@ -117,122 +138,94 @@ public class Parser {
 					if (_t.code == SP) {
 						read();
 					}
-					if (_t.code == ATTVALUE) {
-						encoding = text();
+					if (_t.code == ATT_VALUE) {
+						encoding = stripQuote(_t.toString());
 						read();
 					} else {
 						throw new ParseException("encoding name is expected.", _t.start);
 					}
+					name = null;
 					if (_t.code == SP) {
 						read();
 						if (_t.code == NAME) {
-							name = text();
-							if (name.equals("standalone")) {
-								read();
-								if (_t.code == SP) {
-									read();
-								}
-								if (_t.code == EQ) {
-									read();
-								} else {
-									throw new ParseException("Equal sign is expected.", _t.start);
-								}
-								if (_t.code == SP) {
-									read();
-								}
-								if (_t.code == ATTVALUE) {
-									standalone = text();
-									if (!standalone.substring(1, standalone.length() - 1).equals("yes") && !standalone.equals("no")) {
-										throw new ParseException("Malformed standalone value.", _t.start);
-									}
-									read();
-								} else {
-									throw new ParseException("standalone value is expected.", _t.start);
-								}
-								if (_t.code == SP) {
-									read();
-								}
-							} else {
-								throw new ParseException("encoding or standalone is expected.", _t.start);
-							}
+							name = _t.toString();
 						}
 					}
-				} else if (name.equals("standalone")) {
+				}
+			}
+			if (name != null) {
+				if (name.equals("standalone")) {
 					read();
-					if (_t.code == SP) {
-						read();
-					}
-					if (_t.code == EQ) {
-						read();
-					} else {
-						throw new ParseException("Equal sign is expected.", _t.start);
-					}
-					if (_t.code == SP) {
-						read();
-					}
-					if (_t.code == ATTVALUE) {
-						standalone = text();
-						if (!standalone.substring(1, standalone.length() - 1).equals("yes") && !standalone.equals("no")) {
-							throw new ParseException("Malformed standalone value.", _t.start);
-						}
-						read();
-					} else {
-						throw new ParseException("standalone value is expected.", _t.start);
-					}
-					if (_t.code == SP) {
-						read();
-					}
 				} else {
-					throw new ParseException("encoding or standalone is expected.", _t.start);
+					throw new ParseException("standalone is expected.", _t.start);
+				}
+				if (_t.code == SP) {
+					read();
+				}
+				if (_t.code == EQ) {
+					read();
+				} else {
+					throw new ParseException("Equal sign is expected.", _t.start);
+				}
+				if (_t.code == SP) {
+					read();
+				}
+				if (_t.code == ATT_VALUE) {
+					standalone = stripQuote(_t.toString());
+					if (!standalone.equals("yes") && !standalone.equals("no")) {
+						throw new ParseException("Malformed standalone value.", _t.start);
+					}
+					read();
+				} else {
+					throw new ParseException("standalone value is expected.", _t.start);
+				}
+				if (_t.code == SP) {
+					read();
 				}
 			}
 		}
-		if (_t.code == PI_END) {
-			xml = new XmlDeclaration(start, _t.end, version, encoding, standalone);
+		if (_t.code == XML_END) {
 			read();
 		} else {
 			throw new ParseException("?> is expected.", _t.start);
 		}
-		return xml;
+		return new XmlDeclaration(pop(), version, encoding, standalone);
 	}
 
-	private boolean parseMisc() throws Exception {
+	private Token parseMisc() throws Exception {
+		Token t;
 		if (_t.code == COMMENT) {
-			_list.add(_t);
+			t = _t;
+			suspend();
 			read();
-			return true;
+			resume();
 		} else if (_t.code == PI_START) {
-			ProcessingInstruction pi = parseProcessingInstruction();
-			_list.add(pi);
-			return true;
+			t = parseProcessingInstruction();
 		} else if (_t.code == SP) {
-			_list.add(_t);
+			t = _t;
+			suspend();
 			read();
-			return true;
+			resume();
 		} else {
-			return false;
+			t = null;
 		}
+		return t;
 	}
 
-	@SuppressWarnings("unused")
-	private void parseDoctypeDeclaration() throws Exception {
-		int start = _t.start;
+	private DocumentTypeDeclaration parseDoctypeDeclaration() throws Exception {
 		String name;
-		if (_t.code == DOCTYPE) {
-			read();
-		} else {
-			throw new ParseException("<!DOCTYPE is expected.", _t.start);
-		}
+		push();
+		read();
 		if (_t.code == SP) {
 			read();
 		} else {
 			throw new ParseException("White space is expected.", _t.start);
 		}
 		if (_t.code == NAME) {
-			name = text();
+			name = _t.toString();
 			read();
 		} else {
-			throw new ParseException("White space is expected.", _t.start);
+			throw new ParseException("Name is expected.", _t.start);
 		}
 		if (_t.code == SP) {
 			read();
@@ -271,11 +264,12 @@ public class Parser {
 				read();
 			}
 		}
-		if (_t.code == '>') {
+		if (_t.code == TAG_END) {
 			read();
 		} else {
 			throw new ParseException("> is expected.", _t.start);
 		}
+		return new DocumentTypeDeclaration(pop(), name);
 	}
 
 	private void parseElementDecl() throws Exception {
@@ -472,7 +466,7 @@ public class Parser {
 			throw new ParseException("White space is expected.", _t.start);
 		}
 		if (_t.code == NAME) {
-			name = text();
+			name = _t.toString();
 			read();
 		} else {
 			throw new ParseException("White space is expected.", _t.start);
@@ -480,7 +474,7 @@ public class Parser {
 		if (_t.code == SP) {
 			read();
 			while (_t.code == NAME) {
-				aname = text();
+				aname = _t.toString();
 				read();
 				if (_t.code == SP) {
 					read();
@@ -597,14 +591,14 @@ public class Parser {
 			read();
 		}
 		while (_t.code == '|') {
-			read();
+			read(NMTOKEN);
 			if (_t.code == SP) {
-				read();
+				read(NMTOKEN);
 			}
 			if (_t.code == NMTOKEN) {
 				read();
 			} else {
-				throw new ParseException("Name is expected.", _t.start);
+				throw new ParseException("NMTOKEN is expected.", _t.start);
 			}
 			if (_t.code == SP) {
 				read();
@@ -632,7 +626,7 @@ public class Parser {
 			}
 			//FALLTHROUGH
 		default:
-			if (_t.code == ATTVALUE) {
+			if (_t.code == ATT_VALUE) {
 				read();
 			} else {
 				throw new ParseException("AttValue is expected.", _t.start);
@@ -644,8 +638,8 @@ public class Parser {
 	@SuppressWarnings("unused")
 	private void parseEntityDecl() throws Exception {
 		int start = _t.start;
-		String name;
-		String aname;
+		String key;
+		String value;
 		if (_t.code == ENTITY_DECL) {
 			read();
 		} else {
@@ -657,7 +651,7 @@ public class Parser {
 			throw new ParseException("White space is expected.", _t.start);
 		}
 		if (_t.code == NAME) {
-			name = text();
+			key = _t.toString();
 			read();
 			if (_t.code == SP) {
 				read();
@@ -665,6 +659,8 @@ public class Parser {
 				throw new ParseException("White space is expected.", _t.start);
 			}
 			if (_t.code == ENTITY_VALUE) {
+				value = ((QuotedString)_t).innerText;
+				_document.putEntity(key, value);
 				read();
 			} else if (_t.code == SYSTEM || _t.code == PUBLIC) {
 				parseExternalId();
@@ -699,7 +695,7 @@ public class Parser {
 				throw new ParseException("White space is expected.", _t.start);
 			}
 			if (_t.code == NAME) {
-				name = text();
+				key = _t.toString();
 				read();
 			} else {
 				throw new ParseException("Name is expected.", _t.start);
@@ -710,6 +706,8 @@ public class Parser {
 				throw new ParseException("White space is expected.", _t.start);
 			}
 			if (_t.code == ENTITY_VALUE) {
+				value = ((QuotedString)_t).innerText;
+				_document.putReference(key, value);
 				read();
 			} else if (_t.code == SYSTEM || _t.code == PUBLIC) {
 				parseExternalId();
@@ -745,7 +743,7 @@ public class Parser {
 			throw new ParseException("White space is expected.", _t.start);
 		}
 		if (_t.code == NAME) {
-			name = text();
+			name = _t.toString();
 			read();
 		} else {
 			throw new ParseException("Name is expected.", _t.start);
@@ -774,7 +772,7 @@ public class Parser {
 		if (_t.code == SYSTEM) {
 			read();
 			if (_t.code == SP) {
-				read();
+				read(SYSTEM_LITERAL);
 			} else {
 				throw new ParseException("White space is expected.", _t.start);
 			}
@@ -786,7 +784,7 @@ public class Parser {
 		} else if (_t.code == PUBLIC) {
 			read();
 			if (_t.code == SP) {
-				read();
+				read(PUBID_LITERAL);
 			} else {
 				throw new ParseException("White space is expected.", _t.start);
 			}
@@ -796,7 +794,7 @@ public class Parser {
 				throw new ParseException("Pubid literal is expected.", _t.start);
 			}
 			if (_t.code == SP) {
-				read();
+				read(SYSTEM_LITERAL);
 			} else {
 				throw new ParseException("White space is expected.", _t.start);
 			}
@@ -812,7 +810,7 @@ public class Parser {
 		if (_t.code == SYSTEM) {
 			read();
 			if (_t.code == SP) {
-				read();
+				read(SYSTEM_LITERAL);
 			} else {
 				throw new ParseException("White space is expected.", _t.start);
 			}
@@ -824,7 +822,7 @@ public class Parser {
 		} else if (_t.code == PUBLIC) {
 			read();
 			if (_t.code == SP) {
-				read();
+				read(PUBID_LITERAL);
 			} else {
 				throw new ParseException("White space is expected.", _t.start);
 			}
@@ -834,7 +832,7 @@ public class Parser {
 				throw new ParseException("Pubid literal is expected.", _t.start);
 			}
 			if (_t.code == SP) {
-				read();
+				read(SYSTEM_LITERAL);
 				if (_t.code == SYSTEM_LITERAL) {
 					read();
 				}
@@ -843,13 +841,12 @@ public class Parser {
 	}
 
 	private ProcessingInstruction parseProcessingInstruction() throws Exception {
-		ProcessingInstruction pi;
-		int start = _t.start;
 		String name;
 		String body;
+		push();
 		read(NAME);
 		if (_t.code == NAME) {
-			name = text();
+			name = _t.toString();
 			if (name.toLowerCase().equals("xml")) {
 				throw new ParseException("xml is now allowed for PI.", _t.start);
 			} else {
@@ -859,43 +856,40 @@ public class Parser {
 			throw new ParseException("Name is expected.", _t.start);
 		}
 		if (_t.code == PI_BODY) {
-			body = text();
+			body = _t.toString();
 			read();
 		} else {
 			body = null;
 		}
 		if (_t.code == PI_END) {
-			pi = new ProcessingInstruction(start, _t.end, name, body);
 			read();
 		} else {
 			throw new ParseException("PI end is expected.", _t.start);
 		}
-		return pi;
+		return new ProcessingInstruction(pop(), name, body);
 	}
 
-	private Element parseElement() throws Exception {
-		Element element;
-		int start = _t.start;
+	private Element parseElement(Element parent, Document document) throws Exception {
 		String name;
 		List<Attribute> attributes = new ArrayList<>();
 		if (_t.code == STAG_START) {
+			push();
 			read();
 		} else {
 			throw new ParseException("Tag start is expected.", _t.start);
 		}
 		if (_t.code == NAME) {
-			name = text();
+			name = _t.toString();
 			read();
 		} else {
 			throw new ParseException("Name is expected.", _t.start);
 		}
 		while (_t.code == SP) {
 			read();
-			int astart;
-			String aname;
+			String key;
 			if (_t.code == NAME) {
-				astart = _t.start;
-				aname = text();
+				key = _t.toString();
+				push();
 				read();
 			} else {
 				break;
@@ -911,31 +905,36 @@ public class Parser {
 			if (_t.code == SP) {
 				read();
 			}
-			if (_t.code == ATTVALUE) {
-				attributes.add(new Attribute(astart, _t.end, aname, text()));
+			if (_t.code == ATT_VALUE) {
+				QuotedString qs = (QuotedString)_t;
+				String value = translate(qs.innerText);
 				read();
+				Attribute attribute = new Attribute(pop(), key, value);
+				attributes.add(attribute);
+				_tt.add(attribute);
 			} else {
 				throw new ParseException("Attribute value is expected.", _t.start);
 			}
 		}
 		if (_t.code == EETAG_END) {
-			element = new Element(start, _t.end, name, attributes);
 			read();
-			return element;
-		} else if (_t.code == TAG_END) {
-			element = new Element(start, _t.end, name, attributes);
+			return new Element(pop(), name, attributes, parent);
+		}
+		if (_t.code == TAG_END) {
 			read();
 		} else {
 			throw new ParseException("Tag end is expected.", _t.start);
 		}
-		parseContent(element);
+		Element element = new Element(pop(), name, attributes, parent);
+		List<Token> children = parseContent(element, document);
 		if (_t.code == ETAG_START) {
+			push();
 			read();
 		} else {
 			throw new ParseException("ETag start is expected.", _t.start);
 		}
 		if (_t.code == NAME) {
-			if (!text().equals(name)) {
+			if (!_t.toString().equals(name)) {
 				throw new ParseException("Tags mismatch.", _t.start);
 			}
 			read();
@@ -946,62 +945,194 @@ public class Parser {
 			read();
 		}
 		if (_t.code == TAG_END) {
-			element = new Element(element, _t.end);
 			read();
 		} else {
 			throw new ParseException("ETag end is expected.", _t.start);
 		}
+		element.set(children, pop());
 		return element;
 	}
 
-	private void parseContent(Element parent) throws Exception {
+	private List<Token> parseContent(Element parent, Document document) throws Exception {
+		push();
 		if (_t.code == CHAR_DATA) {
-			CharData cd = new CharData(_t.start, _t.end, text());
-			parent.addChild(cd);
 			read();
 		}
 		while (true) {
 			if (_t.code == STAG_START) {
-				Element child = parseElement();
-				parent.addChild(child);
-			} else if (_t.code == ENTITYREF) {
-				parent.addChild(_t);
+				_tt.add(parseElement(parent, document));
+			} else if (_t.code == ENTITY_REF) {
 				read();
-			} else if (_t.code == CHARREF) {
-				parent.addChild(_t);
+			} else if (_t.code == CHAR_REF) {
 				read();
-			} else if (_t.code == CDSECT) {
-				parent.addChild(_t);
+			} else if (_t.code == CD_SECT) {
 				read();
 			} else if (_t.code == PI_START) {
-				ProcessingInstruction pi = parseProcessingInstruction();
-				parent.addChild(pi);
+				_tt.add(parseProcessingInstruction());
 			} else if (_t.code == COMMENT) {
-				parent.addChild(_t);
 				read();
 			} else {
 				break;
 			}
 			if (_t.code == CHAR_DATA) {
-				CharData cd = new CharData(_t.start, _t.end, text());
-				parent.addChild(cd);
 				read();
 			}
 		}
+		return pop();
+	}
+
+	private List<Token> push() {
+		_ttt.push(_tt);
+		_tt = new ArrayList<>();
+		return _tt;
+	}
+
+	private List<Token> pop() {
+		List<Token> last = _tt;
+		_tt = _ttt.pop();
+		return last;
+	}
+
+	private void suspend() {
+		_ttEnabled = false;
+	}
+
+	private void resume() {
+		_ttEnabled = true;
 	}
 
 	private Token read() {
-		_t = _lexer.read();
-		return _t;
+		return read(0);
 	}
 
 	private Token read(int preferred) {
+		if (_ttEnabled) {
+			_tt.add(_t);
+		}
+		boolean sp = _t.code == SP;
 		_t = _lexer.read(preferred);
+		while (_t.code == EOF && !_lexers.isEmpty()) {
+			_lexer = _lexers.pop();
+			_t = _lexer.read(preferred);
+			if (sp && _t.code == SP) {
+				_t = _lexer.read(preferred);
+			}
+		}
+		if (_t.code == PEREFERENCE) {
+			int mode = _lexer.mode();
+			if (Lexer.MODE_DOCTYPE <= mode && mode <= Lexer.MODE_DOCTYPE_NOTATION) {
+				String value = _document.getReference(((ParameterEntityReference)_t).name);
+				if (value != null) {
+					_lexers.push(_lexer);
+					_lexer = new Lexer(value, mode);
+					Token t = _lexer.read(preferred);
+					if (sp && t.code == SP) {
+						t = _lexer.read(preferred);
+					}
+					if (t.code == EOF) {
+						_lexer = _lexers.pop();
+					} else {
+						_t = t;
+					}
+				}
+			}
+		}
 		return _t;
 	}
 
-	private String text() {
-		return _t.text(_contents);
+	private void installPredefinedEntities() {
+		_document.putEntity("lt", translate("&#38;#60;"));
+		_document.putEntity("gt", translate("&#62;"));
+		_document.putEntity("amp", translate("&#38;#38;"));
+		_document.putEntity("apos", translate("&#39;"));
+		_document.putEntity("quot", translate("&#34;"));
+	}
+
+	public static String stripQuote(String text) {
+		return text != null && text.length() >= 2 ? text.substring(1, text.length() - 1) : null;
+	}
+
+	public String translate(String text) {
+		if (text == null) {
+			return null;
+		}
+		int replaced = 0;
+		StringBuilder buf = new StringBuilder();
+		int n = text.length();
+		int i = 0;
+		int c = i < n ? text.codePointAt(i++) : -1;
+		while (c >= 0) {
+			if (c == '&') {
+				int h = i;
+				c = i < n ? text.codePointAt(i++) : -1;
+				if (c == '#') {
+					boolean successful = false;
+					int d = 0;
+					c = i < n ? text.codePointAt(i++) : -1;
+					if (c == 'x') {
+						c = i < n ? text.codePointAt(i++) : -1;
+						if (Lexer.isHexadecimal(c)) {
+							do {
+								d = d * 16 + (c < 'A' ? c - '0' : c < 'a' ? c - 'A' + 10 : c - 'a' + 10);
+								c = i < n ? text.codePointAt(i++) : -1;
+							} while (Lexer.isHexadecimal(c));
+							if (c == ';') {
+								successful = true;
+							}
+						}
+					} else if (Lexer.isDigit(c)) {
+						do {
+							d = d * 10 + c - '0';
+							c = i < n ? text.codePointAt(i++) : -1;
+						} while (Lexer.isDigit(c));
+						if (c == ';') {
+							successful = true;
+						}
+					}
+					if (successful) {
+						buf.appendCodePoint(d);
+						replaced++;
+					} else {
+						buf.append('&');
+						i = h;
+					}
+				} else if (Lexer.isNameStartChar(c)) {
+					StringBuilder buf2 = new StringBuilder();
+					buf2.appendCodePoint(c);
+					c = i < n ? text.codePointAt(i++) : -1;
+					while (Lexer.isNameChar(c)) {
+						buf2.appendCodePoint(c);
+						c = i < n ? text.codePointAt(i++) : -1;
+					}
+					if (c == ';') {
+						String key = buf2.toString();
+						String value = _document.getEntity(key);
+						if (value != null) {
+							buf.append(value);
+							replaced++;
+						} else {
+							buf.append('&');
+							buf.append(key);
+							buf.append(';');
+						}
+					} else {
+						buf.append('&');
+						i = h;
+					}
+				} else {
+					buf.append('&');
+					i = h;
+				}
+			} else {
+				buf.appendCodePoint(c);
+			}
+			c = i < n ? text.codePointAt(i++) : -1;
+		}
+		if (replaced > 0) {
+			return translate(buf.toString());
+		} else {
+			return text;
+		}
 	}
 
 }

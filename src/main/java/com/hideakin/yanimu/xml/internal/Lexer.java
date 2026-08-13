@@ -6,34 +6,45 @@ import static com.hideakin.yanimu.xml.Token.*;
 
 public class Lexer {
 
-	private final static int MODE_XML = 1;
-	private final static int MODE_PI = 2;
-	private final static int MODE_STAG = 3;
-	private final static int MODE_ETAG = 4;
-	private final static int MODE_DOCTYPE = 500;
-	private final static int MODE_DOCTYPE_SYSTEM = 501;
-	private final static int MODE_DOCTYPE_PUBLIC = 502;
-	private final static int MODE_DOCTYPE_ELEMENT = 510;
-	private final static int MODE_DOCTYPE_ATTLIST = 520;
-	private final static int MODE_DOCTYPE_ENTITY = 530;
-	private final static int MODE_DOCTYPE_NOTATION = 540;
-	private final static int MODE_DOCTYPE_NOTATION_SYSTEM = 541;
-	private final static int MODE_DOCTYPE_NOTATION_PUBLIC = 542;
-	private final static int MODE_DOCTYPE_PI = 550;
+	public final static int MODE_XML = 1;
+	public final static int MODE_PI = 2;
+	public final static int MODE_STAG = 3;
+	public final static int MODE_ETAG = 4;
+	public final static int MODE_DOCTYPE = 500;
+	public final static int MODE_DOCTYPE_ELEMENT = 501;
+	public final static int MODE_DOCTYPE_ATTLIST = 502;
+	public final static int MODE_DOCTYPE_ENTITY = 503;
+	public final static int MODE_DOCTYPE_NOTATION = 504;
+	public final static int MODE_DOCTYPE_PI = 505;
 
-	private final byte[] _contents;
-	private int _i; // index to read next
-	private int _h; // head index of the character sequence
-	private int _c; // current unicode codepoint
+	private final Reader _reader;
+	private int _g; // head index of the character sequence
+	private int _h; // head index of the byte sequence
+	private int _c; // current UNICODE codepoint
 	private int _d; // depth of the element structure
-	private int _m; // mode of the tokenization 
+	private int _m; // read mode
 
-	public Lexer(byte[] contents) throws Exception {
-		_contents = contents;
-		_i = 0;
+	public Lexer(byte[] content) {
+		this(content, 0);
+	}
+
+	public Lexer(byte[] content, int mode) {
+		_reader = ReaderFactory.create(content);
 		_d = 0;
-		_m = 0;
+		_m = mode;
 		readChar();
+	}
+
+	public Lexer(String content) {
+		this(content.getBytes(), 0);
+	}
+
+	public Lexer(String content, int mode) {
+		this(content.getBytes(), mode);
+	}
+
+	public int mode() {
+		return _m;
 	}
 
 	public Token read() {
@@ -41,170 +52,109 @@ public class Lexer {
 	}
 
 	public Token read(int preferred) {
-		int h = _h;
+		_g = _h;
 		if (_c == EOF) {
-			return new Token(EOF, h, h);
+			return Token.of(EOF, _g, _h, text());
 		} else if (_m == MODE_STAG || _m == MODE_ETAG || _m == MODE_XML) {
 			switch (_c) {
 			case HT:
 			case LF:
 			case CR:
 			case SP:
+				readChar();
 				return parseWhiteSpace();
 			case '>':
 				readChar();
 				_d += _m == MODE_STAG ? +1 : -1;
 				_m = 0;
-				return new Token(TAG_END, h, _h);
+				return Token.of(TAG_END, _g, _h, text());
 			case '/':
 				if (next('>')) {
 					readChar();
 					_m = 0;
-					return new Token(EETAG_END, h, _h);
-				} else {
-					readChar();
-					return new Token(ILLEGAL_CHARACTER, h, _h);
+					return Token.of(EETAG_END, _g, _h, text());
 				}
+				break;
 			case '?':
 				if (_m == MODE_XML && next('>')) {
 					readChar();
 					_m = 0;
-					return new Token(PI_END, h, _h);
-				} else {
-					readChar();
-					return new Token(ILLEGAL_CHARACTER, h, _h);
+					return Token.of(XML_END, _g, _h, text());
 				}
+				break;
 			case '=':
 				readChar();
-				return new Token(EQ, h, _h);
+				return Token.of(EQ, _g, _h, text());
 			case '\"':
 			case '\'':
-				return parseAttValue();
+				int q = _c;
+				readChar();
+				return parseAttValue(q);
 			default:
-				return parseName();
+				if (isNameStartChar(_c)) {
+					readChar();
+					return parseName();
+				}
+				break;
 			}
 		} else if (_m == MODE_PI || _m == MODE_DOCTYPE_PI) {
-			if (preferred == NAME) {
-				return parseName();
-			} else if (isWhiteSpace(_c)) {
+			switch (_c) {
+			case HT:
+			case LF:
+			case CR:
+			case SP:
 				readChar();
-				while (true) {
-					if (_c == EOF) {
-						return new Token(PREMATURE_EOF, h, _h);
-					} else if (_c == '?' && peek('>')) {
-						return new Token(PI_BODY, h, _h);
-					} else {
+				return parseWhiteSpace();
+			case '?':
+				if (next('>')) {
+					readChar();
+					_m = _m == MODE_DOCTYPE_PI ? MODE_DOCTYPE : 0;
+					return Token.of(PI_END, _g, _h, text());
+				}
+				//FALLTHROUGH
+			default:
+				if (preferred == NAME) {
+					if (isNameStartChar(_c)) {
 						readChar();
+						return parseName();
 					}
 				}
-			} else if (_c == '?' && next('>')) {
 				readChar();
-				_m = _m == MODE_DOCTYPE_PI ? MODE_DOCTYPE : 0;
-				return new Token(PI_END, h, _h);
-			} else {
-				readChar();
-				return new Token(ILLEGAL_CHARACTER, h, _h);
+				return parsePI();
 			}
 		} else if (_d > 0) {
 			switch (_c) {
 			case '<':
 				if (next('!', '-', '-')) {
+					readChar();
 					return parseComment();
 				} else if (next('?')) {
 					readChar();
 					_m = MODE_PI;
-					return new Token(PI_START, h, _h);
+					return Token.of(PI_START, _g, _h, text());
 				} else if (next('!', '[', 'C', 'D', 'A', 'T', 'A', '[')) {
 					readChar();
-					while (true) {
-						if (_c == EOF) {
-							return new Token(PREMATURE_EOF, h, _h);
-						} else if (_c == ']' && next(']', '>')) {
-							readChar();
-							return new Token(CDSECT, h, _h);
-						}
-					}
+					return parseCDSect();
 				} else if (next('/')) {
 					readChar();
 					_m = MODE_ETAG;
-					return new Token(ETAG_START, h, _h);
+					return Token.of(ETAG_START, _g, _h, text());
 				} else {
 					readChar();
 					_m = MODE_STAG;
-					return new Token(STAG_START, h, _h);
+					return Token.of(STAG_START, _g, _h, text());
 				}
 			case '&':
-				if (next('#', 'x')) {
-					readChar();
-					if (isHexadecimal(_c)) {
-						readChar();
-					} else {
-						readChar();
-						return new Token(MALFORMED_CHARREF, h, _h);
-					}
-					while (isHexadecimal(_c)) {
-						readChar();
-					}
-					if (_c == ';') {
-						readChar();
-						return new Token(CHARREF, h, _h);
-					} else {
-						readChar();
-						return new Token(MALFORMED_CHARREF, h, _h);
-					}
-				} else if (next('#')) {
-					readChar();
-					if (isDigit(_c)) {
-						readChar();
-					} else {
-						readChar();
-						return new Token(MALFORMED_CHARREF, h, _h);
-					}
-					while (isDigit(_c)) {
-						readChar();
-					}
-					if (_c == ';') {
-						readChar();
-						return new Token(CHARREF, h, _h);
-					} else {
-						readChar();
-						return new Token(MALFORMED_CHARREF, h, _h);
-					}
-				} else {
-					readChar();
-					if (isNameStartChar(_c)) {
-						readChar();
-					} else {
-						readChar();
-						return new Token(MALFORMED_ENTITYREF, h, _h);
-					}
-					while (isNameChar(_c)) {
-						readChar();
-					}
-					if (_c == ';') {
-						readChar();
-						return new Token(ENTITYREF, h, _h);
-					} else {
-						readChar();
-						return new Token(MALFORMED_ENTITYREF, h, _h);
-					}
-				}
+				readChar();
+				return parseReference();
 			case ']':
 				if (next(']', '>')) {
-					readChar();
-					return new Token(ILLEGAL_SEQUENCE, h, _h);
+					break;
 				}
 				//FALLTHROUGH
 			default:
 				readChar();
-				while (_c != EOF && _c != '<' && _c != '&') {
-					if (_c == ']' && next(']', '>')) {
-						_i -= 2;
-						break;
-					}
-					readChar();
-				}
-				return new Token(CHAR_DATA, h, _h);
+				return parseCharData();
 			}
 		} else if (_m == 0) {
 			switch (_c) {
@@ -212,43 +162,43 @@ public class Lexer {
 			case LF:
 			case CR:
 			case SP:
+				readChar();
 				return parseWhiteSpace();
 			case '<':
 				if (next('!', '-', '-')) {
+					readChar();
 					return parseComment();
 				} else if (next('?')) {
+					int i = _reader.to();
 					if (next('x', 'm', 'l')) {
 						readChar();
 						if (isNameChar(_c)) {
-							_i = h + 2;
+							_reader.reset(i);
 							readChar();
 							_m = MODE_PI;
-							return new Token(PI_START, h, _h);
+							return Token.of(PI_START, _g, _h, "<?");
 						} else {
 							_m = MODE_XML;
-							return new Token(XML, h, _h);
+							return Token.of(XML_START, _g, _h, text());
 						}
 					} else {
 						readChar();
 						_m = MODE_PI;
-						return new Token(PI_START, h, _h);
+						return Token.of(PI_START, _g, _h, text());
 					}
 				} else if (next('!', 'D', 'O', 'C', 'T', 'Y', 'P', 'E')) {
 					readChar();
 					_m = MODE_DOCTYPE;
-					return new Token(DOCTYPE, h, _h);
+					return Token.of(DOCTYPE_DECL, _g, _h, text());
 				} else {
 					readChar();
 					_m = MODE_STAG;
-					return new Token(STAG_START, h, _h);
+					return Token.of(STAG_START, _g, _h, text());
 				}
 			default:
-				readChar();
-				return new Token(ILLEGAL_CHARACTER, h, _h);
+				break;
 			}
 		} else if (_m == MODE_DOCTYPE
-				|| _m == MODE_DOCTYPE_SYSTEM
-				|| _m == MODE_DOCTYPE_PUBLIC
 				|| _m == MODE_DOCTYPE_ELEMENT
 				|| _m == MODE_DOCTYPE_ATTLIST
 				|| _m == MODE_DOCTYPE_ENTITY
@@ -258,39 +208,40 @@ public class Lexer {
 			case LF:
 			case CR:
 			case SP:
+				readChar();
 				return parseWhiteSpace();
 			case '<':
 				if (next('!')) {
 					if (next('-', '-')) {
+						readChar();
 						return parseComment();
 					} else if (next('E', 'L', 'E', 'M', 'E', 'N', 'T')) {
 						readChar();
 						_m = MODE_DOCTYPE_ELEMENT;
-						return new Token(ELEMENT_DECL, h, _h);
+						return Token.of(ELEMENT_DECL, _g, _h, text());
 					} else if (next('A', 'T', 'T', 'L', 'I', 'S', 'T')) {
 						readChar();
 						_m = MODE_DOCTYPE_ATTLIST;
-						return new Token(ATTLIST_DECL, h, _h);
+						return Token.of(ATTLIST_DECL, _g, _h, text());
 					} else if (next('E', 'N', 'T', 'I', 'T', 'Y')) {
 						readChar();
 						_m = MODE_DOCTYPE_ENTITY;
-						return new Token(ENTITY_DECL, h, _h);
+						return Token.of(ENTITY_DECL, _g, _h, text());
 					} else if (next('N', 'O', 'T', 'A', 'T', 'I', 'O', 'N')) {
 						readChar();
 						_m = MODE_DOCTYPE_NOTATION;
-						return new Token(NOTATION_DECL, h, _h);
+						return Token.of(NOTATION_DECL, _g, _h, text());
 					}
 				} else if (next('?')) {
 					readChar();
 					_m = MODE_DOCTYPE_PI;
-					return new Token(PI_START, h, _h);
+					return Token.of(PI_START, _g, _h, text());
 				}
-				readChar();
-				return new Token(ILLEGAL_CHARACTER, h, _h);
+				break;
 			case '>':
 				readChar();
 				_m = _m == MODE_DOCTYPE ? 0 : MODE_DOCTYPE;
-				return new Token('>', h, _h);
+				return Token.of(TAG_END, _g, _h, text());
 			case '[':
 			case ']':
 			case '(':
@@ -301,287 +252,276 @@ public class Lexer {
 			case '+':
 				int c = _c;
 				readChar();
-				return new Token(c, h, _h);
+				return Token.of(c, _g, _h, text());
 			case ')':
 				if (next('*')) {
 					readChar();
-					return new Token(PCDATA_END, h, _h);
+					return Token.of(PCDATA_END, _g, _h, text());
 				} else {
 					readChar();
-					return new Token(')', h, _h);
+					return Token.of(')', _g, _h, text());
 				}
 			case '#':
 				if (next('P', 'C', 'D', 'A', 'T', 'A')) {
 					readChar();
-					return new Token(PCDATA, h, _h);
+					return Token.of(PCDATA, _g, _h, text());
 				} else if (next('R', 'E', 'Q', 'U', 'I', 'R', 'E', 'D')) {
 					readChar();
-					return new Token(REQUIRED, h, _h);
+					return Token.of(REQUIRED, _g, _h, text());
 				} else if (next('I', 'M', 'P', 'L', 'I', 'E', 'D')) {
 					readChar();
-					return new Token(IMPLIED, h, _h);
+					return Token.of(IMPLIED, _g, _h, text());
 				} else if (next('F', 'I', 'X', 'E', 'D')) {
 					readChar();
-					return new Token(FIXED, h, _h);
+					return Token.of(FIXED, _g, _h, text());
+				}
+				break;
+			case '%':
+				readChar();
+				if (isNameStartChar(_c)) {
+					readChar();
+					return parsePEReference();
+				} else {
+					return Token.of('%', _g, _h, text());
+				}
+			case 'A':
+				if (_m == MODE_DOCTYPE_ELEMENT) {
+					if (next('N', 'Y')) {
+						readChar();
+						return Token.of(ANY, _g, _h, text());
+					}
 				}
 				readChar();
-				return new Token(ILLEGAL_CHARACTER, h, _h);
-			case '%':
-				return parsePEReference();
-			case 'A':
-				if (next('N', 'Y')) {
-					readChar();
-					return new Token(ANY, h, _h);
-				} else {
-					return parseName();
-				}
+				return parseName();
 			case 'C':
-				if (next('D', 'A', 'T', 'A')) {
-					readChar();
-					return new Token(TYPE_CDATA, h, _h);
-				} else {
-					return parseName();
+				if (_m == MODE_DOCTYPE_ATTLIST) {
+					if (next('D', 'A', 'T', 'A')) {
+						readChar();
+						return Token.of(TYPE_CDATA, _g, _h, text());
+					}
 				}
+				readChar();
+				return parseName();
 			case 'E':
-				if (next('M', 'P', 'T', 'Y')) {
-					readChar();
-					return new Token(EMPTY, h, _h);
-				} else if (next('N', 'T', 'I', 'T', 'I', 'E', 'S')) {
-					readChar();
-					return new Token(TYPE_ENTITIES, h, _h);
-				} else if (next('N', 'T', 'I', 'T', 'Y')) {
-					readChar();
-					return new Token(TYPE_ENTITY, h, _h);
-				} else {
-					return parseName();
+				if (_m == MODE_DOCTYPE_ATTLIST) {
+					if (next('N', 'T', 'I', 'T', 'I', 'E', 'S')) {
+						readChar();
+						return Token.of(TYPE_ENTITIES, _g, _h, text());
+					} else if (next('N', 'T', 'I', 'T', 'Y')) {
+						readChar();
+						return Token.of(TYPE_ENTITY, _g, _h, text());
+					}
+				} else if (_m == MODE_DOCTYPE_ELEMENT) {
+					if (next('M', 'P', 'T', 'Y')) {
+						readChar();
+						return Token.of(EMPTY, _g, _h, text());
+					}
 				}
+				readChar();
+				return parseName();
 			case 'I':
-				if (next('D', 'R', 'E', 'F', 'S')) {
-					readChar();
-					return new Token(TYPE_IDREFS, h, _h);
-				} else if (next('D', 'R', 'E', 'F')) {
-					readChar();
-					return new Token(TYPE_IDREF, h, _h);
-				} else if (next('D')) {
-					readChar();
-					return new Token(TYPE_ID, h, _h);
-				} else {
-					return parseName();
+				if (_m == MODE_DOCTYPE_ATTLIST) {
+					if (next('D', 'R', 'E', 'F', 'S')) {
+						readChar();
+						return Token.of(TYPE_IDREFS, _g, _h, text());
+					} else if (next('D', 'R', 'E', 'F')) {
+						readChar();
+						return Token.of(TYPE_IDREF, _g, _h, text());
+					} else if (next('D')) {
+						readChar();
+						return Token.of(TYPE_ID, _g, _h, text());
+					}
 				}
+				readChar();
+				return parseName();
 			case 'N':
-				if (next('M', 'T', 'O', 'K', 'E', 'N', 'S')) {
-					readChar();
-					return new Token(TYPE_NMTOKENS, h, _h);
-				} else if (next('M', 'T', 'O', 'K', 'E', 'N')) {
-					readChar();
-					return new Token(TYPE_NMTOKEN, h, _h);
-				} else if (next('O', 'T', 'A', 'T', 'I', 'O', 'N')) {
-					readChar();
-					return new Token(TYPE_NOTATION, h, _h);
-				} else if (next('D', 'A', 'T', 'A')) {
-					readChar();
-					return new Token(TYPE_NOTATION, h, _h);
-				} else {
-					return parseName();
+				if (_m == MODE_DOCTYPE_ATTLIST) {
+					if (next('M', 'T', 'O', 'K', 'E', 'N', 'S')) {
+						readChar();
+						return Token.of(TYPE_NMTOKENS, _g, _h, text());
+					} else if (next('M', 'T', 'O', 'K', 'E', 'N')) {
+						readChar();
+						return Token.of(TYPE_NMTOKEN, _g, _h, text());
+					} else if (next('O', 'T', 'A', 'T', 'I', 'O', 'N')) {
+						readChar();
+						return Token.of(TYPE_NOTATION, _g, _h, text());
+					}
+				} else if (_m == MODE_DOCTYPE_ENTITY) {
+					if (next('D', 'A', 'T', 'A')) {
+						readChar();
+						return Token.of(NDATA, _g, _h, text());
+					}
 				}
+				readChar();
+				return parseName();
 			case 'P':
-				if ((_m == MODE_DOCTYPE || _m == MODE_DOCTYPE_NOTATION)
-						&& next('U', 'B', 'L', 'I', 'C')) {
-					readChar();
-					_m = _m == MODE_DOCTYPE_NOTATION ? MODE_DOCTYPE_NOTATION_PUBLIC : MODE_DOCTYPE_PUBLIC;
-					return new Token(PUBLIC, h, _h);
-				} else {
-					readChar();
-					return new Token(ILLEGAL_CHARACTER, h, _h);
+				if (_m == MODE_DOCTYPE || _m == MODE_DOCTYPE_NOTATION) {
+					if (next('U', 'B', 'L', 'I', 'C')) {
+						readChar();
+						return Token.of(PUBLIC, _g, _h, text());
+					}
 				}
+				readChar();
+				return parseName();
 			case 'S':
-				if ((_m == MODE_DOCTYPE || _m == MODE_DOCTYPE_NOTATION)
-						&& next('Y', 'S', 'T', 'E', 'M')) {
-					readChar();
-					_m = _m == MODE_DOCTYPE_NOTATION ? MODE_DOCTYPE_NOTATION_SYSTEM : MODE_DOCTYPE_SYSTEM;
-					return new Token(SYSTEM, h, _h);
-				} else {
-					readChar();
-					return new Token(ILLEGAL_CHARACTER, h, _h);
+				if (_m == MODE_DOCTYPE || _m == MODE_DOCTYPE_NOTATION) {
+					if (next('Y', 'S', 'T', 'E', 'M')) {
+						readChar();
+						return Token.of(SYSTEM, _g, _h, text());
+					}
 				}
+				readChar();
+				return parseName();
 			case '\"':
 			case '\'':
-				if (_m == MODE_DOCTYPE_SYSTEM || _m == MODE_DOCTYPE_NOTATION_SYSTEM) {
-					return parseSystemLiteral();
-				} else if (_m == MODE_DOCTYPE_PUBLIC || _m == MODE_DOCTYPE_NOTATION_PUBLIC) {
-					return parsePubidLiteral();
-				} else if (_m == MODE_DOCTYPE_ATTLIST) {
-					return parseAttValue();
-				} else if (_m == MODE_DOCTYPE_ENTITY) {
-					return parseEntityValue();
-				} else {
+				if (preferred == SYSTEM_LITERAL) {
+					int q = _c;
 					readChar();
-					return new Token(ILLEGAL_CHARACTER, h, _h);
+					return parseSystemLiteral(q);
+				} else if (preferred == PUBID_LITERAL) {
+					int q = _c;
+					readChar();
+					return parsePubidLiteral(q);
+				} else if (_m == MODE_DOCTYPE_ATTLIST) {
+					int q = _c;
+					readChar();
+					return parseAttValue(q);
+				} else if (_m == MODE_DOCTYPE_ENTITY) {
+					int q = _c;
+					readChar();
+					return parseEntityValue(q);
 				}
+				break;
 			default:
-				if (preferred == NMTOKEN) {
+				if (preferred == NMTOKEN && isNameChar(_c)) {
+					readChar();
 					return parseNmtoken();
 				} else if (isNameStartChar(_c)) {
-					return parseName();
-				} else {
 					readChar();
-					return new Token(ILLEGAL_CHARACTER, h, _h);
+					return parseName();
 				}
+				break;
 			}
 		} else {
 			throw new RuntimeException("Lexer::read: BUG!");
 		}
+		readChar();
+		return Token.of(ILLEGAL_CHARACTER, _g, _h, text());
 	}
 
 	private Token parseWhiteSpace() {
-		int h = _h;
-		readChar();
 		while (isWhiteSpace(_c)) {
 			readChar();
 		}
-		return new Token(SP, h, _h);
+		return Token.of(SP, _g, _h, text());
 	}
 
 	private Token parseComment() {
-		int h = _h;
-		readChar();
-		int b = 0;
-		while (_c != '-' || b != '-') {
+		while (true) {
 			if (_c == EOF) {
-				return new Token(PREMATURE_EOF, h, _h);
+				return Token.of(PREMATURE_EOF, _g, _h, text());
+			} else if (_c == '-') {
+				readChar();
+				if (_c == '-') {
+					readChar();
+					if (_c == '>') {
+						readChar();
+						return Token.of(COMMENT, _g, _h, text());
+					} else {
+						readChar();
+						return Token.of(ILLEGAL_SEQUENCE, _g, _h, text());
+					}
+				}
+			} else {
+				readChar();
 			}
-			b = _c;
-			readChar();
 		}
-		readChar();
-		if (_c == '>') {
-			readChar();
-			return new Token(COMMENT, h, _h);
-		} else {
-			return new Token(ILLEGAL_SEQUENCE, h, _h);
+	}
+
+	private Token parsePI() {
+		while (true) {
+			if (_c == EOF) {
+				return Token.of(PREMATURE_EOF, _g, _h, text());
+			} else if (_c == '?' && peek('>')) {
+				return Token.of(PI_BODY, _g, _h, text());
+			} else {
+				readChar();
+			}
 		}
 	}
 
 	private Token parseName() {
-		int h = _h;
-		if (isNameStartChar(_c)) {
+		while (isNameChar(_c)) {
 			readChar();
-			while (isNameChar(_c)) {
-				readChar();
-			}
-			return new Token(NAME, h, _h);
-		} else if (_c == EOF) {
-			return new Token(EOF, h, h);
-		} else {
-			readChar();
-			return new Token(ILLEGAL_CHARACTER, h, _h);
 		}
-	}
-
-	private Token parseAttValue() {
-		int h = _h;
-		int q = _c;
-		if (_c == '\"' || _c == '\'') {
-			readChar();
-		} else {
-			return new Token(ILLEGAL_CHARACTER, h, _h);
-		}
-		Token t;
-		while (_c != q) {
-			switch (_c) {
-			case EOF:
-				return new Token(PREMATURE_EOF, h, _h);
-			case '<':
-				readChar();
-				return new Token(ILLEGAL_CHARACTER, h, _h);
-			case '&':
-				t = parseReference();
-				if (t.code != CHARREF && t.code != ENTITYREF) {
-					return new Token(t.code, h, _h);
-				}
-				break;
-			default:
-				readChar();
-				break;
-			}
-		}
-		readChar();
-		return new Token(ATTVALUE, h, _h);
-	}
-
-	private Token parseSystemLiteral() {
-		int h = _h;
-		int q = _c;
-		readChar();
-		while (_c != q) {
-			if (_c == EOF) {
-				return new Token(PREMATURE_EOF, h, _h);
-			} else {
-				readChar();
-			}
-		}
-		readChar();
-		_m = _m == MODE_DOCTYPE_NOTATION_SYSTEM ? MODE_DOCTYPE_NOTATION : MODE_DOCTYPE;
-		return new Token(SYSTEM_LITERAL, h, _h);
-	}
-
-	private Token parsePubidLiteral() {
-		int h = _h;
-		int q = _c;
-		readChar();
-		while (_c != q) {
-			if (_c == EOF) {
-				return new Token(PREMATURE_EOF, h, _h);
-			} else if (isPubidChar(_c)) {
-				readChar();
-			} else {
-				return new Token(ILLEGAL_CHARACTER, h, _h);
-			}
-		}
-		readChar();
-		_m = _m == MODE_DOCTYPE_NOTATION_PUBLIC ? MODE_DOCTYPE_NOTATION_SYSTEM :  MODE_DOCTYPE_SYSTEM;
-		return new Token(PUBID_LITERAL, h, _h);
+		return Token.of(NAME, _g, _h, text());
 	}
 
 	private Token parseNmtoken() {
-		int h = _h;
-		if (isNameChar(_c)) {
+		while (isNameChar(_c)) {
 			readChar();
-			while (isNameChar(_c)) {
-				readChar();
-			}
-			return new Token(NMTOKEN, h, _h);
-		} else if (_c == EOF) {
-			return new Token(EOF, h, h);
-		} else {
-			readChar();
-			return new Token(ILLEGAL_CHARACTER, h, _h);
 		}
+		return Token.of(NMTOKEN, _g, _h, text());
 	}
 
-	private Token parseEntityValue() {
-		int h = _h;
-		int q = _c;
-		if (_c == '\"' || _c == '\'') {
-			readChar();
-		} else {
-			return new Token(ILLEGAL_CHARACTER, h, _h);
-		}
-		Token t;
+	private Token parseAttValue(int q) {
 		while (_c != q) {
 			switch (_c) {
 			case EOF:
-				return new Token(PREMATURE_EOF, h, _h);
-			case '%': // PEReference
-				t = parsePEReference();
-				if (t.code != PEREFERENCE) {
-					return new Token(t.code, h, t.end);
-				}
-				break;
+				return Token.of(PREMATURE_EOF, _g, _h, text());
+			case '<':
+				readChar();
+				return Token.of(ILLEGAL_CHARACTER, _g, _h, text());
 			case '&':
-				t = parseReference();
-				if (t.code != CHARREF && t.code != ENTITYREF) {
-					return new Token(t.code, h, _h);
+				readChar();
+				if (_c == '#') {
+					// CharRef
+					readChar();
+					if (_c == 'x') {
+						readChar();
+						if (isHexadecimal(_c)) {
+							readChar();
+							while (isHexadecimal(_c)) {
+								readChar();
+							}
+						} else {
+							readChar();
+							return Token.of(MALFORMED_CHARREF, _g, _h, text());
+						}
+					} else if (isDigit(_c)) {
+						readChar();
+						while (isDigit(_c)) {
+							readChar();
+						}
+					} else {
+						readChar();
+						return Token.of(MALFORMED_CHARREF, _g, _h, text());
+					}
+					if (_c == ';') {
+						readChar();
+					} else if (_c == EOF) {
+						return Token.of(PREMATURE_EOF, _g, _h, text());
+					} else {
+						readChar();
+						return Token.of(MALFORMED_CHARREF, _g, _h, text());
+					}
+				} else if (isNameStartChar(_c)) {
+					// EntityRef
+					readChar();
+					while (isNameChar(_c)) {
+						readChar();
+					}
+					if (_c == ';') {
+						readChar();
+					} else if (_c == EOF) {
+						return Token.of(PREMATURE_EOF, _g, _h, text());
+					} else {
+						readChar();
+						return Token.of(MALFORMED_ENTITYREF, _g, _h, text());
+					}
+				} else {
+					readChar();
+					return Token.of(MALFORMED_REFERENCE, _g, _h, text());
 				}
 				break;
 			default:
@@ -590,193 +530,230 @@ public class Lexer {
 			}
 		}
 		readChar();
-		return new Token(ENTITY_VALUE, h, _h);
+		return Token.of(ATT_VALUE, _g, _h, text());
+	}
+
+	private Token parseSystemLiteral(int q) {
+		while (_c != q) {
+			if (_c == EOF) {
+				return Token.of(PREMATURE_EOF, _g, _h, text());
+			} else {
+				readChar();
+			}
+		}
+		readChar();
+		return Token.of(SYSTEM_LITERAL, _g, _h, text());
+	}
+
+	private Token parsePubidLiteral(int q) {
+		readChar();
+		while (_c != q) {
+			if (_c == EOF) {
+				return Token.of(PREMATURE_EOF, _g, _h, text());
+			} else if (isPubidChar(_c)) {
+				readChar();
+			} else {
+				return Token.of(ILLEGAL_CHARACTER, _g, _h, text());
+			}
+		}
+		readChar();
+		return Token.of(PUBID_LITERAL, _g, _h, text());
+	}
+
+	private Token parseEntityValue(int q) {
+		while (_c != q) {
+			switch (_c) {
+			case EOF:
+				return Token.of(PREMATURE_EOF, _g, _h, text());
+			case '%':
+				readChar();
+				if (isNameStartChar(_c)) {
+					// PEReference
+					readChar();
+					while (isNameChar(_c)) {
+						readChar();
+					}
+					if (_c == ';') {
+						readChar();
+					} else if (_c == EOF) {
+						return Token.of(PREMATURE_EOF, _g, _h, text());
+					} else {
+						readChar();
+						return Token.of(MALFORMED_PEREFERENCE, _g, _h, text());
+					}
+				} else {
+					readChar();
+					return Token.of(MALFORMED_PEREFERENCE, _g, _h, text());
+				}
+				break;
+			case '&':
+				readChar();
+				if (_c == '#') {
+					// CharRef
+					readChar();
+					if (_c == 'x') {
+						readChar();
+						if (isHexadecimal(_c)) {
+							readChar();
+							while (isHexadecimal(_c)) {
+								readChar();
+							}
+						} else {
+							readChar();
+							return Token.of(MALFORMED_CHARREF, _g, _h, text());
+						}
+					} else if (isDigit(_c)) {
+						readChar();
+						while (isDigit(_c)) {
+							readChar();
+						}
+					} else {
+						readChar();
+						return Token.of(MALFORMED_CHARREF, _g, _h, text());
+					}
+					if (_c == ';') {
+						readChar();
+					} else if (_c == EOF) {
+						return Token.of(PREMATURE_EOF, _g, _h, text());
+					} else {
+						readChar();
+						return Token.of(MALFORMED_CHARREF, _g, _h, text());
+					}
+				} else if (isNameStartChar(_c)) {
+					// EntityRef
+					readChar();
+					while (isNameChar(_c)) {
+						readChar();
+					}
+					if (_c == ';') {
+						readChar();
+					} else if (_c == EOF) {
+						return Token.of(PREMATURE_EOF, _g, _h, text());
+					} else {
+						readChar();
+						return Token.of(MALFORMED_ENTITYREF, _g, _h, text());
+					}
+				} else {
+					readChar();
+					return Token.of(MALFORMED_REFERENCE, _g, _h, text());
+				}
+				break;
+			default:
+				readChar();
+				break;
+			}
+		}
+		readChar();
+		return Token.of(ENTITY_VALUE, _g, _h, text());
 	}
 
 	private Token parsePEReference() {
-		int h = _h;
-		if (_c == '%') {
+		readChar();
+		while (isNameChar(_c)) {
 			readChar();
-		} else {
-			readChar();
-			return new Token(MALFORMED_PEREFERENCE, h, _h);
 		}
-		if (isNameStartChar(_c)) {
+		if (_c == ';') {
 			readChar();
-			while (isNameChar(_c)) {
-				readChar();
-			}
-			if (_c == ';') {
-				readChar();
-				return new Token(PEREFERENCE, h, _h);
-			} else if (_c == EOF) {
-				return new Token(PREMATURE_EOF, h, _h);
-			} else {
-				readChar();
-				return new Token(MALFORMED_PEREFERENCE, h, _h);
-			}
+			return Token.of(PEREFERENCE, _g, _h, text());
 		} else if (_c == EOF) {
-			return new Token(EOF, h, h);
+			return Token.of(PREMATURE_EOF, _g, _h, text());
 		} else {
 			readChar();
-			return new Token(MALFORMED_PEREFERENCE, h, _h);
+			return Token.of(MALFORMED_PEREFERENCE, _g, _h, text());
 		}
 	}
 
 	private Token parseReference() {
-		int h = _h;
-		if (_c == '&') {
-			readChar();
-		} else {
-			readChar();
-			return new Token(MALFORMED_REFERENCE, h, _h);
-		}
-		if (next('#')) {
+		if (_c == '#') {
 			// CharRef
-			if (next('x')) {
+			readChar();
+			if (_c == 'x') {
 				readChar();
 				if (isHexadecimal(_c)) {
 					readChar();
+					while (isHexadecimal(_c)) {
+						readChar();
+					}
+					if (_c == ';') {
+						readChar();
+						return Token.of(CHAR_REF, _g, _h, text());
+					} else {
+						readChar();
+						return Token.of(MALFORMED_CHARREF, _g, _h, text());
+					}
 				} else {
-					return new Token(MALFORMED_CHARREF, h, _h);
+					return Token.of(MALFORMED_CHARREF, _g, _h, text());
 				}
-				while (isHexadecimal(_c)) {
-					readChar();
-				}
-				if (_c == ';') {
-					readChar();
-					return new Token(CHARREF, h, _h);
-				} else {
-					return new Token(MALFORMED_CHARREF, h, _h);
-				}
-			} else {
+			} else if (Character.isDigit(_c)) {
 				readChar();
-				if (Character.isDigit(_c)) {
-					readChar();
-				} else {
-					return new Token(MALFORMED_CHARREF, h, _h);
-				}
 				while (Character.isDigit(_c)) {
 					readChar();
 				}
 				if (_c == ';') {
 					readChar();
-					return new Token(CHARREF, h, _h);
+					return Token.of(CHAR_REF, _g, _h, text());
 				} else {
-					return new Token(MALFORMED_CHARREF, h, _h);
+					readChar();
+					return Token.of(MALFORMED_CHARREF, _g, _h, text());
 				}
+			} else {
+				readChar();
+				return Token.of(MALFORMED_CHARREF, _g, _h, text());
 			}
-		} else {
+		} else if (isNameStartChar(_c)) {
 			// EntityRef
 			readChar();
-			if (isNameStartChar(_c)) {
-				readChar();
-			} else {
-				return new Token(MALFORMED_ENTITYREF, h, _h);
-			}
 			while (isNameChar(_c)) {
 				readChar();
 			}
 			if (_c == ';') {
 				readChar();
-				return new Token(ENTITYREF, h, _h);
+				return Token.of(ENTITY_REF, _g, _h, text());
 			} else {
-				return new Token(MALFORMED_ENTITYREF, h, _h);
+				readChar();
+				return Token.of(MALFORMED_ENTITYREF, _g, _h, text());
+			}
+		} else {
+			return Token.of(MALFORMED_REFERENCE, _g, _h, text());
+		}
+	}
+
+	private Token parseCDSect() {
+		while (true) {
+			if (_c == EOF) {
+				return Token.of(PREMATURE_EOF, _g, _h, text());
+			} else if (_c == ']' && next(']', '>')) {
+				readChar();
+				return Token.of(CD_SECT, _g, _h, text());
+			} else {
+				readChar();
 			}
 		}
 	}
 
-	public int readChar() {
-		_h = _i;
-		int b1 = readByte();
-		if (b1 < 0x80) {
-			_c = b1;
-		} else if (b1 < 0xC2) {
-			_c = ILLEGAL_SEQUENCE;
-		} else if (b1 < 0xE0) {
-			int b2 = readByte();
-			if (b2 < 0x80) {
-				_c = ILLEGAL_SEQUENCE;
-			} else if (b2 < 0xC0) {
-				_c = ((b1 & 0x1F) << (6 * 1)) | ((b2 & 0x3F) << (6 * 0));
-				if (_c < 0x80) {
-					_c = OUT_OF_RANGE;
-				}
-			} else {
-				_c = ILLEGAL_SEQUENCE;
-			}
-		} else if (b1 < 0xF0) {
-			int b2 = readByte();
-			if (b2 < 0x80) {
-				_c = ILLEGAL_SEQUENCE;
-			} else if (b2 < 0xC0) {
-				int b3 = readByte();
-				if (b3 < 0x80) {
-					_c = ILLEGAL_SEQUENCE;
-				} else if (b3 < 0xC0) {
-					_c = ((b1 & 0x0F) << (6 * 2)) | ((b2 & 0x3F) << (6 * 1)) | ((b3 & 0x3F) << (6 * 0));
-					if (_c < 0x800 || (0xD800 <= _c && _c <= 0xDFFF)) {
-						_c = OUT_OF_RANGE;
-					}
-				} else {
-					_c = ILLEGAL_SEQUENCE;
-				}
-			} else {
-				_c = ILLEGAL_SEQUENCE;
-			}
-		} else if (b1 < 0xF8) {
-			int b2 = readByte();
-			if (b2 < 0x80) {
-				_c = ILLEGAL_SEQUENCE;
-			} else if (b2 < 0xC0) {
-				int b3 = readByte();
-				if (b3 < 0x80) {
-					_c = ILLEGAL_SEQUENCE;
-				} else if (b3 < 0xC0) {
-					int b4 = readByte();
-					if (b4 < 0x80) {
-						_c = ILLEGAL_SEQUENCE;
-					} else if (b4 < 0xC0) {
-						_c = ((b1 & 0x0F) << (6 * 3)) | ((b2 & 0x3F) << (6 * 2)) | ((b3 & 0x3F) << (6 * 1)) | ((b4 & 0x3F) << (6 * 0));
-						if (_c < 0x10000 || 0x10FFFF < _c) {
-							_c = OUT_OF_RANGE;
-						}
-					} else {
-						_c = ILLEGAL_SEQUENCE;
-					}
-				} else {
-					_c = ILLEGAL_SEQUENCE;
-				}
-			} else {
-				_c = ILLEGAL_SEQUENCE;
-			}
-		} else {
-			_c = ILLEGAL_SEQUENCE;
+	private Token parseCharData() {
+		while (_c != EOF && _c != '<' && _c != '&' && (_c != ']' || !peek(']', '>'))) {
+			readChar();
 		}
+		return Token.of(CHAR_DATA, _g, _h, text());
+	}
+
+	private int readChar() {
+		_c = _reader.readChar();
+		_h = _reader.from();
 		return _c;
 	}
 
-	private int readByte() {
-		return _i < _contents.length ? ((int)_contents[_i++] + 0x100) & 0xFF : EOF;
-	}
-
-	private boolean peek(int c) {
-		return _i < _contents.length && _contents[_i] == c;
-	}
-
 	private boolean next(int... cc) {
-		int n = cc.length;
-		if (_i + n <= _contents.length) {
-			for (int j = 0; j < n; j++) {
-				if (_contents[_i + j] != cc[j]) {
-					return false;
-				}
-			}
-			_i += n;
-			return true;
-		} else {
-			return false;
-		}
+		return _reader.next(cc);
+	}
+
+	private boolean peek(int... cc) {
+		return _reader.peek(cc);
+	}
+
+	private String text() {
+		return _reader.text();
 	}
 
 	public static boolean isWhiteSpace(int c) {
