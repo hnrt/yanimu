@@ -3,6 +3,11 @@ package com.hideakin.yanimu.xml.internal;
 import com.hideakin.yanimu.xml.Attribute;
 import com.hideakin.yanimu.xml.DocumentTypeDeclaration;
 import com.hideakin.yanimu.xml.Element;
+import com.hideakin.yanimu.xml.ExternalEntityDefinition;
+import com.hideakin.yanimu.xml.ExternalParameterEntityDefinition;
+import com.hideakin.yanimu.xml.ExternalIdentifiers;
+import com.hideakin.yanimu.xml.InternalEntityDefinition;
+import com.hideakin.yanimu.xml.InternalParameterEntityDefinition;
 import com.hideakin.yanimu.xml.ParseException;
 import com.hideakin.yanimu.xml.ProcessingInstruction;
 import com.hideakin.yanimu.xml.QuotedString;
@@ -22,19 +27,21 @@ import java.util.Map;
 public class Processor {
 
 	private final byte[] _content;
-	private final Deque<Lexer> _lexers;
+	private final Deque<Lexer> _lexers = new ArrayDeque<>();
 	private Lexer _lexer;
-	private final Deque<List<Token>> _ttt;
+	private final Deque<List<Token>> _ttt = new ArrayDeque<>();
 	private List<Token> _tt;
 	private boolean _ttEnabled;
 	private Token _t;
-	private final Map<String, String> _entities = new HashMap<>();
-	private final Map<String, String> _references = new HashMap<>();
+	private final Map<String, Object> _entities = new HashMap<>();
+	private final List<String> _warnings = new ArrayList<>();
 
 	public Processor(byte[] content) {
 		_content = content;
-		_lexers = new ArrayDeque<>();
-		_ttt = new ArrayDeque<>();
+	}
+
+	public String[] warnings() {
+		return _warnings.toArray(new String[_warnings.size()]);
 	}
 
 	public Token[] parse() throws Exception {
@@ -447,11 +454,7 @@ public class Processor {
 		}
 	}
 
-	@SuppressWarnings("unused")
 	private void parseAttlistDecl() throws Exception {
-		int start = _t.start;
-		String name;
-		String aname;
 		if (_t.code == ATTLIST_DECL) {
 			read();
 		} else {
@@ -463,7 +466,6 @@ public class Processor {
 			throw new ParseException("White space is expected.", _t.start);
 		}
 		if (_t.code == NAME) {
-			name = _t.toString();
 			read();
 		} else {
 			throw new ParseException("White space is expected.", _t.start);
@@ -471,7 +473,6 @@ public class Processor {
 		if (_t.code == SP) {
 			read();
 			while (_t.code == NAME) {
-				aname = _t.toString();
 				read();
 				if (_t.code == SP) {
 					read();
@@ -632,11 +633,8 @@ public class Processor {
 		}
 	}
 
-	@SuppressWarnings("unused")
 	private void parseEntityDecl() throws Exception {
-		int start = _t.start;
 		String key;
-		String value;
 		if (_t.code == ENTITY_DECL) {
 			read();
 		} else {
@@ -656,31 +654,29 @@ public class Processor {
 				throw new ParseException("White space is expected.", _t.start);
 			}
 			if (_t.code == ENTITY_VALUE) {
-				value = ((QuotedString)_t).innerText;
-				putEntity(key, value);
+				putEntity(key, new InternalEntityDefinition(key, ((QuotedString)_t).innerText));
 				read();
 			} else if (_t.code == SYSTEM || _t.code == PUBLIC) {
-				parseExternalId();
+				ExternalIdentifiers extid = parseExternalId();
+				String ndata = null;
 				if (_t.code == SP) {
 					read();
-				} else {
-					throw new ParseException("White space is expected.", _t.start);
+					if (_t.code == NDATA) {
+						read();
+						if (_t.code == SP) {
+							read();
+						} else {
+							throw new ParseException("White space is expected.", _t.start);
+						}
+						if (_t.code == NAME) {
+							ndata = _t.toString();
+							read();
+						} else {
+							throw new ParseException("Name is expected.", _t.start);
+						}
+					}
 				}
-				if (_t.code == NDATA) {
-					read();
-				} else {
-					throw new ParseException("NDATA is expected.", _t.start);
-				}
-				if (_t.code == SP) {
-					read();
-				} else {
-					throw new ParseException("White space is expected.", _t.start);
-				}
-				if (_t.code == NAME) {
-					read();
-				} else {
-					throw new ParseException("Name is expected.", _t.start);
-				}
+				putEntity(key, new ExternalEntityDefinition(key, extid, ndata));
 			} else {
 				throw new ParseException("Entity value or external ID is expected.", _t.start);
 			}
@@ -703,11 +699,11 @@ public class Processor {
 				throw new ParseException("White space is expected.", _t.start);
 			}
 			if (_t.code == ENTITY_VALUE) {
-				value = ((QuotedString)_t).innerText;
-				putReference(key, value);
+				putEntity(key, new InternalParameterEntityDefinition(key, ((QuotedString)_t).innerText));
 				read();
 			} else if (_t.code == SYSTEM || _t.code == PUBLIC) {
-				parseExternalId();
+				ExternalIdentifiers extid = parseExternalId();
+				putEntity(key, new ExternalParameterEntityDefinition(key, extid));
 			} else {
 				throw new ParseException("Entity value or external ID is expected.", _t.start);
 			}
@@ -724,11 +720,7 @@ public class Processor {
 		}
 	}
 
-	@SuppressWarnings("unused")
 	private void parseNotationDecl() throws Exception {
-		int start = _t.start;
-		String name;
-		String aname;
 		if (_t.code == NOTATION_DECL) {
 			read();
 		} else {
@@ -740,7 +732,6 @@ public class Processor {
 			throw new ParseException("White space is expected.", _t.start);
 		}
 		if (_t.code == NAME) {
-			name = _t.toString();
 			read();
 		} else {
 			throw new ParseException("Name is expected.", _t.start);
@@ -751,7 +742,7 @@ public class Processor {
 			throw new ParseException("White space is expected.", _t.start);
 		}
 		if (_t.code == SYSTEM || _t.code == PUBLIC) {
-			parseExternalIdOrPublicId();
+			parseExternalId(false);
 		} else {
 			throw new ParseException("External ID or Public ID is expected.", _t.start);
 		}
@@ -765,45 +756,13 @@ public class Processor {
 		}
 	}
 
-	private void parseExternalId() throws Exception {
-		if (_t.code == SYSTEM) {
-			read();
-			if (_t.code == SP) {
-				read(SYSTEM_LITERAL);
-			} else {
-				throw new ParseException("White space is expected.", _t.start);
-			}
-			if (_t.code == SYSTEM_LITERAL) {
-				read();
-			} else {
-				throw new ParseException("System literal is expected.", _t.start);
-			}
-		} else if (_t.code == PUBLIC) {
-			read();
-			if (_t.code == SP) {
-				read(PUBID_LITERAL);
-			} else {
-				throw new ParseException("White space is expected.", _t.start);
-			}
-			if (_t.code == PUBID_LITERAL) {
-				read();
-			} else {
-				throw new ParseException("Pubid literal is expected.", _t.start);
-			}
-			if (_t.code == SP) {
-				read(SYSTEM_LITERAL);
-			} else {
-				throw new ParseException("White space is expected.", _t.start);
-			}
-			if (_t.code == SYSTEM_LITERAL) {
-				read();
-			} else {
-				throw new ParseException("System literal is expected.", _t.start);
-			}
-		}
+	private ExternalIdentifiers parseExternalId() throws Exception {
+		return parseExternalId(true);
 	}
 
-	private void parseExternalIdOrPublicId() throws Exception {
+	private ExternalIdentifiers parseExternalId(boolean systemLiteralIsMandatory) throws Exception {
+		String sysValue = null;
+		String pubValue = null;
 		if (_t.code == SYSTEM) {
 			read();
 			if (_t.code == SP) {
@@ -812,10 +771,12 @@ public class Processor {
 				throw new ParseException("White space is expected.", _t.start);
 			}
 			if (_t.code == SYSTEM_LITERAL) {
+				sysValue = ((QuotedString)_t).innerText;
 				read();
 			} else {
 				throw new ParseException("System literal is expected.", _t.start);
 			}
+			return new ExternalIdentifiers(sysValue);
 		} else if (_t.code == PUBLIC) {
 			read();
 			if (_t.code == SP) {
@@ -824,16 +785,32 @@ public class Processor {
 				throw new ParseException("White space is expected.", _t.start);
 			}
 			if (_t.code == PUBID_LITERAL) {
+				pubValue = ((QuotedString)_t).innerText;
 				read();
 			} else {
 				throw new ParseException("Pubid literal is expected.", _t.start);
 			}
-			if (_t.code == SP) {
+			if (systemLiteralIsMandatory) {
+				if (_t.code == SP) {
+					read(SYSTEM_LITERAL);
+				} else {
+					throw new ParseException("White space is expected.", _t.start);
+				}
+				if (_t.code == SYSTEM_LITERAL) {
+					sysValue = ((QuotedString)_t).innerText;
+					read();
+				} else {
+					throw new ParseException("System literal is expected.", _t.start);
+				}
+			} else if (_t.code == SP) {
 				read(SYSTEM_LITERAL);
 				if (_t.code == SYSTEM_LITERAL) {
 					read();
 				}
 			}
+			return new ExternalIdentifiers(pubValue, sysValue);
+		} else {
+			return null;
 		}
 	}
 
@@ -1017,7 +994,7 @@ public class Processor {
 		if (_t.code == PEREFERENCE) {
 			int mode = _lexer.mode();
 			if (Lexer.MODE_DOCTYPE <= mode && mode <= Lexer.MODE_DOCTYPE_NOTATION) {
-				String value = getReference(((ParameterEntityReference)_t).name);
+				String value = getParameterEntity(((ParameterEntityReference)_t).name);
 				if (value != null) {
 					_lexers.push(_lexer);
 					_lexer = new Lexer(value, mode);
@@ -1037,34 +1014,57 @@ public class Processor {
 	}
 
 	private void installPredefinedEntities() {
-		putEntity("lt", translate("&#38;#60;"));
-		putEntity("gt", translate("&#62;"));
-		putEntity("amp", translate("&#38;#38;"));
-		putEntity("apos", translate("&#39;"));
-		putEntity("quot", translate("&#34;"));
+		putEntity("lt", new InternalEntityDefinition("lt", translate("&#38;#60;")));
+		putEntity("gt", new InternalEntityDefinition("gt", translate("&#62;")));
+		putEntity("amp", new InternalEntityDefinition("amp", translate("&#38;#38;")));
+		putEntity("apos", new InternalEntityDefinition("apos", translate("&#39;")));
+		putEntity("quot", new InternalEntityDefinition("quot", translate("&#34;")));
 	}
 
-	public String getEntity(String key) {
-		return _entities.get(key);
+	private String getEntity(String key) {
+		Object value = _entities.get(key);
+		if (value instanceof InternalEntityDefinition ie) {
+			return ie.value;
+		} else if (value instanceof ExternalEntityDefinition) {
+			addWarning("External entity reference %s cannot be used as it is not supported.", key);
+			return null;
+		} else {
+			return null;
+		}
 	}
 
-	public void putEntity(String key, String value) {
-		_entities.put(key, value);
+	private void putEntity(String key, Object value) {
+		if ((value instanceof InternalParameterEntityDefinition) || (value instanceof ExternalParameterEntityDefinition)) {
+			String peKey = "%" + key;
+			if (_entities.containsKey(peKey)) {
+				addWarning("Parameter entity reference %s is declared multiple times.", key);
+			} else {
+				_entities.put(peKey, value);
+			}
+		} else if (_entities.containsKey(key)) {
+			addWarning("Entity reference %s is declared multiple times.", key);
+		} else {
+			_entities.put(key, value);
+		}
 	}
 
-	public String getReference(String key) {
-		return _references.get(key);
+	private String getParameterEntity(String key) {
+		Object value = _entities.get("%" + key);
+		if (value instanceof InternalParameterEntityDefinition ipe) {
+			return ipe.value;
+		} else if (value instanceof ExternalParameterEntityDefinition) {
+			addWarning("External parameter entity reference %s cannot be used as it is not supported.", key);
+			return null;
+		} else {
+			return null;
+		}
 	}
 
-	public void putReference(String key, String value) {
-		_references.put(key, value);
-	}
-
-	public static String stripQuote(String text) {
+	private static String stripQuote(String text) {
 		return text != null && text.length() >= 2 ? text.substring(1, text.length() - 1) : null;
 	}
 
-	public String translate(String text) {
+	private String translate(String text) {
 		if (text == null) {
 			return null;
 		}
@@ -1144,6 +1144,13 @@ public class Processor {
 			return translate(buf.toString());
 		} else {
 			return text;
+		}
+	}
+
+	private void addWarning(String format, Object...args) {
+		String message = String.format(format, args);
+		if (!_warnings.contains(message)) {
+			_warnings.add(message);
 		}
 	}
 
