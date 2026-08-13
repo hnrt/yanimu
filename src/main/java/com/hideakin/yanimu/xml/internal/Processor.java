@@ -949,8 +949,7 @@ public class Processor {
 		} else {
 			throw new ParseException("ETag end is expected.", _t.start);
 		}
-		element.set(children, pop());
-		return element;
+		return new Element(element, children, pop());
 	}
 
 	private List<Token> parseContent(Element parent, Document document) throws Exception {

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class DocumentTest {
@@ -44,15 +45,15 @@ public class DocumentTest {
 				+ "<!DOCTYPE greeting [\r\n"
 				+ "  <!ELEMENT greeting (#PCDATA)>\r\n"
 				+ "]>\r\n"
-				+ "<greeting abc=\"&lt;&amp;x&gt;\" xyz=\"&#x41;&#x42;&#x43;\" >Hello, world!</greeting>";
+				+ "<greeting abc=\"&lt;&amp;x&apos;&quot;&gt;\" xyz=\"&#x41;&#x42;&#x43;\" >Hello, world!</greeting>";
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
 			assertEquals("yes", doc.standalone());
 			assertEquals("Hello, world!", doc.root().innerText());
-			assertEquals("<&x>", doc.root().attribute("abc"));
+			assertEquals("<&x\'\">", doc.root().attribute("abc"));
 			assertEquals("ABC", doc.root().attribute("xyz"));
-			assertEquals("<&x>", doc.root().attribute(0));
+			assertEquals("<&x\'\">", doc.root().attribute(0));
 			assertEquals("ABC", doc.root().attribute(1));
 			assertEquals("ABC", doc.root().attribute(-1));
 			assertEquals(null, doc.root().attribute("opq"));
@@ -115,6 +116,32 @@ public class DocumentTest {
 			assertEquals("421", elements.get(5).attribute("id"));
 			assertEquals("422", elements.get(6).attribute("id"));
 			assertEquals("43", elements.get(7).attribute("id"));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Test
+	void test6() {
+		String source = "\uFEFF<?xml version=\"1.0\"?>\r\n"
+				+ "<greeting>Hello, world!</greeting>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes(StandardCharsets.UTF_8));
+			assertEquals("Hello, world!", doc.root().innerText());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Test
+	void test7() {
+		String source = "\uFEFF<?xml version=\"1.0\"?>\r\n"
+				+ "<greeting>Hello, world!</greeting>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes(StandardCharsets.UTF_16LE));
+			assertEquals("Hello, world!", doc.root().innerText());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
