@@ -1,7 +1,6 @@
 package com.hideakin.yanimu.xml.internal;
 
 import com.hideakin.yanimu.xml.Attribute;
-import com.hideakin.yanimu.xml.Document;
 import com.hideakin.yanimu.xml.DocumentTypeDeclaration;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.ParseException;
@@ -16,45 +15,43 @@ import static com.hideakin.yanimu.xml.Token.*;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Processor {
 
 	private final byte[] _content;
-	private Deque<Lexer> _lexers;
+	private final Deque<Lexer> _lexers;
 	private Lexer _lexer;
-	private Deque<List<Token>> _ttt;
+	private final Deque<List<Token>> _ttt;
 	private List<Token> _tt;
 	private boolean _ttEnabled;
 	private Token _t;
-	private Document _document;
+	private final Map<String, String> _entities = new HashMap<>();
+	private final Map<String, String> _references = new HashMap<>();
 
 	public Processor(byte[] content) {
 		_content = content;
+		_lexers = new ArrayDeque<>();
+		_ttt = new ArrayDeque<>();
 	}
 
-	public void parse(Document document) throws Exception {
-		_lexers = new ArrayDeque<>();
+	public Token[] parse() throws Exception {
 		_lexer = new Lexer(_content);
-		_ttt = new ArrayDeque<>();
 		_tt = new ArrayList<>();
 		_ttEnabled = true;
-		_document = document;
 		_t = _lexer.read();
 		installPredefinedEntities();
 		parseProlog();
-		Element root = parseElement(null, document);
+		Element root = parseElement(null);
 		_tt.add(root);
 		Token t;
 		while ((t = parseMisc()) != null) {
 			_tt.add(t);
 		}
 		if (_t.code == EOF) {
-			document.setLayout(_tt);
-			if (_tt.get(0) instanceof XmlDeclaration xmlDeclaration) {
-				document.setXmlDeclaration(xmlDeclaration);
-			}
-			document.setRoot(root);
+			return _tt.toArray(new Token[_tt.size()]);
 		} else {
 			throw new ParseException("Extra data exist.", _t.start);
 		}
@@ -660,7 +657,7 @@ public class Processor {
 			}
 			if (_t.code == ENTITY_VALUE) {
 				value = ((QuotedString)_t).innerText;
-				_document.putEntity(key, value);
+				putEntity(key, value);
 				read();
 			} else if (_t.code == SYSTEM || _t.code == PUBLIC) {
 				parseExternalId();
@@ -707,7 +704,7 @@ public class Processor {
 			}
 			if (_t.code == ENTITY_VALUE) {
 				value = ((QuotedString)_t).innerText;
-				_document.putReference(key, value);
+				putReference(key, value);
 				read();
 			} else if (_t.code == SYSTEM || _t.code == PUBLIC) {
 				parseExternalId();
@@ -869,7 +866,7 @@ public class Processor {
 		return new ProcessingInstruction(pop(), name, body);
 	}
 
-	private Element parseElement(Element parent, Document document) throws Exception {
+	private Element parseElement(Element parent) throws Exception {
 		String name;
 		List<Attribute> attributes = new ArrayList<>();
 		if (_t.code == STAG_START) {
@@ -926,7 +923,7 @@ public class Processor {
 			throw new ParseException("Tag end is expected.", _t.start);
 		}
 		Element element = new Element(pop(), name, attributes, parent);
-		List<Token> children = parseContent(element, document);
+		List<Token> children = parseContent(element);
 		if (_t.code == ETAG_START) {
 			push();
 			read();
@@ -952,14 +949,14 @@ public class Processor {
 		return new Element(element, children, pop());
 	}
 
-	private List<Token> parseContent(Element parent, Document document) throws Exception {
+	private List<Token> parseContent(Element parent) throws Exception {
 		push();
 		if (_t.code == CHAR_DATA) {
 			read();
 		}
 		while (true) {
 			if (_t.code == STAG_START) {
-				_tt.add(parseElement(parent, document));
+				_tt.add(parseElement(parent));
 			} else if (_t.code == ENTITY_REF) {
 				read();
 			} else if (_t.code == CHAR_REF) {
@@ -1020,7 +1017,7 @@ public class Processor {
 		if (_t.code == PEREFERENCE) {
 			int mode = _lexer.mode();
 			if (Lexer.MODE_DOCTYPE <= mode && mode <= Lexer.MODE_DOCTYPE_NOTATION) {
-				String value = _document.getReference(((ParameterEntityReference)_t).name);
+				String value = getReference(((ParameterEntityReference)_t).name);
 				if (value != null) {
 					_lexers.push(_lexer);
 					_lexer = new Lexer(value, mode);
@@ -1040,11 +1037,27 @@ public class Processor {
 	}
 
 	private void installPredefinedEntities() {
-		_document.putEntity("lt", translate("&#38;#60;"));
-		_document.putEntity("gt", translate("&#62;"));
-		_document.putEntity("amp", translate("&#38;#38;"));
-		_document.putEntity("apos", translate("&#39;"));
-		_document.putEntity("quot", translate("&#34;"));
+		putEntity("lt", translate("&#38;#60;"));
+		putEntity("gt", translate("&#62;"));
+		putEntity("amp", translate("&#38;#38;"));
+		putEntity("apos", translate("&#39;"));
+		putEntity("quot", translate("&#34;"));
+	}
+
+	public String getEntity(String key) {
+		return _entities.get(key);
+	}
+
+	public void putEntity(String key, String value) {
+		_entities.put(key, value);
+	}
+
+	public String getReference(String key) {
+		return _references.get(key);
+	}
+
+	public void putReference(String key, String value) {
+		_references.put(key, value);
 	}
 
 	public static String stripQuote(String text) {
@@ -1105,7 +1118,7 @@ public class Processor {
 					}
 					if (c == ';') {
 						String key = buf2.toString();
-						String value = _document.getEntity(key);
+						String value = getEntity(key);
 						if (value != null) {
 							buf.append(value);
 							replaced++;
