@@ -1,14 +1,12 @@
 package com.hideakin.yanimu.xml;
 
-import java.util.Arrays;
-
 public class QuotedString extends Node {
 
 	public final String innerText;
 
-	public QuotedString(int code, int start, int end, byte[] sequence) {
-		super(code, start, end, sequence);
-		this.innerText = new String(Arrays.copyOfRange(sequence, 1, sequence.length - 1));
+	public QuotedString(int type, int offset, byte[] sequence) {
+		super(type, offset, sequence);
+		this.innerText = new String(sequence, 1, sequence.length - 2);
 	}
 
 }

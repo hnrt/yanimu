@@ -3,13 +3,15 @@ package com.hideakin.yanimu.xml;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+
 import com.hideakin.yanimu.xml.internal.Processor;
 
 public class Document {
 
 	protected Path _path;
 	protected byte[] _content;
-	protected Node[] _layout;
+	protected List<Node> _layout;
 	protected XmlDeclaration _xmlDeclaration;
 	protected Element _root;
 
@@ -32,7 +34,7 @@ public class Document {
 		return _content;
 	}
 
-	public Node[] layout() {
+	public List<Node> layout() {
 		return _layout;
 	}
 
@@ -67,7 +69,7 @@ public class Document {
 		_root = null;
 		Processor processor = new Processor(content);
 		_layout = processor.parse();
-		if (_layout[0] instanceof XmlDeclaration xmlDeclaration) {
+		if (_layout.get(0) instanceof XmlDeclaration xmlDeclaration) {
 			_xmlDeclaration = xmlDeclaration;
 		}
 		for (Node token : _layout) {

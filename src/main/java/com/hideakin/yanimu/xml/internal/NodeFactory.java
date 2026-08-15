@@ -18,26 +18,26 @@ public class NodeFactory {
 	public NodeFactory() {
 	}
 
-	public Node nodeOf(int code) {
+	public Node nodeOf(int type) {
 		byte[] sequence = pop();
-		switch (code) {
+		switch (type) {
 		case ENTITY_VALUE:
 		case ATT_VALUE:
 		case SYSTEM_LITERAL:
 		case PUBID_LITERAL:
-			return new QuotedString(code, _offset, _offset + sequence.length, sequence);
+			return new QuotedString(type, _offset, sequence);
 		case COMMENT:
-			return new Comment(_offset, _offset + sequence.length, sequence);
+			return new Comment(_offset, sequence);
 		case CD_SECT:
-			return new CDATASection(_offset, _offset + sequence.length, sequence);
+			return new CDATASection(_offset, sequence);
 		case CHAR_REF:
-			return new CharRef(_offset, _offset + sequence.length, sequence);
+			return new CharRef(_offset, sequence);
 		case ENTITY_REF:
-			return new EntityRef(_offset, _offset + sequence.length, sequence);
+			return new EntityRef(_offset, sequence);
 		case PEREFERENCE:
-			return new ParameterEntityReference(_offset, _offset + sequence.length, sequence);
+			return new ParameterEntityReference(_offset, sequence);
 		default:
-			return new Node(code, _offset, _offset + sequence.length, sequence);
+			return new Node(type, _offset, sequence);
 		}
 	}
 

@@ -44,7 +44,7 @@ public class Processor {
 		return _warnings.toArray(new String[_warnings.size()]);
 	}
 
-	public Node[] parse() throws Exception {
+	public List<Node> parse() throws Exception {
 		_lexer = new Lexer(_content);
 		_nn = new ArrayList<>();
 		_n = _lexer.read();
@@ -54,21 +54,21 @@ public class Processor {
 		while (parseMisc()) {
 			continue;
 		}
-		if (_n.code == EOF) {
-			return _nn.toArray(new Node[_nn.size()]);
+		if (_n.type == EOF) {
+			return _nn;
 		} else {
 			throw new ParseException("Extra data exist.", _n.start);
 		}
 	}
 
 	private void parseProlog() throws Exception {
-		if (_n.code == XML_START) {
+		if (_n.type == XML_START) {
 			parseXmlDeclaration();
 		}
 		while (parseMisc()) {
 			continue;
 		}
-		if (_n.code == DOCTYPE_DECL) {
+		if (_n.type == DOCTYPE_DECL) {
 			parseDoctypeDeclaration();
 			while (parseMisc()) {
 				continue;
@@ -83,12 +83,12 @@ public class Processor {
 		String standalone = null;
 		push();
 		read();
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		} else {
 			throw new ParseException("White space is expected.", _n.start);
 		}
-		if (_n.code == NAME) {
+		if (_n.type == NAME) {
 			name = _n.toString();
 		} else {
 			throw new ParseException("version is expected.", _n.start);
@@ -98,18 +98,18 @@ public class Processor {
 		} else {
 			throw new ParseException("version is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		}
-		if (_n.code == EQ) {
+		if (_n.type == EQ) {
 			read();
 		} else {
 			throw new ParseException("Equal sign is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		}
-		if (_n.code == ATT_VALUE) {
+		if (_n.type == ATT_VALUE) {
 			version = stripQuote(_n.toString());
 			if (!version.matches("1\\.[0-9]+")) {
 				throw new ParseException("Malformed version number.", _n.start);
@@ -119,33 +119,33 @@ public class Processor {
 			throw new ParseException("version number is expected.", _n.start);
 		}
 		name = null;
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
-			if (_n.code == NAME) {
+			if (_n.type == NAME) {
 				name = _n.toString();
 				if (name.equals("encoding")) {
 					read();
-					if (_n.code == S) {
+					if (_n.type == S) {
 						read();
 					}
-					if (_n.code == EQ) {
+					if (_n.type == EQ) {
 						read();
 					} else {
 						throw new ParseException("Equal sign is expected.", _n.start);
 					}
-					if (_n.code == S) {
+					if (_n.type == S) {
 						read();
 					}
-					if (_n.code == ATT_VALUE) {
+					if (_n.type == ATT_VALUE) {
 						encoding = stripQuote(_n.toString());
 						read();
 					} else {
 						throw new ParseException("encoding name is expected.", _n.start);
 					}
 					name = null;
-					if (_n.code == S) {
+					if (_n.type == S) {
 						read();
-						if (_n.code == NAME) {
+						if (_n.type == NAME) {
 							name = _n.toString();
 						}
 					}
@@ -157,18 +157,18 @@ public class Processor {
 				} else {
 					throw new ParseException("standalone is expected.", _n.start);
 				}
-				if (_n.code == S) {
+				if (_n.type == S) {
 					read();
 				}
-				if (_n.code == EQ) {
+				if (_n.type == EQ) {
 					read();
 				} else {
 					throw new ParseException("Equal sign is expected.", _n.start);
 				}
-				if (_n.code == S) {
+				if (_n.type == S) {
 					read();
 				}
-				if (_n.code == ATT_VALUE) {
+				if (_n.type == ATT_VALUE) {
 					standalone = stripQuote(_n.toString());
 					if (!standalone.equals("yes") && !standalone.equals("no")) {
 						throw new ParseException("Malformed standalone value.", _n.start);
@@ -177,12 +177,12 @@ public class Processor {
 				} else {
 					throw new ParseException("standalone value is expected.", _n.start);
 				}
-				if (_n.code == S) {
+				if (_n.type == S) {
 					read();
 				}
 			}
 		}
-		if (_n.code == XML_END) {
+		if (_n.type == XML_END) {
 			read();
 		} else {
 			throw new ParseException("?> is expected.", _n.start);
@@ -192,11 +192,11 @@ public class Processor {
 	}
 
 	private boolean parseMisc() throws Exception {
-		if (_n.code == COMMENT) {
+		if (_n.type == COMMENT) {
 			read();
-		} else if (_n.code == PI_START) {
+		} else if (_n.type == PI_START) {
 			parseProcessingInstruction();
-		} else if (_n.code == S) {
+		} else if (_n.type == S) {
 			read();
 		} else {
 			return false;
@@ -208,55 +208,55 @@ public class Processor {
 		String name;
 		push();
 		read();
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		} else {
 			throw new ParseException("White space is expected.", _n.start);
 		}
-		if (_n.code == NAME) {
+		if (_n.type == NAME) {
 			name = _n.toString();
 			read();
 		} else {
 			throw new ParseException("Name is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
-			if (_n.code == SYSTEM || _n.code == PUBLIC) {
+			if (_n.type == SYSTEM || _n.type == PUBLIC) {
 				parseExternalId();
-				if (_n.code == S) {
+				if (_n.type == S) {
 					read();
 				}
 			}
 		}
-		if (_n.code == '[') {
+		if (_n.type == '[') {
 			read();
-			while (_n.code != ']') {
-				if (_n.code == ELEMENT_DECL) {
+			while (_n.type != ']') {
+				if (_n.type == ELEMENT_DECL) {
 					parseElementDecl();
-				} else if (_n.code == ATTLIST_DECL) {
+				} else if (_n.type == ATTLIST_DECL) {
 					parseAttlistDecl();
-				} else if (_n.code == ENTITY_DECL) {
+				} else if (_n.type == ENTITY_DECL) {
 					parseEntityDecl();
-				} else if (_n.code == NOTATION_DECL) {
+				} else if (_n.type == NOTATION_DECL) {
 					parseNotationDecl();
-				} else if (_n.code == PI_START) {
+				} else if (_n.type == PI_START) {
 					parseProcessingInstruction();
-				} else if (_n.code == COMMENT) {
+				} else if (_n.type == COMMENT) {
 					read();
-				} else if (_n.code == PEREFERENCE) {
+				} else if (_n.type == PEREFERENCE) {
 					read();
-				} else if (_n.code == S) {
+				} else if (_n.type == S) {
 					read();
 				} else {
 					throw new ParseException("Internal subset is expected.", _n.start);
 				}
 			}
 			read();
-			if (_n.code == S) {
+			if (_n.type == S) {
 				read();
 			}
 		}
-		if (_n.code == TAG_END) {
+		if (_n.type == TAG_END) {
 			read();
 		} else {
 			throw new ParseException("> is expected.", _n.start);
@@ -267,34 +267,34 @@ public class Processor {
 
 	private void parseElementDecl() throws Exception {
 		read();
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read(NAME);
 		} else {
 			throw new ParseException("White space is expected.", _n.start);
 		}
-		if (_n.code == NAME) {
+		if (_n.type == NAME) {
 			read();
 		} else {
 			throw new ParseException("Name is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		} else {
 			throw new ParseException("White space is expected.", _n.start);
 		}
-		if (_n.code == EMPTY) {
+		if (_n.type == EMPTY) {
 			read();
-		} else if (_n.code == ANY) {
+		} else if (_n.type == ANY) {
 			read();
-		} else if (_n.code == '(') {
+		} else if (_n.type == '(') {
 			parseMixedOrChildren();
 		} else {
 			throw new ParseException("EMPTY, ANY or ( is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		}
-		if (_n.code == '>') {
+		if (_n.type == '>') {
 			read();
 		} else {
 			throw new ParseException("End of element declaration is expected.", _n.start);
@@ -302,39 +302,39 @@ public class Processor {
 	}
 
 	private void parseMixedOrChildren() throws Exception {
-		if (_n.code == '(') {
+		if (_n.type == '(') {
 			read();
 		} else {
 			throw new ParseException("( is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		}
-		if (_n.code == PCDATA) {
+		if (_n.type == PCDATA) {
 			read();
-			if (_n.code == S) {
+			if (_n.type == S) {
 				read();
 			}
-			if (_n.code == ')') {
+			if (_n.type == ')') {
 				read();
-			} else if (_n.code == PCDATA_END) {
+			} else if (_n.type == PCDATA_END) {
 				read();
-			} else if (_n.code == '|') {
+			} else if (_n.type == '|') {
 				do {
 					read();
-					if (_n.code == S) {
+					if (_n.type == S) {
 						read();
 					}
-					if (_n.code == NAME) {
+					if (_n.type == NAME) {
 						read();
 					} else {
 						throw new ParseException("Name is expected.", _n.start);
 					}
-					if (_n.code == S) {
+					if (_n.type == S) {
 						read();
 					}
-				} while (_n.code == '|');
-				if (_n.code == PCDATA_END) {
+				} while (_n.type == '|');
+				if (_n.type == PCDATA_END) {
 					read();
 				} else {
 					throw new ParseException(")* is expected.", _n.start);
@@ -344,84 +344,84 @@ public class Processor {
 			}
 		} else {
 			parseCP();
-			if (_n.code == S) {
+			if (_n.type == S) {
 				read();
 			}
-			if (_n.code == '|') {
+			if (_n.type == '|') {
 				do {
 					read();
-					if (_n.code == S) {
+					if (_n.type == S) {
 						read();
 					}
 					parseCP();
-					if (_n.code == S) {
+					if (_n.type == S) {
 						read();
 					}
-				} while (_n.code == '|');
-			} else if (_n.code == ',') {
+				} while (_n.type == '|');
+			} else if (_n.type == ',') {
 				do {
 					read();
-					if (_n.code == S) {
+					if (_n.type == S) {
 						read();
 					}
 					parseCP();
-					if (_n.code == S) {
+					if (_n.type == S) {
 						read();
 					}
-				} while (_n.code == ',');
+				} while (_n.type == ',');
 			}
-			if (_n.code == ')') {
+			if (_n.type == ')') {
 				read();
 			} else {
 				throw new ParseException(") is expected.", _n.start);
 			}
-			if (_n.code == '?') {
+			if (_n.type == '?') {
 				read();
-			} else if (_n.code == '*') {
+			} else if (_n.type == '*') {
 				read();
-			} else if (_n.code == '+') {
+			} else if (_n.type == '+') {
 				read();
 			}
 		}
 	}
 
 	private void parseChoiceOrSequence() throws Exception {
-		if (_n.code == '(') {
+		if (_n.type == '(') {
 			read();
 		} else {
 			throw new ParseException("( is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		}
 		parseCP();
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		}
-		if (_n.code == '|') {
+		if (_n.type == '|') {
 			do {
 				read();
-				if (_n.code == S) {
+				if (_n.type == S) {
 					read();
 				}
 				parseCP();
-				if (_n.code == S) {
+				if (_n.type == S) {
 					read();
 				}
-			} while (_n.code == '|');
-		} else if (_n.code == ',') {
+			} while (_n.type == '|');
+		} else if (_n.type == ',') {
 			do {
 				read();
-				if (_n.code == S) {
+				if (_n.type == S) {
 					read();
 				}
 				parseCP();
-				if (_n.code == S) {
+				if (_n.type == S) {
 					read();
 				}
-			} while (_n.code == ',');
+			} while (_n.type == ',');
 		}
-		if (_n.code == ')') {
+		if (_n.type == ')') {
 			read();
 		} else {
 			throw new ParseException(") is expected.", _n.start);
@@ -429,60 +429,60 @@ public class Processor {
 	}
 
 	private void parseCP() throws Exception {
-		if (_n.code == NAME) {
+		if (_n.type == NAME) {
 			read();
 		} else {
 			parseChoiceOrSequence();
 		}
-		if (_n.code == '?') {
+		if (_n.type == '?') {
 			read();
-		} else if (_n.code == '*') {
+		} else if (_n.type == '*') {
 			read();
-		} else if (_n.code == '+') {
+		} else if (_n.type == '+') {
 			read();
 		}
 	}
 
 	private void parseAttlistDecl() throws Exception {
-		if (_n.code == ATTLIST_DECL) {
+		if (_n.type == ATTLIST_DECL) {
 			read();
 		} else {
 			throw new ParseException("<!ATTLIST is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		} else {
 			throw new ParseException("White space is expected.", _n.start);
 		}
-		if (_n.code == NAME) {
+		if (_n.type == NAME) {
 			read();
 		} else {
 			throw new ParseException("White space is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
-			while (_n.code == NAME) {
+			while (_n.type == NAME) {
 				read();
-				if (_n.code == S) {
+				if (_n.type == S) {
 					read();
 				} else {
 					throw new ParseException("White space is expected.", _n.start);
 				}
 				parseAttType();
-				if (_n.code == S) {
+				if (_n.type == S) {
 					read();
 				} else {
 					throw new ParseException("White space is expected.", _n.start);
 				}
 				parseDefaultDecl();
-				if (_n.code == S) {
+				if (_n.type == S) {
 					read();
 				} else {
 					break;
 				}
 			}
 		}
-		if (_n.code == '>') {
+		if (_n.type == '>') {
 			read();
 		} else {
 			throw new ParseException("End of attlist declaration is expected.", _n.start);
@@ -490,7 +490,7 @@ public class Processor {
 	}
 
 	private void parseAttType() throws Exception {
-		switch (_n.code) {
+		switch (_n.type) {
 		case TYPE_CDATA:
 		case TYPE_ID:
 		case TYPE_IDREF:
@@ -513,47 +513,47 @@ public class Processor {
 	}
 
 	private void parseNotationType() throws Exception {
-		if (_n.code == TYPE_NOTATION) {
+		if (_n.type == TYPE_NOTATION) {
 			read();
 		} else {
 			throw new ParseException("NOTATION is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		} else {
 			throw new ParseException("White space is expected.", _n.start);
 		}
-		if (_n.code == '(') {
+		if (_n.type == '(') {
 			read();
 		} else {
 			throw new ParseException("( is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		}
-		if (_n.code == NAME) {
+		if (_n.type == NAME) {
 			read();
 		} else {
 			throw new ParseException("Name is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		}
-		while (_n.code == '|') {
+		while (_n.type == '|') {
 			read();
-			if (_n.code == S) {
+			if (_n.type == S) {
 				read();
 			}
-			if (_n.code == NAME) {
+			if (_n.type == NAME) {
 				read();
 			} else {
 				throw new ParseException("Name is expected.", _n.start);
 			}
-			if (_n.code == S) {
+			if (_n.type == S) {
 				read();
 			}
 		}
-		if (_n.code == ')') {
+		if (_n.type == ')') {
 			read();
 		} else {
 			throw new ParseException(") is expected.", _n.start);
@@ -561,37 +561,37 @@ public class Processor {
 	}
 
 	private void parseEnumeration() throws Exception {
-		if (_n.code == '(') {
+		if (_n.type == '(') {
 			read(NMTOKEN);
 		} else {
 			throw new ParseException("( is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read(NMTOKEN);
 		}
-		if (_n.code == NMTOKEN) {
+		if (_n.type == NMTOKEN) {
 			read();
 		} else {
 			throw new ParseException("Nmtoken is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		}
-		while (_n.code == '|') {
+		while (_n.type == '|') {
 			read(NMTOKEN);
-			if (_n.code == S) {
+			if (_n.type == S) {
 				read(NMTOKEN);
 			}
-			if (_n.code == NMTOKEN) {
+			if (_n.type == NMTOKEN) {
 				read();
 			} else {
 				throw new ParseException("NMTOKEN is expected.", _n.start);
 			}
-			if (_n.code == S) {
+			if (_n.type == S) {
 				read();
 			}
 		}
-		if (_n.code == ')') {
+		if (_n.type == ')') {
 			read();
 		} else {
 			throw new ParseException(") is expected.", _n.start);
@@ -599,21 +599,21 @@ public class Processor {
 	}
 
 	private void parseDefaultDecl() throws Exception {
-		switch (_n.code) {
+		switch (_n.type) {
 		case REQUIRED:
 		case IMPLIED:
 			read();
 			break;
 		case FIXED:
 			read();
-			if (_n.code == S) {
+			if (_n.type == S) {
 				read();
 			} else {
 				throw new ParseException("white space is expected.", _n.start);
 			}
 			//FALLTHROUGH
 		default:
-			if (_n.code == ATT_VALUE) {
+			if (_n.type == ATT_VALUE) {
 				read();
 			} else {
 				throw new ParseException("AttValue is expected.", _n.start);
@@ -624,40 +624,40 @@ public class Processor {
 
 	private void parseEntityDecl() throws Exception {
 		String key;
-		if (_n.code == ENTITY_DECL) {
+		if (_n.type == ENTITY_DECL) {
 			read();
 		} else {
 			throw new ParseException("<!ENTITY is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		} else {
 			throw new ParseException("White space is expected.", _n.start);
 		}
-		if (_n.code == NAME) {
+		if (_n.type == NAME) {
 			key = _n.toString();
 			read();
-			if (_n.code == S) {
+			if (_n.type == S) {
 				read();
 			} else {
 				throw new ParseException("White space is expected.", _n.start);
 			}
-			if (_n.code == ENTITY_VALUE) {
+			if (_n.type == ENTITY_VALUE) {
 				putEntity(key, new InternalEntityDefinition(key, ((QuotedString)_n).innerText));
 				read();
-			} else if (_n.code == SYSTEM || _n.code == PUBLIC) {
+			} else if (_n.type == SYSTEM || _n.type == PUBLIC) {
 				ExternalIdentifiers extid = parseExternalId();
 				String ndata = null;
-				if (_n.code == S) {
+				if (_n.type == S) {
 					read();
-					if (_n.code == NDATA) {
+					if (_n.type == NDATA) {
 						read();
-						if (_n.code == S) {
+						if (_n.type == S) {
 							read();
 						} else {
 							throw new ParseException("White space is expected.", _n.start);
 						}
-						if (_n.code == NAME) {
+						if (_n.type == NAME) {
 							ndata = _n.toString();
 							read();
 						} else {
@@ -669,28 +669,28 @@ public class Processor {
 			} else {
 				throw new ParseException("Entity value or external ID is expected.", _n.start);
 			}
-		} else if (_n.code == '%') {
+		} else if (_n.type == '%') {
 			read();
-			if (_n.code == S) {
+			if (_n.type == S) {
 				read();
 			} else {
 				throw new ParseException("White space is expected.", _n.start);
 			}
-			if (_n.code == NAME) {
+			if (_n.type == NAME) {
 				key = _n.toString();
 				read();
 			} else {
 				throw new ParseException("Name is expected.", _n.start);
 			}
-			if (_n.code == S) {
+			if (_n.type == S) {
 				read();
 			} else {
 				throw new ParseException("White space is expected.", _n.start);
 			}
-			if (_n.code == ENTITY_VALUE) {
+			if (_n.type == ENTITY_VALUE) {
 				putEntity(key, new InternalParameterEntityDefinition(key, ((QuotedString)_n).innerText));
 				read();
-			} else if (_n.code == SYSTEM || _n.code == PUBLIC) {
+			} else if (_n.type == SYSTEM || _n.type == PUBLIC) {
 				ExternalIdentifiers extid = parseExternalId();
 				putEntity(key, new ExternalParameterEntityDefinition(key, extid));
 			} else {
@@ -699,10 +699,10 @@ public class Processor {
 		} else {
 			throw new ParseException("Name or % is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		}
-		if (_n.code == '>') {
+		if (_n.type == '>') {
 			read();
 		} else {
 			throw new ParseException("End of entity declaration is expected.", _n.start);
@@ -710,35 +710,35 @@ public class Processor {
 	}
 
 	private void parseNotationDecl() throws Exception {
-		if (_n.code == NOTATION_DECL) {
+		if (_n.type == NOTATION_DECL) {
 			read();
 		} else {
 			throw new ParseException("<!NOTATION is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		} else {
 			throw new ParseException("White space is expected.", _n.start);
 		}
-		if (_n.code == NAME) {
+		if (_n.type == NAME) {
 			read();
 		} else {
 			throw new ParseException("Name is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		} else {
 			throw new ParseException("White space is expected.", _n.start);
 		}
-		if (_n.code == SYSTEM || _n.code == PUBLIC) {
+		if (_n.type == SYSTEM || _n.type == PUBLIC) {
 			parseExternalId(false);
 		} else {
 			throw new ParseException("External ID or Public ID is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		}
-		if (_n.code == '>') {
+		if (_n.type == '>') {
 			read();
 		} else {
 			throw new ParseException("End of notation declaration is expected.", _n.start);
@@ -752,48 +752,48 @@ public class Processor {
 	private ExternalIdentifiers parseExternalId(boolean systemLiteralIsMandatory) throws Exception {
 		String sysValue = null;
 		String pubValue = null;
-		if (_n.code == SYSTEM) {
+		if (_n.type == SYSTEM) {
 			read();
-			if (_n.code == S) {
+			if (_n.type == S) {
 				read(SYSTEM_LITERAL);
 			} else {
 				throw new ParseException("White space is expected.", _n.start);
 			}
-			if (_n.code == SYSTEM_LITERAL) {
+			if (_n.type == SYSTEM_LITERAL) {
 				sysValue = ((QuotedString)_n).innerText;
 				read();
 			} else {
 				throw new ParseException("System literal is expected.", _n.start);
 			}
 			return new ExternalIdentifiers(sysValue);
-		} else if (_n.code == PUBLIC) {
+		} else if (_n.type == PUBLIC) {
 			read();
-			if (_n.code == S) {
+			if (_n.type == S) {
 				read(PUBID_LITERAL);
 			} else {
 				throw new ParseException("White space is expected.", _n.start);
 			}
-			if (_n.code == PUBID_LITERAL) {
+			if (_n.type == PUBID_LITERAL) {
 				pubValue = ((QuotedString)_n).innerText;
 				read();
 			} else {
 				throw new ParseException("Pubid literal is expected.", _n.start);
 			}
 			if (systemLiteralIsMandatory) {
-				if (_n.code == S) {
+				if (_n.type == S) {
 					read(SYSTEM_LITERAL);
 				} else {
 					throw new ParseException("White space is expected.", _n.start);
 				}
-				if (_n.code == SYSTEM_LITERAL) {
+				if (_n.type == SYSTEM_LITERAL) {
 					sysValue = ((QuotedString)_n).innerText;
 					read();
 				} else {
 					throw new ParseException("System literal is expected.", _n.start);
 				}
-			} else if (_n.code == S) {
+			} else if (_n.type == S) {
 				read(SYSTEM_LITERAL);
-				if (_n.code == SYSTEM_LITERAL) {
+				if (_n.type == SYSTEM_LITERAL) {
 					read();
 				}
 			}
@@ -808,7 +808,7 @@ public class Processor {
 		String body;
 		push();
 		read(NAME);
-		if (_n.code == NAME) {
+		if (_n.type == NAME) {
 			name = _n.toString();
 			if (name.toLowerCase().equals("xml")) {
 				throw new ParseException("xml is now allowed for PI.", _n.start);
@@ -818,13 +818,13 @@ public class Processor {
 		} else {
 			throw new ParseException("Name is expected.", _n.start);
 		}
-		if (_n.code == PI_BODY) {
+		if (_n.type == PI_BODY) {
 			body = _n.toString();
 			read();
 		} else {
 			body = null;
 		}
-		if (_n.code == PI_END) {
+		if (_n.type == PI_END) {
 			read();
 		} else {
 			throw new ParseException("PI end is expected.", _n.start);
@@ -836,40 +836,40 @@ public class Processor {
 	private void parseElement(Element parent) throws Exception {
 		String name;
 		List<Attribute> attributes = new ArrayList<>();
-		if (_n.code == STAG_START) {
+		if (_n.type == STAG_START) {
 			push();
 			read();
 		} else {
 			throw new ParseException("Tag start is expected.", _n.start);
 		}
-		if (_n.code == NAME) {
+		if (_n.type == NAME) {
 			name = _n.toString();
 			read();
 		} else {
 			throw new ParseException("Name is expected.", _n.start);
 		}
-		while (_n.code == S) {
+		while (_n.type == S) {
 			read();
 			String key;
-			if (_n.code == NAME) {
+			if (_n.type == NAME) {
 				key = _n.toString();
 				push();
 				read();
 			} else {
 				break;
 			}
-			if (_n.code == S) {
+			if (_n.type == S) {
 				read();
 			}
-			if (_n.code == EQ) {
+			if (_n.type == EQ) {
 				read();
 			} else {
 				throw new ParseException("Equal sign is expected.", _n.start);
 			}
-			if (_n.code == S) {
+			if (_n.type == S) {
 				read();
 			}
-			if (_n.code == ATT_VALUE) {
+			if (_n.type == ATT_VALUE) {
 				QuotedString qs = (QuotedString)_n;
 				String value = translate(qs.innerText);
 				read();
@@ -880,26 +880,26 @@ public class Processor {
 				throw new ParseException("Attribute value is expected.", _n.start);
 			}
 		}
-		if (_n.code == EETAG_END) {
+		if (_n.type == EETAG_END) {
 			read();
 			Element t = new Element(pop(), name, attributes, parent);
 			_nn.add(t);
 			return;
 		}
-		if (_n.code == TAG_END) {
+		if (_n.type == TAG_END) {
 			read();
 		} else {
 			throw new ParseException("Tag end is expected.", _n.start);
 		}
 		Element element = new Element(pop(), name, attributes, parent);
 		List<Node> children = parseContent(element);
-		if (_n.code == ETAG_START) {
+		if (_n.type == ETAG_START) {
 			push();
 			read();
 		} else {
 			throw new ParseException("ETag start is expected.", _n.start);
 		}
-		if (_n.code == NAME) {
+		if (_n.type == NAME) {
 			if (!_n.toString().equals(name)) {
 				throw new ParseException("Tags mismatch.", _n.start);
 			}
@@ -907,10 +907,10 @@ public class Processor {
 		} else {
 			throw new ParseException("Name is expected.", _n.start);
 		}
-		if (_n.code == S) {
+		if (_n.type == S) {
 			read();
 		}
-		if (_n.code == TAG_END) {
+		if (_n.type == TAG_END) {
 			read();
 		} else {
 			throw new ParseException("ETag end is expected.", _n.start);
@@ -921,29 +921,29 @@ public class Processor {
 
 	private List<Node> parseContent(Element parent) throws Exception {
 		push();
-		if (_n.code == CHAR_DATA) {
+		if (_n.type == CHAR_DATA) {
 			read();
 		}
 		while (true) {
-			if (_n.code == STAG_START) {
+			if (_n.type == STAG_START) {
 				parseElement(parent);
-			} else if (_n.code == ENTITY_REF) {
+			} else if (_n.type == ENTITY_REF) {
 				EntityRef er = (EntityRef)_n;
 				String value = getEntity(er.name);
 				_n = new EntityRef(er, value != null ? value : er.toString());
 				read();
-			} else if (_n.code == CHAR_REF) {
+			} else if (_n.type == CHAR_REF) {
 				read();
-			} else if (_n.code == CD_SECT) {
+			} else if (_n.type == CD_SECT) {
 				read();
-			} else if (_n.code == PI_START) {
+			} else if (_n.type == PI_START) {
 				parseProcessingInstruction();
-			} else if (_n.code == COMMENT) {
+			} else if (_n.type == COMMENT) {
 				read();
 			} else {
 				break;
 			}
-			if (_n.code == CHAR_DATA) {
+			if (_n.type == CHAR_DATA) {
 				read();
 			}
 		}
@@ -968,16 +968,16 @@ public class Processor {
 
 	private Node read(int preferred) {
 		_nn.add(_n);
-		boolean sp = _n.code == S;
+		boolean sp = _n.type == S;
 		_n = _lexer.read(preferred);
-		while (_n.code == EOF && !_lexers.isEmpty()) {
+		while (_n.type == EOF && !_lexers.isEmpty()) {
 			_lexer = _lexers.pop();
 			_n = _lexer.read(preferred);
-			if (sp && _n.code == S) {
+			if (sp && _n.type == S) {
 				_n = _lexer.read(preferred);
 			}
 		}
-		if (_n.code == PEREFERENCE) {
+		if (_n.type == PEREFERENCE) {
 			int mode = _lexer.mode();
 			if (Lexer.MODE_DOCTYPE <= mode && mode <= Lexer.MODE_DOCTYPE_NOTATION) {
 				String value = getParameterEntity(((ParameterEntityReference)_n).name);
@@ -985,10 +985,10 @@ public class Processor {
 					_lexers.push(_lexer);
 					_lexer = new Lexer(value, mode);
 					Node t = _lexer.read(preferred);
-					if (sp && t.code == S) {
+					if (sp && t.type == S) {
 						t = _lexer.read(preferred);
 					}
-					if (t.code == EOF) {
+					if (t.type == EOF) {
 						_lexer = _lexers.pop();
 					} else {
 						_n = t;

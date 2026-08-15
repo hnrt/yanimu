@@ -4,8 +4,8 @@ public class CharRef extends Node {
 
 	public final int codepoint;
 
-	public CharRef(int start, int end, byte[] sequence) {
-		super(CHAR_REF, start, end, sequence);
+	public CharRef(int offset, byte[] sequence) {
+		super(CHAR_REF, offset, sequence);
 		int i = 2;
 		int c = sequence[i++];
 		int d = 0;

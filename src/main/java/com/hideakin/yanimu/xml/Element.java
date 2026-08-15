@@ -5,28 +5,28 @@ import java.util.List;
 
 public class Element extends Node {
 
-	public final Node[] startLayout;
-	public final Node[] children;
-	public final Node[] endLayout;
+	public final List<Node> startLayout;
+	public final List<Node> children;
+	public final List<Node> endLayout;
 	public final String name;
-	public final Attribute[] attributes;
+	public final List<Attribute> attributes;
 	public Element parent;
 
 	public Element(List<Node> tokenList, String name, List<Attribute> attributes, Element parent) {
 		super(ELEMENT, tokenList);
-		this.startLayout = tokenList.toArray(new Node[tokenList.size()]);
+		this.startLayout = tokenList;
 		this.children = null;
 		this.endLayout = null;
 		this.name = name;
-		this.attributes = attributes.toArray(new Attribute[attributes.size()]);
+		this.attributes = attributes;
 		this.parent = parent;
 	}
 
 	public Element(Element startTag, List<Node> childList, List<Node> endList) {
-		super(ELEMENT, startTag.start, endList.get(endList.size() - 1).end, buildSequence(startTag.sequence, childList, endList));
+		super(ELEMENT, startTag.start, buildSequence(startTag.sequence, childList, endList));
 		this.startLayout = startTag.startLayout;
-		this.children = childList.toArray(new Node[childList.size()]);
-		this.endLayout = endList.toArray(new Node[endList.size()]);
+		this.children = childList;
+		this.endLayout = endList;
 		this.name = startTag.name;
 		this.attributes = startTag.attributes;
 		this.parent = startTag.parent;
@@ -48,16 +48,16 @@ public class Element extends Node {
 
 	public String attribute(int index) {
 		if (index < 0) {
-			index += attributes.length;
+			index += attributes.size();
 		}
-		return 0 <= index && index < attributes.length ? attributes[index].value : null;
+		return 0 <= index && index < attributes.size() ? attributes.get(index).value : null;
 	}
 
 	public String innerText() {
-		if (children.length > 0) {
+		if (children.size() > 0) {
 			StringBuilder buffer = new StringBuilder();
 			for (Node child : children) {
-				switch (child.code) {
+				switch (child.type) {
 				case CHAR_DATA:
 					buffer.append(child.toString());
 					break;
@@ -95,11 +95,9 @@ public class Element extends Node {
 	private static byte[] buildSequence(byte[] startTag, List<Node> childList, List<Node> endList) {
 		int n = startTag.length;
 		for (Node token : childList) {
-			if (token.sequence == null) continue;
 			n += token.sequence.length;
 		}
 		for (Node token : endList) {
-			if (token.sequence == null) continue;
 			n += token.sequence.length;
 		}
 		byte[] sequence = new byte[n];
@@ -107,12 +105,10 @@ public class Element extends Node {
 		System.arraycopy(startTag, 0, sequence, i, startTag.length);
 		i += startTag.length;
 		for (Node token : childList) {
-			if (token.sequence == null) continue;
 			System.arraycopy(token.sequence, 0, sequence, i, token.sequence.length);
 			i += token.sequence.length;
 		}
 		for (Node token : endList) {
-			if (token.sequence == null) continue;
 			System.arraycopy(token.sequence, 0, sequence, i, token.sequence.length);
 			i += token.sequence.length;
 		}

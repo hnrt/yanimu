@@ -1,6 +1,5 @@
 package com.hideakin.yanimu.xml;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class Node {
@@ -70,34 +69,24 @@ public class Node {
 	public static final int MALFORMED_ENTITYREF = 3006800;
 	public static final int MALFORMED_PEREFERENCE = 3006900;
 
-	public final int code;
+	public final int type;
 	public final int start;
 	public final int end;
 	public final byte[] sequence;
 
-	public Node(int code, int start, int end, byte[] sequence) {
-		this.code = code;
+	public Node(int type, int start, byte[] sequence) {
+		this.type = type;
 		this.start = start;
-		this.end = end;
+		this.end = start + sequence.length;
 		this.sequence = sequence;
 	}
 
-	public Node(int code, List<Node> tokenList) {
-		this.code = code;
-		this.start = tokenList.get(0).start;
-		this.end = tokenList.get(tokenList.size() - 1).end;
-		int n = 0;
-		for (Node token : tokenList) {
-			if (token.sequence == null) continue;
-			n += token.sequence.length;
-		}
-		this.sequence = new byte[n];
-		int i = 0;
-		for (Node token : tokenList) {
-			if (token.sequence == null) continue;
-			System.arraycopy(token.sequence, 0, this.sequence, i, token.sequence.length);
-			i += token.sequence.length;
-		}
+	public Node(int type, List<Node> tokenList) {
+		this(type, tokenList.get(0).start, buildSequence(tokenList));
+	}
+
+	public Node(int type, int start, List<Node> tokenList) {
+		this(type, start, buildSequence(tokenList));
 	}
 
 	@Override
@@ -105,10 +94,18 @@ public class Node {
 		return sequence != null ? new String(sequence) : "";
 	}
 
-	public static List<Node> list(Node first) {
-		List<Node> tt = new ArrayList<>();
-		tt.add(first);
-		return tt;
+	private static byte[] buildSequence(List<Node> tokenList) {
+		int n = 0;
+		for (Node token : tokenList) {
+			n += token.sequence.length;
+		}
+		byte[] sequence = new byte[n];
+		int i = 0;
+		for (Node token : tokenList) {
+			System.arraycopy(token.sequence, 0, sequence, i, token.sequence.length);
+			i += token.sequence.length;
+		}
+		return sequence;
 	}
 
 }
