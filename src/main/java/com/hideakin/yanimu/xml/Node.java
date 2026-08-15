@@ -28,17 +28,21 @@ public class Node {
 	public static final int XML_START = 2002301;
 	public static final int XML_END = 2002302;
 	public static final int DOCTYPE_DECL = 2002800;
+	public static final int DOCTYPE_DECL_START = 2002801;
 	public static final int ELEMENT = 2003900;
 	public static final int STAG_START = 2004001;
 	public static final int ATTRIBUTE = 2004100;
 	public static final int ETAG_START = 2004201;
 	public static final int EETAG_END = 2004401;
 	public static final int ELEMENT_DECL = 2004500;
+	public static final int ELEMENT_DECL_START = 2004501;
+	public static final int CONTENTSPEC = 2004600;
 	public static final int EMPTY = 2004601;
 	public static final int ANY = 2004602;
 	public static final int PCDATA = 2005101;
 	public static final int PCDATA_END = 2005102;
 	public static final int ATTLIST_DECL = 2005200;
+	public static final int ATTLIST_DECL_START = 2005201;
 	public static final int TYPE_CDATA = 2005501;
 	public static final int TYPE_ID = 2005601;
 	public static final int TYPE_IDREF = 2005602;
@@ -55,10 +59,12 @@ public class Node {
 	public static final int ENTITY_REF = 2006800;
 	public static final int PEREFERENCE = 2006900;
 	public static final int ENTITY_DECL = 2007000;
+	public static final int ENTITY_DECL_START = 2007001;
 	public static final int SYSTEM = 2007501;
 	public static final int PUBLIC = 2007502;
 	public static final int NDATA = 2007601;
 	public static final int NOTATION_DECL = 2008200;
+	public static final int NOTATION_DECL_START = 2008201;
 
 	public static final int PREMATURE_EOF = 3000001;
 	public static final int ILLEGAL_ENCODING = 3000002;
@@ -74,19 +80,19 @@ public class Node {
 	public final int end;
 	public final byte[] sequence;
 
-	public Node(int type, int start, byte[] sequence) {
+	protected Node(int type, int offset, byte[] sequence) {
 		this.type = type;
-		this.start = start;
-		this.end = start + sequence.length;
+		this.start = offset;
+		this.end = offset + sequence.length;
 		this.sequence = sequence;
 	}
 
-	public Node(int type, List<Node> tokenList) {
-		this(type, tokenList.get(0).start, buildSequence(tokenList));
+	protected Node(int type, List<Node> nodeList) {
+		this(type, nodeList.get(0).start, buildSequence(nodeList));
 	}
 
-	public Node(int type, int start, List<Node> tokenList) {
-		this(type, start, buildSequence(tokenList));
+	protected Node(int type, int offset, List<Node> nodeList) {
+		this(type, offset, buildSequence(nodeList));
 	}
 
 	@Override
@@ -94,16 +100,16 @@ public class Node {
 		return sequence != null ? new String(sequence) : "";
 	}
 
-	private static byte[] buildSequence(List<Node> tokenList) {
+	private static byte[] buildSequence(List<Node> nodeList) {
 		int n = 0;
-		for (Node token : tokenList) {
-			n += token.sequence.length;
+		for (Node node : nodeList) {
+			n += node.sequence.length;
 		}
 		byte[] sequence = new byte[n];
 		int i = 0;
-		for (Node token : tokenList) {
-			System.arraycopy(token.sequence, 0, sequence, i, token.sequence.length);
-			i += token.sequence.length;
+		for (Node node : nodeList) {
+			System.arraycopy(node.sequence, 0, sequence, i, node.sequence.length);
+			i += node.sequence.length;
 		}
 		return sequence;
 	}

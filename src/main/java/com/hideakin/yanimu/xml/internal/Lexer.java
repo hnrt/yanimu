@@ -35,11 +35,15 @@ public class Lexer {
 	private int _m; // read mode
 
 	public Lexer(byte[] content) {
-		this(content, 0);
+		this(content, 0, 0);
 	}
 
 	public Lexer(byte[] content, int mode) {
-		_nodeFactory = new NodeFactory();
+		this(content, mode, 0);
+	}
+
+	public Lexer(byte[] content, int mode, int offset) {
+		_nodeFactory = new NodeFactory(offset);
 		_reader = _readerFactory.create(content, _nodeFactory);
 		_d = 0;
 		_m = mode;
@@ -47,15 +51,27 @@ public class Lexer {
 	}
 
 	public Lexer(String content) {
-		this(content.getBytes(), 0);
+		this(content.getBytes(), 0, 0);
 	}
 
 	public Lexer(String content, int mode) {
-		this(content.getBytes(), mode);
+		this(content.getBytes(), mode, 0);
+	}
+
+	public Lexer(String content, int mode, int offset) {
+		this(content.getBytes(), mode, offset);
 	}
 
 	public int mode() {
 		return _m;
+	}
+
+	public int offset() {
+		return _nodeFactory.offset();
+	}
+
+	public void setOffset(int offset) {
+		_nodeFactory.setOffset(offset);
 	}
 
 	public Node read() {
@@ -199,7 +215,7 @@ public class Lexer {
 				} else if (next('!', 'D', 'O', 'C', 'T', 'Y', 'P', 'E')) {
 					readChar();
 					_m = MODE_DOCTYPE;
-					return nodeOf(DOCTYPE_DECL);
+					return nodeOf(DOCTYPE_DECL_START);
 				} else {
 					readChar();
 					_m = MODE_STAG;
@@ -228,19 +244,19 @@ public class Lexer {
 					} else if (next('E', 'L', 'E', 'M', 'E', 'N', 'T')) {
 						readChar();
 						_m = MODE_DOCTYPE_ELEMENT;
-						return nodeOf(ELEMENT_DECL);
+						return nodeOf(ELEMENT_DECL_START);
 					} else if (next('A', 'T', 'T', 'L', 'I', 'S', 'T')) {
 						readChar();
 						_m = MODE_DOCTYPE_ATTLIST;
-						return nodeOf(ATTLIST_DECL);
+						return nodeOf(ATTLIST_DECL_START);
 					} else if (next('E', 'N', 'T', 'I', 'T', 'Y')) {
 						readChar();
 						_m = MODE_DOCTYPE_ENTITY;
-						return nodeOf(ENTITY_DECL);
+						return nodeOf(ENTITY_DECL_START);
 					} else if (next('N', 'O', 'T', 'A', 'T', 'I', 'O', 'N')) {
 						readChar();
 						_m = MODE_DOCTYPE_NOTATION;
-						return nodeOf(NOTATION_DECL);
+						return nodeOf(NOTATION_DECL_START);
 					}
 				} else if (next('?')) {
 					readChar();

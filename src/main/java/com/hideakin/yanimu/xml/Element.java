@@ -12,9 +12,9 @@ public class Element extends Node {
 	public final List<Attribute> attributes;
 	public Element parent;
 
-	public Element(List<Node> tokenList, String name, List<Attribute> attributes, Element parent) {
-		super(ELEMENT, tokenList);
-		this.startLayout = tokenList;
+	public Element(List<Node> nodeList, String name, List<Attribute> attributes, Element parent) {
+		super(ELEMENT, nodeList);
+		this.startLayout = nodeList;
 		this.children = null;
 		this.endLayout = null;
 		this.name = name;
@@ -94,23 +94,23 @@ public class Element extends Node {
 
 	private static byte[] buildSequence(byte[] startTag, List<Node> childList, List<Node> endList) {
 		int n = startTag.length;
-		for (Node token : childList) {
-			n += token.sequence.length;
+		for (Node node : childList) {
+			n += node.sequence.length;
 		}
-		for (Node token : endList) {
-			n += token.sequence.length;
+		for (Node node : endList) {
+			n += node.sequence.length;
 		}
 		byte[] sequence = new byte[n];
 		int i = 0;
 		System.arraycopy(startTag, 0, sequence, i, startTag.length);
 		i += startTag.length;
-		for (Node token : childList) {
-			System.arraycopy(token.sequence, 0, sequence, i, token.sequence.length);
-			i += token.sequence.length;
+		for (Node node : childList) {
+			System.arraycopy(node.sequence, 0, sequence, i, node.sequence.length);
+			i += node.sequence.length;
 		}
-		for (Node token : endList) {
-			System.arraycopy(token.sequence, 0, sequence, i, token.sequence.length);
-			i += token.sequence.length;
+		for (Node node : endList) {
+			System.arraycopy(node.sequence, 0, sequence, i, node.sequence.length);
+			i += node.sequence.length;
 		}
 		return sequence;
 	}

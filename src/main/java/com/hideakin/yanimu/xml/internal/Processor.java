@@ -1,12 +1,10 @@
 package com.hideakin.yanimu.xml.internal;
 
 import com.hideakin.yanimu.xml.Attribute;
-import com.hideakin.yanimu.xml.DocumentTypeDeclaration;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.EntityRef;
 import com.hideakin.yanimu.xml.ExternalEntityDefinition;
 import com.hideakin.yanimu.xml.ExternalParameterEntityDefinition;
-import com.hideakin.yanimu.xml.ExternalIdentifiers;
 import com.hideakin.yanimu.xml.InternalEntityDefinition;
 import com.hideakin.yanimu.xml.InternalParameterEntityDefinition;
 import com.hideakin.yanimu.xml.ParseException;
@@ -14,12 +12,20 @@ import com.hideakin.yanimu.xml.ProcessingInstruction;
 import com.hideakin.yanimu.xml.QuotedString;
 import com.hideakin.yanimu.xml.Node;
 import com.hideakin.yanimu.xml.XmlDeclaration;
+import com.hideakin.yanimu.xml.doctype.ContentChoice;
+import com.hideakin.yanimu.xml.doctype.ContentParticle;
+import com.hideakin.yanimu.xml.doctype.ContentSequence;
+import com.hideakin.yanimu.xml.doctype.ContentSpec;
+import com.hideakin.yanimu.xml.doctype.DocumentTypeDeclaration;
+import com.hideakin.yanimu.xml.doctype.ElementTypeDeclaration;
+import com.hideakin.yanimu.xml.doctype.ExternalIdentifiers;
 import com.hideakin.yanimu.xml.ParameterEntityReference;
 
 import static com.hideakin.yanimu.xml.Node.*;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -68,7 +74,7 @@ public class Processor {
 		while (parseMisc()) {
 			continue;
 		}
-		if (_n.type == DOCTYPE_DECL) {
+		if (_n.type == DOCTYPE_DECL_START) {
 			parseDoctypeDeclaration();
 			while (parseMisc()) {
 				continue;
@@ -206,6 +212,8 @@ public class Processor {
 
 	private void parseDoctypeDeclaration() throws Exception {
 		String name;
+		ExternalIdentifiers extid = null;
+		List<Object> declarations = new ArrayList<>();
 		push();
 		read();
 		if (_n.type == S) {
@@ -222,7 +230,7 @@ public class Processor {
 		if (_n.type == S) {
 			read();
 			if (_n.type == SYSTEM || _n.type == PUBLIC) {
-				parseExternalId();
+				extid = parseExternalId();
 				if (_n.type == S) {
 					read();
 				}
@@ -231,13 +239,14 @@ public class Processor {
 		if (_n.type == '[') {
 			read();
 			while (_n.type != ']') {
-				if (_n.type == ELEMENT_DECL) {
-					parseElementDecl();
-				} else if (_n.type == ATTLIST_DECL) {
+				if (_n.type == ELEMENT_DECL_START) {
+					ElementTypeDeclaration etd = parseElementDecl();
+					declarations.add(etd);
+				} else if (_n.type == ATTLIST_DECL_START) {
 					parseAttlistDecl();
-				} else if (_n.type == ENTITY_DECL) {
+				} else if (_n.type == ENTITY_DECL_START) {
 					parseEntityDecl();
-				} else if (_n.type == NOTATION_DECL) {
+				} else if (_n.type == NOTATION_DECL_START) {
 					parseNotationDecl();
 				} else if (_n.type == PI_START) {
 					parseProcessingInstruction();
@@ -261,11 +270,13 @@ public class Processor {
 		} else {
 			throw new ParseException("> is expected.", _n.start);
 		}
-		DocumentTypeDeclaration t = new DocumentTypeDeclaration(pop(), name); 
-		_nn.add(t);
+		DocumentTypeDeclaration dtd = new DocumentTypeDeclaration(pop(), name, extid, declarations);
+		_nn.add(dtd);
 	}
 
-	private void parseElementDecl() throws Exception {
+	private ElementTypeDeclaration parseElementDecl() throws Exception {
+		String name;
+		push();
 		read();
 		if (_n.type == S) {
 			read(NAME);
@@ -273,6 +284,7 @@ public class Processor {
 			throw new ParseException("White space is expected.", _n.start);
 		}
 		if (_n.type == NAME) {
+			name = _n.toString();
 			read();
 		} else {
 			throw new ParseException("Name is expected.", _n.start);
@@ -282,26 +294,40 @@ public class Processor {
 		} else {
 			throw new ParseException("White space is expected.", _n.start);
 		}
-		if (_n.type == EMPTY) {
-			read();
-		} else if (_n.type == ANY) {
-			read();
-		} else if (_n.type == '(') {
-			parseMixedOrChildren();
-		} else {
-			throw new ParseException("EMPTY, ANY or ( is expected.", _n.start);
-		}
+		ContentSpec cs = parseContentSpec();
+		_nn.add(cs);
 		if (_n.type == S) {
 			read();
 		}
-		if (_n.type == '>') {
+		if (_n.type == TAG_END) {
 			read();
 		} else {
 			throw new ParseException("End of element declaration is expected.", _n.start);
 		}
+		ElementTypeDeclaration etd = new ElementTypeDeclaration(pop(), name, cs);
+		_nn.add(etd);
+		return etd;
 	}
 
-	private void parseMixedOrChildren() throws Exception {
+	private ContentSpec parseContentSpec() throws Exception {
+		if (_n.type == EMPTY) {
+			push();
+			read();
+			return new ContentSpec(pop(), EMPTY);
+		} else if (_n.type == ANY) {
+			push();
+			read();
+			return new ContentSpec(pop(), ANY);
+		} else if (_n.type == '(') {
+			return parseMixedOrChildren();
+		} else {
+			throw new ParseException("EMPTY, ANY or ( is expected.", _n.start);
+		}
+	}
+
+	private ContentSpec parseMixedOrChildren() throws Exception {
+		ContentSpec cs;
+		push();
 		if (_n.type == '(') {
 			read();
 		} else {
@@ -317,15 +343,20 @@ public class Processor {
 			}
 			if (_n.type == ')') {
 				read();
+				cs = new ContentSpec(pop(), PCDATA);
 			} else if (_n.type == PCDATA_END) {
 				read();
+				cs = new ContentSpec(pop(), Arrays.asList("#PCDATA"));
 			} else if (_n.type == '|') {
+				List<String> choiceList = new ArrayList<>();
+				choiceList.add("#PCDATA");
 				do {
 					read();
 					if (_n.type == S) {
 						read();
 					}
 					if (_n.type == NAME) {
+						choiceList.add(_n.toString());
 						read();
 					} else {
 						throw new ParseException("Name is expected.", _n.start);
@@ -339,53 +370,35 @@ public class Processor {
 				} else {
 					throw new ParseException(")* is expected.", _n.start);
 				}
+				cs = new ContentSpec(pop(), choiceList);
 			} else {
 				throw new ParseException(") or )* is expected.", _n.start);
 			}
 		} else {
-			parseCP();
-			if (_n.type == S) {
-				read();
-			}
-			if (_n.type == '|') {
-				do {
-					read();
-					if (_n.type == S) {
-						read();
-					}
-					parseCP();
-					if (_n.type == S) {
-						read();
-					}
-				} while (_n.type == '|');
-			} else if (_n.type == ',') {
-				do {
-					read();
-					if (_n.type == S) {
-						read();
-					}
-					parseCP();
-					if (_n.type == S) {
-						read();
-					}
-				} while (_n.type == ',');
-			}
-			if (_n.type == ')') {
-				read();
-			} else {
-				throw new ParseException(") is expected.", _n.start);
-			}
-			if (_n.type == '?') {
-				read();
-			} else if (_n.type == '*') {
-				read();
-			} else if (_n.type == '+') {
-				read();
-			}
+			ContentParticle cp = parseChildren();
+			cs = new ContentSpec(pop(), cp);
+		}
+		return cs;
+	}
+
+	private ContentParticle parseChildren() throws Exception {
+		Object target = parseChoiceOrSequence();
+		if (_n.type == '?') {
+			read();
+			return new ContentParticle(target, '?');
+		} else if (_n.type == '*') {
+			read();
+			return new ContentParticle(target, '*');
+		} else if (_n.type == '+') {
+			read();
+			return new ContentParticle(target, '+');
+		} else {
+			return new ContentParticle(target);
 		}
 	}
 
-	private void parseChoiceOrSequence() throws Exception {
+	private Object parseChoiceOrSequence() throws Exception {
+		Object choiceOrSequence;
 		if (_n.type == '(') {
 			read();
 		} else {
@@ -394,61 +407,73 @@ public class Processor {
 		if (_n.type == S) {
 			read();
 		}
-		parseCP();
+		ContentParticle cp = parseCP();
 		if (_n.type == S) {
 			read();
 		}
 		if (_n.type == '|') {
+			ContentChoice choice = new ContentChoice(cp);
 			do {
 				read();
 				if (_n.type == S) {
 					read();
 				}
-				parseCP();
+				cp = parseCP();
+				choice.add(cp);
 				if (_n.type == S) {
 					read();
 				}
 			} while (_n.type == '|');
+			choiceOrSequence = choice;
 		} else if (_n.type == ',') {
+			ContentSequence seq = new ContentSequence(cp);
 			do {
 				read();
 				if (_n.type == S) {
 					read();
 				}
-				parseCP();
+				cp = parseCP();
+				seq.add(cp);
 				if (_n.type == S) {
 					read();
 				}
 			} while (_n.type == ',');
+			choiceOrSequence = seq;
+		} else {
+			choiceOrSequence = new ContentSequence(cp);
 		}
 		if (_n.type == ')') {
 			read();
 		} else {
 			throw new ParseException(") is expected.", _n.start);
 		}
+		return choiceOrSequence;
 	}
 
-	private void parseCP() throws Exception {
+	private ContentParticle parseCP() throws Exception {
+		Object target;
 		if (_n.type == NAME) {
+			target = _n.toString();
 			read();
 		} else {
-			parseChoiceOrSequence();
+			target = parseChoiceOrSequence();
 		}
 		if (_n.type == '?') {
 			read();
+			return new ContentParticle(target, '?');
 		} else if (_n.type == '*') {
 			read();
+			return new ContentParticle(target, '*');
 		} else if (_n.type == '+') {
 			read();
+			return new ContentParticle(target, '+');
+		} else {
+			return new ContentParticle(target);
 		}
 	}
 
 	private void parseAttlistDecl() throws Exception {
-		if (_n.type == ATTLIST_DECL) {
-			read();
-		} else {
-			throw new ParseException("<!ATTLIST is expected.", _n.start);
-		}
+		read();
 		if (_n.type == S) {
 			read();
 		} else {
@@ -482,7 +507,7 @@ public class Processor {
 				}
 			}
 		}
-		if (_n.type == '>') {
+		if (_n.type == TAG_END) {
 			read();
 		} else {
 			throw new ParseException("End of attlist declaration is expected.", _n.start);
@@ -624,11 +649,7 @@ public class Processor {
 
 	private void parseEntityDecl() throws Exception {
 		String key;
-		if (_n.type == ENTITY_DECL) {
-			read();
-		} else {
-			throw new ParseException("<!ENTITY is expected.", _n.start);
-		}
+		read();
 		if (_n.type == S) {
 			read();
 		} else {
@@ -702,7 +723,7 @@ public class Processor {
 		if (_n.type == S) {
 			read();
 		}
-		if (_n.type == '>') {
+		if (_n.type == TAG_END) {
 			read();
 		} else {
 			throw new ParseException("End of entity declaration is expected.", _n.start);
@@ -710,11 +731,7 @@ public class Processor {
 	}
 
 	private void parseNotationDecl() throws Exception {
-		if (_n.type == NOTATION_DECL) {
-			read();
-		} else {
-			throw new ParseException("<!NOTATION is expected.", _n.start);
-		}
+		read();
 		if (_n.type == S) {
 			read();
 		} else {
@@ -738,7 +755,7 @@ public class Processor {
 		if (_n.type == S) {
 			read();
 		}
-		if (_n.type == '>') {
+		if (_n.type == TAG_END) {
 			read();
 		} else {
 			throw new ParseException("End of notation declaration is expected.", _n.start);
@@ -829,8 +846,8 @@ public class Processor {
 		} else {
 			throw new ParseException("PI end is expected.", _n.start);
 		}
-		ProcessingInstruction t = new ProcessingInstruction(pop(), name, body); 
-		_nn.add(t);
+		ProcessingInstruction pi = new ProcessingInstruction(pop(), name, body); 
+		_nn.add(pi);
 	}
 
 	private void parseElement(Element parent) throws Exception {
@@ -970,30 +987,40 @@ public class Processor {
 		_nn.add(_n);
 		boolean sp = _n.type == S;
 		_n = _lexer.read(preferred);
-		while (_n.type == EOF && !_lexers.isEmpty()) {
-			_lexer = _lexers.pop();
-			_n = _lexer.read(preferred);
-			if (sp && _n.type == S) {
-				_n = _lexer.read(preferred);
-			}
-		}
-		if (_n.type == PEREFERENCE) {
-			int mode = _lexer.mode();
-			if (Lexer.MODE_DOCTYPE <= mode && mode <= Lexer.MODE_DOCTYPE_NOTATION) {
-				String value = getParameterEntity(((ParameterEntityReference)_n).name);
-				if (value != null) {
-					_lexers.push(_lexer);
-					_lexer = new Lexer(value, mode);
-					Node t = _lexer.read(preferred);
-					if (sp && t.type == S) {
-						t = _lexer.read(preferred);
-					}
-					if (t.type == EOF) {
-						_lexer = _lexers.pop();
-					} else {
-						_n = t;
-					}
+		while (true) {
+			if (_n.type == EOF) {
+				if (_lexers.isEmpty()) {
+					break;
 				}
+				int offset = _n.start;
+				_lexer = _lexers.pop();
+				_lexer.setOffset(offset);
+				_n = _lexer.read(preferred);
+				if (sp && _n.type == S) {
+					_lexer.setOffset(offset);
+					_n = _lexer.read(preferred);
+				}
+			} else if (_n.type == PEREFERENCE) {
+				int mode = _lexer.mode();
+				if (Lexer.MODE_DOCTYPE <= mode && mode <= Lexer.MODE_DOCTYPE_NOTATION) {
+					String value = getParameterEntity(((ParameterEntityReference)_n).name);
+					if (value != null) {
+						int offset = _n.start;
+						_lexers.push(_lexer);
+						_lexer = new Lexer(value, mode, offset);
+						_n = _lexer.read(preferred);
+						if (sp && _n.type == S) {
+							_lexer.setOffset(offset);
+							_n = _lexer.read(preferred);
+						}
+					} else {
+						break;
+					}
+				} else {
+					break;
+				}
+			} else {
+				break;
 			}
 		}
 		return _n;

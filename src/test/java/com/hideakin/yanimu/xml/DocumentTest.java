@@ -1,10 +1,17 @@
 package com.hideakin.yanimu.xml;
 
 import org.junit.jupiter.api.Test;
+
+import com.hideakin.yanimu.xml.doctype.ContentParticle;
+import com.hideakin.yanimu.xml.doctype.ContentSpec;
+import com.hideakin.yanimu.xml.doctype.DocumentTypeDeclaration;
+import com.hideakin.yanimu.xml.doctype.ElementTypeDeclaration;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 
 public class DocumentTest {
@@ -48,7 +55,8 @@ public class DocumentTest {
 				+ "<greeting abc=\"&lt;&amp;x&apos;&quot;&gt;\" xyz=\"&#x41;&#x42;&#x43;\" >Hello, world!</greeting>";
 		Document doc = new Document();
 		try {
-			doc.load(source.getBytes());
+			byte[] content = source.getBytes();
+			doc.load(content);
 			assertEquals("yes", doc.standalone());
 			assertEquals("Hello, world!", doc.root().innerText());
 			assertEquals("<&x\'\">", doc.root().attribute("abc"));
@@ -58,6 +66,8 @@ public class DocumentTest {
 			assertEquals("ABC", doc.root().attribute(-1));
 			assertEquals(null, doc.root().attribute("opq"));
 			assertEquals(null, doc.root().attribute(2));
+			assertEquals(checkOffset("test3", doc.layout(), 0), content.length);
+			System.out.printf("test3: content.length=%d\n", content.length);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -105,7 +115,8 @@ public class DocumentTest {
 				+ "</greeting>";
 		Document doc = new Document();
 		try {
-			doc.load(source.getBytes());
+			byte[] content = source.getBytes();
+			doc.load(content);
 			List<Element> elements = doc.root().getElements("abc");
 			assertEquals(8, elements.size());
 			assertEquals("1", elements.get(0).attribute("id"));
@@ -116,6 +127,8 @@ public class DocumentTest {
 			assertEquals("421", elements.get(5).attribute("id"));
 			assertEquals("422", elements.get(6).attribute("id"));
 			assertEquals("43", elements.get(7).attribute("id"));
+			int end = checkOffset("test5", doc.layout(), 0);
+			System.out.printf("test5: content.length=%d end=%d\n", content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -130,8 +143,8 @@ public class DocumentTest {
 			byte[] content = source.getBytes(StandardCharsets.UTF_8);
 			doc.load(content);
 			assertEquals("Hello, world!", doc.root().innerText());
-			checkOffset("test6", doc.layout(), 0);
-			System.out.printf("test6: content.length=%d-3=%d\n", content.length, content.length - 3);
+			int end = checkOffset("test6", doc.layout(), 0);
+			System.out.printf("test6: content.length=%d-3=%d actual=%d\n", content.length, content.length - 3, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -179,8 +192,9 @@ public class DocumentTest {
 			assertEquals("30", elements.get(1).innerText());
 			assertEquals("400", elements.get(2).innerText());
 			assertEquals("void func(int x) {\n\treturn x < 100 ? x * 4 : x * 2;\n}//<>&bogus;", doc.root().getElements("code").get(0).innerText());
-			assertEquals(checkOffset("test8", doc.layout(), 0), content.length);
-			System.out.printf("test8: content.length=%d\n", content.length);
+			int end = checkOffset("test8", doc.layout(), 0);
+			System.out.printf("test8: content.length=%d actual=%d\n", content.length, end);
+			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -203,6 +217,12 @@ public class DocumentTest {
 					iend = checkOffset(String.format("%s[%d]E", header, i), element.endLayout, iend);
 				}
 				assertEquals(expected, iend);
+			} else if (node.type == Node.DOCTYPE_DECL) {
+				DocumentTypeDeclaration dtd = (DocumentTypeDeclaration)node;
+				assertEquals(dtd.end, checkOffset(String.format("%s[%d]DTD", header, i), Arrays.asList(dtd.layout), dtd.start));
+				for (Object obj : dtd.declarations) {
+					printDeclaration(header, obj);
+				}
 			}
 		}
 		return expected;
@@ -227,6 +247,39 @@ public class DocumentTest {
 			return buf.toString().substring(1);
 		default:
 			return node.toString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("\t", "\\t");
+		}
+	}
+
+	private void printDeclaration(String header, Object obj) {
+		if (obj instanceof ElementTypeDeclaration etd) {
+			System.out.printf("%s:DTD:ELEMENT %s ", header, etd.name);
+			print(etd.cs);
+		}
+	}
+
+	private void print(ContentSpec cs) {
+		if (cs.value instanceof Integer intValue) {
+			switch (intValue) {
+			case Node.EMPTY:
+				System.out.printf("EMPTY\n");
+				break;
+			case Node.ANY:
+				System.out.printf("ANY\n");
+				break;
+			case Node.PCDATA:
+				System.out.printf("(#PCDATA)\n");
+				break;
+			}
+		} else if (cs.value instanceof String[] arrValue) {
+			System.out.printf("(%s", arrValue[0]);
+			for (int i = 1; i < arrValue.length; i++) {
+				System.out.printf("|%s", arrValue[i]);
+			}
+			System.out.printf(")*\n");
+		} else if (cs.value instanceof ContentParticle particle) {
+			System.out.printf("%s\n", particle.toString());
+		} else {
+			System.out.printf("BUG!\n");
 		}
 	}
 

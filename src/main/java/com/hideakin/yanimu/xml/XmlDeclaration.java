@@ -9,9 +9,9 @@ public class XmlDeclaration extends Node {
 	public final String encoding;
 	public final String standalone;
 
-	public XmlDeclaration(List<Node> tokenList, String version, String encoding, String standalone) {
-		super(XML_DECL, tokenList);
-		this.layout = tokenList.toArray(new Node[tokenList.size()]);
+	public XmlDeclaration(List<Node> nodeList, String version, String encoding, String standalone) {
+		super(XML_DECL, nodeList);
+		this.layout = nodeList.toArray(new Node[nodeList.size()]);
 		this.version = version;
 		this.encoding = encoding;
 		this.standalone = standalone;

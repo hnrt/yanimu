@@ -1,5 +1,7 @@
 package com.hideakin.yanimu.xml;
 
+import com.hideakin.yanimu.xml.doctype.ExternalIdentifiers;
+
 public class ExternalParameterEntityDefinition {
 
 	public final String key;

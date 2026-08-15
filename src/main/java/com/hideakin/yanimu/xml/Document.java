@@ -10,7 +10,6 @@ import com.hideakin.yanimu.xml.internal.Processor;
 public class Document {
 
 	protected Path _path;
-	protected byte[] _content;
 	protected List<Node> _layout;
 	protected XmlDeclaration _xmlDeclaration;
 	protected Element _root;
@@ -28,10 +27,6 @@ public class Document {
 
 	public void setPath(Path path) {
 		_path = path;
-	}
-
-	public byte[] content() {
-		return _content;
 	}
 
 	public List<Node> layout() {
@@ -63,7 +58,6 @@ public class Document {
 	}
 
 	public void load(byte[] content) throws Exception {
-		_content = content;
 		_layout = null;
 		_xmlDeclaration = null;
 		_root = null;
@@ -72,8 +66,8 @@ public class Document {
 		if (_layout.get(0) instanceof XmlDeclaration xmlDeclaration) {
 			_xmlDeclaration = xmlDeclaration;
 		}
-		for (Node token : _layout) {
-			if (token instanceof Element element) {
+		for (Node node : _layout) {
+			if (node instanceof Element element) {
 				_root = element;
 				break;
 			}

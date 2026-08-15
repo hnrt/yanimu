@@ -12,10 +12,31 @@ import static com.hideakin.yanimu.xml.Node.*;
 
 public class NodeFactory {
 
+	private static class NodeX extends Node {
+
+		public NodeX(int type, int offset, byte[] sequence) {
+			super(type, offset, sequence);
+		}
+
+	}
+		
 	private StringBuilder _buffer = new StringBuilder();
-	private int _offset = 0;
+	private int _offset;
 
 	public NodeFactory() {
+		this(0);
+	}
+
+	public NodeFactory(int offset) {
+		_offset = offset;
+	}
+
+	public int offset() {
+		return _offset;
+	}
+
+	public void setOffset(int offset) {
+		_offset = offset;
 	}
 
 	public Node nodeOf(int type) {
@@ -38,7 +59,7 @@ public class NodeFactory {
 		case PEREFERENCE:
 			return new ParameterEntityReference(offset, sequence);
 		default:
-			return new Node(type, offset, sequence);
+			return new NodeX(type, offset, sequence);
 		}
 	}
 
