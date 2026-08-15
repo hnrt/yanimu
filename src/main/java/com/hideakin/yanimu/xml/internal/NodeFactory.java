@@ -19,25 +19,26 @@ public class NodeFactory {
 	}
 
 	public Node nodeOf(int type) {
+		int offset = _offset;
 		byte[] sequence = pop();
 		switch (type) {
 		case ENTITY_VALUE:
 		case ATT_VALUE:
 		case SYSTEM_LITERAL:
 		case PUBID_LITERAL:
-			return new QuotedString(type, _offset, sequence);
+			return new QuotedString(type, offset, sequence);
 		case COMMENT:
-			return new Comment(_offset, sequence);
+			return new Comment(offset, sequence);
 		case CD_SECT:
-			return new CDATASection(_offset, sequence);
+			return new CDATASection(offset, sequence);
 		case CHAR_REF:
-			return new CharRef(_offset, sequence);
+			return new CharRef(offset, sequence);
 		case ENTITY_REF:
-			return new EntityRef(_offset, sequence);
+			return new EntityRef(offset, sequence);
 		case PEREFERENCE:
-			return new ParameterEntityReference(_offset, sequence);
+			return new ParameterEntityReference(offset, sequence);
 		default:
-			return new Node(type, _offset, sequence);
+			return new Node(type, offset, sequence);
 		}
 	}
 

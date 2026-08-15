@@ -127,9 +127,11 @@ public class DocumentTest {
 				+ "<greeting>Hello, world!</greeting>";
 		Document doc = new Document();
 		try {
-			doc.load(source.getBytes(StandardCharsets.UTF_8));
+			byte[] content = source.getBytes(StandardCharsets.UTF_8);
+			doc.load(content);
 			assertEquals("Hello, world!", doc.root().innerText());
-			print("test6", doc.layout());
+			checkOffset("test6", doc.layout(), 0);
+			System.out.printf("test6: content.length=%d-3=%d\n", content.length, content.length - 3);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -166,7 +168,8 @@ public class DocumentTest {
 				+ "</greeting>\r\n";
 		Document doc = new Document();
 		try {
-			doc.load(source.getBytes());
+			byte[] content = source.getBytes(); 
+			doc.load(content);
 			List<Element> elements = doc.root().getElements("test");
 			assertEquals(3, elements.size());
 			assertEquals("2", elements.get(0).attribute("id"));
@@ -176,38 +179,54 @@ public class DocumentTest {
 			assertEquals("30", elements.get(1).innerText());
 			assertEquals("400", elements.get(2).innerText());
 			assertEquals("void func(int x) {\n\treturn x < 100 ? x * 4 : x * 2;\n}//<>&bogus;", doc.root().getElements("code").get(0).innerText());
-			print("test8", doc.layout());
+			assertEquals(checkOffset("test8", doc.layout(), 0), content.length);
+			System.out.printf("test8: content.length=%d\n", content.length);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	private void print(String header, List<Node> tokens) {
-		for (Node token : tokens) {
-			if (token.type == Node.S) {
-				System.out.printf("%s:", header);
-				for (byte c : token.sequence) {
-					System.out.printf(" %s",
-							c == ' ' ? "SP" :
-							c == 9 ? "HT" :
-							c == 10 ? "LF" :
-							c == 13 ? "CR" :
-							"?");
-				}
-				System.out.printf("\n");
-			} else if (token.type == Node.ELEMENT) {
-				System.out.printf("%s: %s\n", header, token);
-				Element element = (Element)token;
+	private int checkOffset(String header, List<Node> nodes, int expected) {
+		for (int i = 0; i < nodes.size(); i++) {
+			Node node = nodes.get(i);
+			System.out.printf("%s[%d] %d %d %s\n", header, i, node.start, node.end, sprint(node));
+			assertEquals(expected, node.start);
+			expected += node.sequence.length;
+			assertEquals(expected, node.end);
+			if (node.type == Node.ELEMENT) {
+				Element element = (Element)node;
+				int iend = checkOffset(String.format("%s[%d]S", header, i), element.startLayout, element.start);
 				if (element.endLayout != null) {
-					print(header + ":ELEMENT:S", element.startLayout);
-					print(header + ":ELEMENT:C", element.children);
-					print(header + ":ELEMENT:E", element.endLayout);
+					if (element.children.size() > 0) {
+						iend = checkOffset(String.format("%s[%d]C", header, i), element.children, iend);
+					}
+					iend = checkOffset(String.format("%s[%d]E", header, i), element.endLayout, iend);
 				}
-			} else if (token.type == Node.CHAR_DATA) {
-				System.out.printf("%s: %s\n", header, token.toString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("\t", "\\t"));
-			} else {
-				System.out.printf("%s: %s\n", header, token);
+				assertEquals(expected, iend);
 			}
+		}
+		return expected;
+	}
+
+	private String sprint(Node node) {
+		StringBuilder buf;
+		switch (node.type) {
+		case Node.ELEMENT:
+			return "<...>";
+		case Node.S:
+			buf = new StringBuilder();
+			for (byte c : node.sequence) {
+				switch (c) {
+				case 9: buf.append(" HT"); break;
+				case 10: buf.append(" LF"); break;
+				case 13: buf.append(" CR"); break;
+				case 32: buf.append(" SP"); break;
+				default: buf.append(" ?"); break;
+				}
+			}
+			return buf.toString().substring(1);
+		default:
+			return node.toString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("\t", "\\t");
 		}
 	}
 
