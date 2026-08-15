@@ -1,12 +1,12 @@
 package com.hideakin.yanimu.xml.internal;
 
-import static com.hideakin.yanimu.xml.Token.EOF;
-import static com.hideakin.yanimu.xml.Token.ILLEGAL_ENCODING;
+import static com.hideakin.yanimu.xml.Node.EOF;
+import static com.hideakin.yanimu.xml.Node.ILLEGAL_ENCODING;
 
 public class UTF8Reader extends AnyReader {
 
-	public UTF8Reader(byte[] content) {
-		super(content);
+	public UTF8Reader(byte[] content, NodeFactory nodeFactory) {
+		super(content, nodeFactory);
 		if (3 <= content.length && content[0]  == -17 && content[1] == -69 && content[2] == -65) {
 			// EF BB BF (BOM)
 			_i = 3;
@@ -16,7 +16,7 @@ public class UTF8Reader extends AnyReader {
 	@Override
 	public int readChar() {
 		if (Character.MIN_CODE_POINT <= _c && _c <= Character.MAX_CODE_POINT) {
-			_buffer.appendCodePoint(_c);
+			storeChar(_c);
 		}
 		_h = _i;
 		int b1 = readByte();

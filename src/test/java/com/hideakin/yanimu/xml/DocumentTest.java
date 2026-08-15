@@ -182,9 +182,9 @@ public class DocumentTest {
 		}
 	}
 
-	private void print(String header, Token[] tokens) {
-		for (Token token : tokens) {
-			if (token.code == Token.SP) {
+	private void print(String header, Node[] tokens) {
+		for (Node token : tokens) {
+			if (token.code == Node.S) {
 				System.out.printf("%s:", header);
 				for (byte c : token.sequence) {
 					System.out.printf(" %s",
@@ -195,7 +195,7 @@ public class DocumentTest {
 							"?");
 				}
 				System.out.printf("\n");
-			} else if (token.code == Token.ELEMENT) {
+			} else if (token.code == Node.ELEMENT) {
 				System.out.printf("%s: %s\n", header, token);
 				Element element = (Element)token;
 				if (element.endLayout != null) {
@@ -203,7 +203,7 @@ public class DocumentTest {
 					print(header + ":ELEMENT:C", element.children);
 					print(header + ":ELEMENT:E", element.endLayout);
 				}
-			} else if (token.code == Token.CHAR_DATA) {
+			} else if (token.code == Node.CHAR_DATA) {
 				System.out.printf("%s: %s\n", header, token.toString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("\t", "\\t"));
 			} else {
 				System.out.printf("%s: %s\n", header, token);

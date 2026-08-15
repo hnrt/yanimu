@@ -8,7 +8,6 @@ public interface Reader {
 	int from();
 	int to();
 	int codepoint();
-	String text();
 	void reset(int i);
 
 }

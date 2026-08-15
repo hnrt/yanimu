@@ -3,18 +3,18 @@ package com.hideakin.yanimu.xml;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Element extends Token {
+public class Element extends Node {
 
-	public final Token[] startLayout;
-	public final Token[] children;
-	public final Token[] endLayout;
+	public final Node[] startLayout;
+	public final Node[] children;
+	public final Node[] endLayout;
 	public final String name;
 	public final Attribute[] attributes;
 	public Element parent;
 
-	public Element(List<Token> tokenList, String name, List<Attribute> attributes, Element parent) {
+	public Element(List<Node> tokenList, String name, List<Attribute> attributes, Element parent) {
 		super(ELEMENT, tokenList);
-		this.startLayout = tokenList.toArray(new Token[tokenList.size()]);
+		this.startLayout = tokenList.toArray(new Node[tokenList.size()]);
 		this.children = null;
 		this.endLayout = null;
 		this.name = name;
@@ -22,15 +22,15 @@ public class Element extends Token {
 		this.parent = parent;
 	}
 
-	public Element(Element startTag, List<Token> childList, List<Token> endList) {
+	public Element(Element startTag, List<Node> childList, List<Node> endList) {
 		super(ELEMENT, startTag.start, endList.get(endList.size() - 1).end, buildSequence(startTag.sequence, childList, endList));
 		this.startLayout = startTag.startLayout;
-		this.children = childList.toArray(new Token[childList.size()]);
-		this.endLayout = endList.toArray(new Token[endList.size()]);
+		this.children = childList.toArray(new Node[childList.size()]);
+		this.endLayout = endList.toArray(new Node[endList.size()]);
 		this.name = startTag.name;
 		this.attributes = startTag.attributes;
 		this.parent = startTag.parent;
-		for (Token child : childList) {
+		for (Node child : childList) {
 			if (child instanceof Element childElement) {
 				childElement.parent = this;
 			}
@@ -56,7 +56,7 @@ public class Element extends Token {
 	public String innerText() {
 		if (children.length > 0) {
 			StringBuilder buffer = new StringBuilder();
-			for (Token child : children) {
+			for (Node child : children) {
 				switch (child.code) {
 				case CHAR_DATA:
 					buffer.append(child.toString());
@@ -81,7 +81,7 @@ public class Element extends Token {
 
 	public List<Element> getElements(String name) {
 		List<Element> elements = new ArrayList<>();
-		for (Token child : children) {
+		for (Node child : children) {
 			if (child instanceof Element element) {
 				if (element.name.equals(name)) {
 					elements.add(element);
@@ -92,13 +92,13 @@ public class Element extends Token {
 		return elements;
 	}
 
-	private static byte[] buildSequence(byte[] startTag, List<Token> childList, List<Token> endList) {
+	private static byte[] buildSequence(byte[] startTag, List<Node> childList, List<Node> endList) {
 		int n = startTag.length;
-		for (Token token : childList) {
+		for (Node token : childList) {
 			if (token.sequence == null) continue;
 			n += token.sequence.length;
 		}
-		for (Token token : endList) {
+		for (Node token : endList) {
 			if (token.sequence == null) continue;
 			n += token.sequence.length;
 		}
@@ -106,12 +106,12 @@ public class Element extends Token {
 		int i = 0;
 		System.arraycopy(startTag, 0, sequence, i, startTag.length);
 		i += startTag.length;
-		for (Token token : childList) {
+		for (Node token : childList) {
 			if (token.sequence == null) continue;
 			System.arraycopy(token.sequence, 0, sequence, i, token.sequence.length);
 			i += token.sequence.length;
 		}
-		for (Token token : endList) {
+		for (Node token : endList) {
 			if (token.sequence == null) continue;
 			System.arraycopy(token.sequence, 0, sequence, i, token.sequence.length);
 			i += token.sequence.length;

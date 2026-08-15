@@ -9,7 +9,7 @@ public class Document {
 
 	protected Path _path;
 	protected byte[] _content;
-	protected Token[] _layout;
+	protected Node[] _layout;
 	protected XmlDeclaration _xmlDeclaration;
 	protected Element _root;
 
@@ -32,7 +32,7 @@ public class Document {
 		return _content;
 	}
 
-	public Token[] layout() {
+	public Node[] layout() {
 		return _layout;
 	}
 
@@ -70,7 +70,7 @@ public class Document {
 		if (_layout[0] instanceof XmlDeclaration xmlDeclaration) {
 			_xmlDeclaration = xmlDeclaration;
 		}
-		for (Token token : _layout) {
+		for (Node token : _layout) {
 			if (token instanceof Element element) {
 				_root = element;
 				break;

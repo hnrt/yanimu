@@ -2,7 +2,7 @@ package com.hideakin.yanimu.xml;
 
 import java.util.Arrays;
 
-public class EntityRef extends Token {
+public class EntityRef extends Node {
 
 	public final String name;
 	public final String translated;

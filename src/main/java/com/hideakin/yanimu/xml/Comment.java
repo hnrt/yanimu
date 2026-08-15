@@ -2,7 +2,7 @@ package com.hideakin.yanimu.xml;
 
 import java.util.Arrays;
 
-public class Comment extends Token {
+public class Comment extends Node {
 
 	public final String innerText;
 

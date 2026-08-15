@@ -2,7 +2,7 @@ package com.hideakin.yanimu.xml;
 
 import java.util.Arrays;
 
-public class QuotedString extends Token {
+public class QuotedString extends Node {
 
 	public final String innerText;
 

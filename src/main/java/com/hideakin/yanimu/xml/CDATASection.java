@@ -2,7 +2,7 @@ package com.hideakin.yanimu.xml;
 
 import java.util.Arrays;
 
-public class CDATASection extends Token {
+public class CDATASection extends Node {
 
 	public final String innerText;
 

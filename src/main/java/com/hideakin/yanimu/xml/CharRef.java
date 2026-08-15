@@ -1,6 +1,6 @@
 package com.hideakin.yanimu.xml;
 
-public class CharRef extends Token {
+public class CharRef extends Node {
 
 	public final int codepoint;
 

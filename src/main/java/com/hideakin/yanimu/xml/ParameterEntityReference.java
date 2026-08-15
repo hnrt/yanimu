@@ -2,7 +2,7 @@ package com.hideakin.yanimu.xml;
 
 import java.util.Arrays;
 
-public class ParameterEntityReference extends Token {
+public class ParameterEntityReference extends Node {
 
 	public final String name;
 
