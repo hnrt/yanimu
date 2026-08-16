@@ -1,4 +1,4 @@
-package com.hideakin.yanimu.xml;
+package com.hideakin.yanimu.xml.doctype;
 
 public class InternalEntityDefinition {
 

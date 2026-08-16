@@ -9,6 +9,10 @@ import com.hideakin.yanimu.xml.doctype.ContentSpec;
 import com.hideakin.yanimu.xml.doctype.DocumentTypeDeclaration;
 import com.hideakin.yanimu.xml.doctype.ElementTypeDeclaration;
 import com.hideakin.yanimu.xml.doctype.EntityDeclaration;
+import com.hideakin.yanimu.xml.doctype.ExternalEntityDefinition;
+import com.hideakin.yanimu.xml.doctype.ExternalParameterEntityDefinition;
+import com.hideakin.yanimu.xml.doctype.InternalEntityDefinition;
+import com.hideakin.yanimu.xml.doctype.InternalParameterEntityDefinition;
 import com.hideakin.yanimu.xml.doctype.NotationDeclaration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

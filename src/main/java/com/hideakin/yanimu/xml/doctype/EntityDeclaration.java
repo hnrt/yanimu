@@ -2,10 +2,6 @@ package com.hideakin.yanimu.xml.doctype;
 
 import java.util.List;
 
-import com.hideakin.yanimu.xml.ExternalEntityDefinition;
-import com.hideakin.yanimu.xml.ExternalParameterEntityDefinition;
-import com.hideakin.yanimu.xml.InternalEntityDefinition;
-import com.hideakin.yanimu.xml.InternalParameterEntityDefinition;
 import com.hideakin.yanimu.xml.Node;
 
 public class EntityDeclaration extends Node {

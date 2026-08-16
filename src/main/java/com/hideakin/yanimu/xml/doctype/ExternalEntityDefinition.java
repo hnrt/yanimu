@@ -1,6 +1,4 @@
-package com.hideakin.yanimu.xml;
-
-import com.hideakin.yanimu.xml.doctype.ExternalIdentifiers;
+package com.hideakin.yanimu.xml.doctype;
 
 public class ExternalEntityDefinition {
 
