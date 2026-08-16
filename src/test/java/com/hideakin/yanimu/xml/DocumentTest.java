@@ -2,10 +2,14 @@ package com.hideakin.yanimu.xml;
 
 import org.junit.jupiter.api.Test;
 
+import com.hideakin.yanimu.xml.doctype.AttributeDefinition;
+import com.hideakin.yanimu.xml.doctype.AttributeListDeclaration;
 import com.hideakin.yanimu.xml.doctype.ContentParticle;
 import com.hideakin.yanimu.xml.doctype.ContentSpec;
 import com.hideakin.yanimu.xml.doctype.DocumentTypeDeclaration;
 import com.hideakin.yanimu.xml.doctype.ElementTypeDeclaration;
+import com.hideakin.yanimu.xml.doctype.EntityDeclaration;
+import com.hideakin.yanimu.xml.doctype.NotationDeclaration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -66,8 +70,9 @@ public class DocumentTest {
 			assertEquals("ABC", doc.root().attribute(-1));
 			assertEquals(null, doc.root().attribute("opq"));
 			assertEquals(null, doc.root().attribute(2));
-			assertEquals(checkOffset("test3", doc.layout(), 0), content.length);
-			System.out.printf("test3: content.length=%d\n", content.length);
+			int end = checkOffset("test3", doc.layout(), 0);
+			System.out.printf("test3: content.length=%d actual=%d\n", content.length, end);
+			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -84,9 +89,13 @@ public class DocumentTest {
 				+ "<greeting>Hello, world!</greeting>";
 		Document doc = new Document();
 		try {
-			doc.load(source.getBytes());
+			byte[] content = source.getBytes();
+			doc.load(content);
 			assertEquals("no", doc.standalone());
 			assertEquals("Hello, world!", doc.root().innerText());
+			int end = checkOffset("test4", doc.layout(), 0);
+			System.out.printf("test4: content.length=%d end=%d\n", content.length, end);
+			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -98,6 +107,14 @@ public class DocumentTest {
 				+ "<!DOCTYPE greeting [\r\n"
 				+ "  <!ENTITY % name.para 'X'>\r\n"
 				+ "  <!ENTITY % content.para 'ANY'>\r\n"
+				+ "  <!ENTITY open-hatch\r\n"
+				+ "         SYSTEM \"http://www.textuality.com/boilerplate/OpenHatch.xml\">\r\n"
+				+ "  <!ENTITY open-hatch\r\n"
+				+ "         PUBLIC \"-//Textuality//TEXT Standard open-hatch boilerplate//EN\"\r\n"
+				+ "         \"http://www.textuality.com/boilerplate/OpenHatch.xml\">\r\n"
+				+ "  <!ENTITY hatch-pic\r\n"
+				+ "         SYSTEM \"../grafix/OpenHatch.gif\"\r\n"
+				+ "         NDATA gif >"
 				+ "  <!ELEMENT br EMPTY>\r\n"
 				+ "  <!ELEMENT p (#PCDATA|emph)* >\r\n"
 				+ "  <!ELEMENT %name.para; %content.para; >\r\n"
@@ -129,6 +146,7 @@ public class DocumentTest {
 			assertEquals("43", elements.get(7).attribute("id"));
 			int end = checkOffset("test5", doc.layout(), 0);
 			System.out.printf("test5: content.length=%d end=%d\n", content.length, end);
+			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -145,6 +163,7 @@ public class DocumentTest {
 			assertEquals("Hello, world!", doc.root().innerText());
 			int end = checkOffset("test6", doc.layout(), 0);
 			System.out.printf("test6: content.length=%d-3=%d actual=%d\n", content.length, content.length - 3, end);
+			assertEquals(content.length - 3, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -254,6 +273,28 @@ public class DocumentTest {
 		if (obj instanceof ElementTypeDeclaration etd) {
 			System.out.printf("%s:DTD:ELEMENT %s ", header, etd.name);
 			print(etd.cs);
+		} else if (obj instanceof AttributeListDeclaration ald) {
+			System.out.printf("%s:DTD:ATTLIST %s", header, ald.name);
+			for (int i = 0; i < ald.definitions.length; i++) {
+				AttributeDefinition d = ald.definitions[i];
+				System.out.printf(" [%d] %s %s %s", i, d.key, d.type, d.value);
+			}
+			System.out.printf("\n");
+		} else if (obj instanceof EntityDeclaration ed) {
+			System.out.printf("%s:DTD:ENTITY ", header);
+			if (ed.definition instanceof InternalEntityDefinition ie) {
+				System.out.printf("%s \"%s\"\n", ie.key, ie.value.replaceAll("\"", "\\\\\""));
+			} else if (ed.definition instanceof ExternalEntityDefinition ee) {
+				System.out.printf("%s system=%s pubid=%s ndata=%s\n", ee.key, ee.systemLiteral, ee.pubidLiteral, ee.ndata);
+			} else if (ed.definition instanceof InternalParameterEntityDefinition ipe) {
+				System.out.printf("%% %s \"%s\"\n", ipe.key, ipe.value.replaceAll("\"", "\\\\\""));
+			} else if (ed.definition instanceof ExternalParameterEntityDefinition epe) {
+				System.out.printf("%% %s system=%s pubid=%s\n", epe.key, epe.systemLiteral, epe.pubidLiteral);
+			} else {
+				System.out.printf("BUG!\n");
+			}
+		} else if (obj instanceof NotationDeclaration nd) {
+			System.out.printf("%s:DTD:NOTATION %s system=%s pubid=%s\n", header, nd.name, nd.systemLiteral, nd.pubidLiteral);
 		}
 	}
 

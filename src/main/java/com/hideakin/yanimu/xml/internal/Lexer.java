@@ -381,7 +381,9 @@ public class Lexer {
 				readChar();
 				return parseName();
 			case 'P':
-				if (_m == MODE_DOCTYPE || _m == MODE_DOCTYPE_NOTATION) {
+				if (_m == MODE_DOCTYPE
+					|| _m == MODE_DOCTYPE_ENTITY
+					|| _m == MODE_DOCTYPE_NOTATION) {
 					if (next('U', 'B', 'L', 'I', 'C')) {
 						readChar();
 						return nodeOf(PUBLIC);
@@ -390,7 +392,9 @@ public class Lexer {
 				readChar();
 				return parseName();
 			case 'S':
-				if (_m == MODE_DOCTYPE || _m == MODE_DOCTYPE_NOTATION) {
+				if (_m == MODE_DOCTYPE
+					|| _m == MODE_DOCTYPE_ENTITY
+					|| _m == MODE_DOCTYPE_NOTATION) {
 					if (next('Y', 'S', 'T', 'E', 'M')) {
 						readChar();
 						return nodeOf(SYSTEM);
