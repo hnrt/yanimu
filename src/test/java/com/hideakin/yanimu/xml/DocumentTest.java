@@ -19,14 +19,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
 
 public class DocumentTest {
 
 	@Test
-	void test1() {
+	void test01() {
 		String source = "<?xml version=\"1.0\"?>\r\n"
 				+ "<greeting>Hello, world!</greeting>";
 		Document doc = new Document();
@@ -35,8 +39,8 @@ public class DocumentTest {
 			assertEquals("1.0", doc.version());
 			assertEquals("Hello, world!", doc.root().innerText());
 			byte[] content = source.getBytes();
-			int end = checkOffset("test1", doc.layout(), 0);
-			System.out.printf("test1: content.length=%d actual=%d\n", content.length, end);
+			int end = checkOffset("test01", doc.layout(), 0);
+			System.out.printf("test01: content.length=%d actual=%d\n", content.length, end);
 			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -45,7 +49,7 @@ public class DocumentTest {
 	}
 
 	@Test
-	void test2() {
+	void test02() {
 		String source = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\r\n"
 				+ "<!DOCTYPE greeting SYSTEM \"hello.dtd\">\r\n"
 				+ "<greeting abc:xyz='123'>Hello, world!</greeting>";
@@ -56,8 +60,8 @@ public class DocumentTest {
 			assertEquals("UTF-8", doc.encoding());
 			assertEquals("Hello, world!", doc.root().innerText());
 			assertEquals("123", doc.root().attribute("abc:xyz"));
-			int end = checkOffset("test2", doc.layout(), 0);
-			System.out.printf("test2: content.length=%d actual=%d\n", content.length, end);
+			int end = checkOffset("test02", doc.layout(), 0);
+			System.out.printf("test02: content.length=%d actual=%d\n", content.length, end);
 			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -66,7 +70,7 @@ public class DocumentTest {
 	}
 
 	@Test
-	void test3() {
+	void test03() {
 		String source = "<?xml version=\"1.0\" standalone='yes' ?>\r\n"
 				+ "<!DOCTYPE greeting [\r\n"
 				+ "  <!ELEMENT greeting (#PCDATA)>\r\n"
@@ -85,8 +89,8 @@ public class DocumentTest {
 			assertEquals("ABC", doc.root().attribute(-1));
 			assertEquals(null, doc.root().attribute("opq"));
 			assertEquals(null, doc.root().attribute(2));
-			int end = checkOffset("test3", doc.layout(), 0);
-			System.out.printf("test3: content.length=%d actual=%d\n", content.length, end);
+			int end = checkOffset("test03", doc.layout(), 0);
+			System.out.printf("test03: content.length=%d actual=%d\n", content.length, end);
 			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -95,7 +99,7 @@ public class DocumentTest {
 	}
 
 	@Test
-	void test4() {
+	void test04() {
 		String source = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone='no' ?>\r\n"
 				+ "<!DOCTYPE greeting [\r\n"
 				+ "  <!ATTLIST poem  xml:space (default|preserve) 'preserve'>\r\n"
@@ -109,8 +113,8 @@ public class DocumentTest {
 			doc.load(content);
 			assertEquals("no", doc.standalone());
 			assertEquals("Hello, world!", doc.root().innerText());
-			int end = checkOffset("test4", doc.layout(), 0);
-			System.out.printf("test4: content.length=%d end=%d\n", content.length, end);
+			int end = checkOffset("test04", doc.layout(), 0);
+			System.out.printf("test04: content.length=%d end=%d\n", content.length, end);
 			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -119,7 +123,7 @@ public class DocumentTest {
 	}
 
 	@Test
-	void test5() {
+	void test05() {
 		String source = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone='no' ?>\r\n"
 				+ "<!DOCTYPE greeting [\r\n"
 				+ "  <!ENTITY % name.para 'X'>\r\n"
@@ -180,8 +184,8 @@ public class DocumentTest {
 			assertEquals("421", elements.get(5).attribute("id"));
 			assertEquals("422", elements.get(6).attribute("id"));
 			assertEquals("43", elements.get(7).attribute("id"));
-			int end = checkOffset("test5", doc.layout(), 0);
-			System.out.printf("test5: content.length=%d end=%d\n", content.length, end);
+			int end = checkOffset("test05", doc.layout(), 0);
+			System.out.printf("test05: content.length=%d end=%d\n", content.length, end);
 			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -190,7 +194,7 @@ public class DocumentTest {
 	}
 
 	@Test
-	void test6() {
+	void test06() {
 		String source = "\uFEFF<?xml version=\"1.0\"?>\r\n"
 				+ "<greeting>Hello, world!</greeting>";
 		Document doc = new Document();
@@ -198,8 +202,8 @@ public class DocumentTest {
 			byte[] content = source.getBytes(StandardCharsets.UTF_8);
 			doc.load(content);
 			assertEquals("Hello, world!", doc.root().innerText());
-			int end = checkOffset("test6", doc.layout(), 0);
-			System.out.printf("test6: content.length=%d-3=%d actual=%d\n", content.length, content.length - 3, end);
+			int end = checkOffset("test06", doc.layout(), 0);
+			System.out.printf("test06: content.length=%d-3=%d actual=%d\n", content.length, content.length - 3, end);
 			assertEquals(content.length - 3, end);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -208,7 +212,7 @@ public class DocumentTest {
 	}
 
 	@Test
-	void test7() {
+	void test07() {
 		String source = "\uFEFF<?xml version=\"1.0\"?>\r\n"
 				+ "<greeting>Hello, world!</greeting>";
 		Document doc = new Document();
@@ -222,7 +226,7 @@ public class DocumentTest {
 	}
 
 	@Test
-	void test8() {
+	void test08() {
 		String source = "<?xml version=\"1.0\" ?>\r\n"
 				+ "<!DOCTYPE greeting [\r\n"
 				+ "  <!ENTITY single-line-comment '//'>\r\n"
@@ -252,8 +256,8 @@ public class DocumentTest {
 			assertEquals("400", elements.get(2).innerText());
 			assertEquals("void func(int x) {\n\treturn x < 100 ? x * 4 : x * 2;\n}//<>&bogus;", doc.root().getElements("code").get(0).innerText());
 			assertEquals("<waldo>", doc.root().getElements("options").get(0).attribute("xyzzy"));
-			int end = checkOffset("test8", doc.layout(), 0);
-			System.out.printf("test8: content.length=%d actual=%d\n", content.length, end);
+			int end = checkOffset("test08", doc.layout(), 0);
+			System.out.printf("test08: content.length=%d actual=%d\n", content.length, end);
 			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -262,92 +266,92 @@ public class DocumentTest {
 	}
 
 	@Test
-	void test9() {
+	void test09() {
 		String source = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n"
-		+ "<!DOCTYPE library [\r\n"
-		+ "    <!-- ENTITY 定義 -->\r\n"
-		+ "    <!ENTITY authorDefault \"Unknown Author\">\r\n"
-		+ "    <!ENTITY copyright \"(C) 2026 Example Library\">\r\n"
-		+ "\r\n"
-		+ "    <!-- 要素定義 -->\r\n"
-		+ "    <!ELEMENT library (meta, books, logs)>\r\n"
-		+ "    <!ELEMENT meta (name, created)>\r\n"
-		+ "    <!ELEMENT name (#PCDATA)>\r\n"
-		+ "    <!ELEMENT created (#PCDATA)>\r\n"
-		+ "\r\n"
-		+ "    <!ELEMENT books (book+)>\r\n"
-		+ "    <!ELEMENT book (title, author?, description?, tags?)>\r\n"
-		+ "\r\n"
-		+ "    <!-- 属性定義 -->\r\n"
-		+ "    <!ATTLIST book\r\n"
-		+ "        id ID #REQUIRED\r\n"
-		+ "        category CDATA #IMPLIED\r\n"
-		+ "        status (draft | published | archived) \"draft\"\r\n"
-		+ "    >\r\n"
-		+ "\r\n"
-		+ "    <!ELEMENT title (#PCDATA)>\r\n"
-		+ "    <!ELEMENT author (#PCDATA)>\r\n"
-		+ "    <!ELEMENT description (#PCDATA | note | highlight)*>\r\n"
-		+ "    <!ELEMENT note (#PCDATA)>\r\n"
-		+ "    <!ELEMENT highlight (#PCDATA)>\r\n"
-		+ "\r\n"
-		+ "    <!ELEMENT tags (tag*)>\r\n"
-		+ "    <!ELEMENT tag (#PCDATA)>\r\n"
-		+ "\r\n"
-		+ "    <!-- ログ要素（再帰構造） -->\r\n"
-		+ "    <!ELEMENT logs (log*)>\r\n"
-		+ "    <!ELEMENT log (message, log*)>\r\n"
-		+ "    <!ELEMENT message (#PCDATA)>\r\n"
-		+ "]>\r\n"
-		+ "<library>\r\n"
-		+ "    <meta>\r\n"
-		+ "        <name>Sample Library</name>\r\n"
-		+ "        <created>2026-08-16</created>\r\n"
-		+ "    </meta>\r\n"
-		+ "\r\n"
-		+ "    <books>\r\n"
-		+ "        <book id=\"b001\" category=\"fiction\" status=\"published\">\r\n"
-		+ "            <title>XML Adventures</title>\r\n"
-		+ "            <author>&authorDefault;</author>\r\n"
-		+ "            <description>\r\n"
-		+ "                <![CDATA[\r\n"
-		+ "                    This book explores XML parsing techniques.\r\n"
-		+ "                ]]>\r\n"
-		+ "                <note>Includes DTD and ENTITY examples.</note>\r\n"
-		+ "                <highlight>Recommended for parser testing.</highlight>\r\n"
-		+ "            </description>\r\n"
-		+ "            <tags>\r\n"
-		+ "                <tag>XML</tag>\r\n"
-		+ "                <tag>Parser</tag>\r\n"
-		+ "                <tag>DTD</tag>\r\n"
-		+ "            </tags>\r\n"
-		+ "        </book>\r\n"
-		+ "\r\n"
-		+ "        <book id=\"b002\" status=\"draft\">\r\n"
-		+ "            <title>Advanced Parsing</title>\r\n"
-		+ "            <author>Hanako</author>\r\n"
-		+ "            <description>Work in progress.</description>\r\n"
-		+ "        </book>\r\n"
-		+ "    </books>\r\n"
-		+ "\r\n"
-		+ "    <logs>\r\n"
-		+ "        <log>\r\n"
-		+ "            <message>Library initialized.</message>\r\n"
-		+ "            <log>\r\n"
-		+ "                <message>Books loaded.</message>\r\n"
-		+ "            </log>\r\n"
-		+ "        </log>\r\n"
-		+ "    </logs>\r\n"
-		+ "\r\n"
-		+ "    <!-- ENTITY 展開確認用 -->\r\n"
-		+ "    <footer>&copyright;</footer>\r\n"
-		+ "</library>\r\n";
+				+ "<!DOCTYPE library [\r\n"
+				+ "    <!-- ENTITY 定義 -->\r\n"
+				+ "    <!ENTITY authorDefault \"Unknown Author\">\r\n"
+				+ "    <!ENTITY copyright \"(C) 2026 Example Library\">\r\n"
+				+ "\r\n"
+				+ "    <!-- 要素定義 -->\r\n"
+				+ "    <!ELEMENT library (meta, books, logs)>\r\n"
+				+ "    <!ELEMENT meta (name, created)>\r\n"
+				+ "    <!ELEMENT name (#PCDATA)>\r\n"
+				+ "    <!ELEMENT created (#PCDATA)>\r\n"
+				+ "\r\n"
+				+ "    <!ELEMENT books (book+)>\r\n"
+				+ "    <!ELEMENT book (title, author?, description?, tags?)>\r\n"
+				+ "\r\n"
+				+ "    <!-- 属性定義 -->\r\n"
+				+ "    <!ATTLIST book\r\n"
+				+ "        id ID #REQUIRED\r\n"
+				+ "        category CDATA #IMPLIED\r\n"
+				+ "        status (draft | published | archived) \"draft\"\r\n"
+				+ "    >\r\n"
+				+ "\r\n"
+				+ "    <!ELEMENT title (#PCDATA)>\r\n"
+				+ "    <!ELEMENT author (#PCDATA)>\r\n"
+				+ "    <!ELEMENT description (#PCDATA | note | highlight)*>\r\n"
+				+ "    <!ELEMENT note (#PCDATA)>\r\n"
+				+ "    <!ELEMENT highlight (#PCDATA)>\r\n"
+				+ "\r\n"
+				+ "    <!ELEMENT tags (tag*)>\r\n"
+				+ "    <!ELEMENT tag (#PCDATA)>\r\n"
+				+ "\r\n"
+				+ "    <!-- ログ要素（再帰構造） -->\r\n"
+				+ "    <!ELEMENT logs (log*)>\r\n"
+				+ "    <!ELEMENT log (message, log*)>\r\n"
+				+ "    <!ELEMENT message (#PCDATA)>\r\n"
+				+ "]>\r\n"
+				+ "<library>\r\n"
+				+ "    <meta>\r\n"
+				+ "        <name>Sample Library</name>\r\n"
+				+ "        <created>2026-08-16</created>\r\n"
+				+ "    </meta>\r\n"
+				+ "\r\n"
+				+ "    <books>\r\n"
+				+ "        <book id=\"b001\" category=\"fiction\" status=\"published\">\r\n"
+				+ "            <title>XML Adventures</title>\r\n"
+				+ "            <author>&authorDefault;</author>\r\n"
+				+ "            <description>\r\n"
+				+ "                <![CDATA[\r\n"
+				+ "                    This book explores XML parsing techniques.\r\n"
+				+ "                ]]>\r\n"
+				+ "                <note>Includes DTD and ENTITY examples.</note>\r\n"
+				+ "                <highlight>Recommended for parser testing.</highlight>\r\n"
+				+ "            </description>\r\n"
+				+ "            <tags>\r\n"
+				+ "                <tag>XML</tag>\r\n"
+				+ "                <tag>Parser</tag>\r\n"
+				+ "                <tag>DTD</tag>\r\n"
+				+ "            </tags>\r\n"
+				+ "        </book>\r\n"
+				+ "\r\n"
+				+ "        <book id=\"b002\" status=\"draft\">\r\n"
+				+ "            <title>Advanced Parsing</title>\r\n"
+				+ "            <author>Hanako</author>\r\n"
+				+ "            <description>Work in progress.</description>\r\n"
+				+ "        </book>\r\n"
+				+ "    </books>\r\n"
+				+ "\r\n"
+				+ "    <logs>\r\n"
+				+ "        <log>\r\n"
+				+ "            <message>Library initialized.</message>\r\n"
+				+ "            <log>\r\n"
+				+ "                <message>Books loaded.</message>\r\n"
+				+ "            </log>\r\n"
+				+ "        </log>\r\n"
+				+ "    </logs>\r\n"
+				+ "\r\n"
+				+ "    <!-- ENTITY 展開確認用 -->\r\n"
+				+ "    <footer>&copyright;</footer>\r\n"
+				+ "</library>\r\n";
 		Document doc = new Document();
 		try {
 			byte[] content = source.getBytes(); 
 			doc.load(content);
-			int end = checkOffset("test9", doc.layout(), 0);
-			System.out.printf("test9: content.length=%d actual=%d\n", content.length, end);
+			int end = checkOffset("test09", doc.layout(), 0);
+			System.out.printf("test09: content.length=%d actual=%d\n", content.length, end);
 			assertEquals(content.length, end);
 			List<Element> authors = doc.root().getElements("author");
 			assertEquals("Unknown Author", authors.get(0).innerText());
@@ -355,6 +359,53 @@ public class DocumentTest {
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void test10() {
+		Path path2 = Path.of("C2909F59-CA4C-4DE5-8B97-27E5DE002221.dtd");
+		String source1 = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\r\n"
+				+ "<!DOCTYPE greeting PUBLIC \"-//X4D//Bogus version 1.0//EN\" \""
+				+ path2.toString()
+				+ "\">\r\n"
+				+ "<greeting>Hello, world!</greeting>";
+		String source2 = "<!ENTITY % draft 'INCLUDE' >\r\n"
+				+ "<!ENTITY % final 'IGNORE' >\r\n"
+				+ "\r\n"
+				+ "<![%draft;[\r\n"
+				+ "<!ELEMENT book (comments*, title, body, supplements?)>\r\n"
+				+ "]]>\r\n"
+				+ "<![%final;[\r\n"
+				+ "<!ELEMENT book (title, body, supplements?)>\r\n"
+				+ "]]>";
+		Document doc = new Document();
+		try {
+			byte[] content2 = source2.getBytes();
+			Files.write(path2, content2, StandardOpenOption.CREATE);
+			System.out.printf("test10: Wrote to %s\n", path2);
+			byte[] content1 = source1.getBytes();
+			doc.load(content1);
+			int end = checkOffset("test10", doc.layout(), 0);
+			System.out.printf("test10: content.length=%d actual=%d\n", content1.length, end);
+			assertEquals(content1.length, end);
+			for (String message : doc.warnings()) {
+				System.out.printf("test10: WARN: %s\n", message);
+			}
+			for (String message : doc.information()) {
+				System.out.printf("test10: INFO: %s\n", message);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		} finally {
+			try {
+				if (Files.deleteIfExists(path2)) {
+					System.out.printf("test10: Deleted %s\n", path2);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 

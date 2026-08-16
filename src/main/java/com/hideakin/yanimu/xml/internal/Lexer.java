@@ -15,7 +15,15 @@ public class Lexer {
 	public static final int MODE_DOCTYPE_ATTLIST = 502;
 	public static final int MODE_DOCTYPE_ENTITY = 503;
 	public static final int MODE_DOCTYPE_NOTATION = 504;
-	public static final int MODE_DOCTYPE_PI = 505;
+	public static final int MODE_DOCTYPE_PI = 510;
+	public static final int MODE_EXTERNAL = 600;
+	public static final int MODE_EXTERNAL_ELEMENT = 601;
+	public static final int MODE_EXTERNAL_ATTLIST = 602;
+	public static final int MODE_EXTERNAL_ENTITY = 603;
+	public static final int MODE_EXTERNAL_NOTATION = 604;
+	public static final int MODE_EXTERNAL_IGNORE = 605;
+	public static final int MODE_EXTERNAL_PI = 610;
+	public static final int MODE_EXTERNAL_XML = 620;
 
 	public static final int EOF = -1;
 	public static final int PREMATURE_EOF = Node.PREMATURE_EOF;
@@ -66,6 +74,10 @@ public class Lexer {
 		return _m;
 	}
 
+	public void setMode(int mode) {
+		_m = mode;
+	}
+
 	public int offset() {
 		return _nodeFactory.offset();
 	}
@@ -81,7 +93,7 @@ public class Lexer {
 	public Node read(int preferred) {
 		if (_c == EOF) {
 			return nodeOf(EOF);
-		} else if (_m == MODE_STAG || _m == MODE_ETAG || _m == MODE_XML) {
+		} else if (_m == MODE_STAG || _m == MODE_ETAG || _m == MODE_XML || _m == MODE_EXTERNAL_XML) {
 			switch (_c) {
 			case HT:
 			case LF:
@@ -102,9 +114,9 @@ public class Lexer {
 				}
 				break;
 			case '?':
-				if (_m == MODE_XML && next('>')) {
+				if ((_m == MODE_XML || _m == MODE_EXTERNAL_XML) && next('>')) {
 					readChar();
-					_m = 0;
+					_m = _m == MODE_EXTERNAL_XML ? MODE_EXTERNAL : 0;
 					return nodeOf(XML_END);
 				}
 				break;
@@ -123,7 +135,7 @@ public class Lexer {
 				}
 				break;
 			}
-		} else if (_m == MODE_PI || _m == MODE_DOCTYPE_PI) {
+		} else if (_m == MODE_PI || _m == MODE_DOCTYPE_PI || _m == MODE_EXTERNAL_PI) {
 			switch (_c) {
 			case HT:
 			case LF:
@@ -134,7 +146,7 @@ public class Lexer {
 			case '?':
 				if (next('>')) {
 					readChar();
-					_m = _m == MODE_DOCTYPE_PI ? MODE_DOCTYPE : 0;
+					_m = _m == MODE_EXTERNAL_PI ? MODE_EXTERNAL : _m == MODE_DOCTYPE_PI ? MODE_DOCTYPE : 0;
 					return nodeOf(PI_END);
 				}
 				//FALLTHROUGH
@@ -224,11 +236,7 @@ public class Lexer {
 			default:
 				break;
 			}
-		} else if (_m == MODE_DOCTYPE
-				|| _m == MODE_DOCTYPE_ELEMENT
-				|| _m == MODE_DOCTYPE_ATTLIST
-				|| _m == MODE_DOCTYPE_ENTITY
-				|| _m == MODE_DOCTYPE_NOTATION) {
+		} else if (MODE_DOCTYPE <= _m && _m <= MODE_EXTERNAL_NOTATION) {
 			switch (_c) {
 			case HT:
 			case LF:
@@ -243,33 +251,55 @@ public class Lexer {
 						return parseComment();
 					} else if (next('E', 'L', 'E', 'M', 'E', 'N', 'T')) {
 						readChar();
-						_m = MODE_DOCTYPE_ELEMENT;
+						_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_ELEMENT : MODE_DOCTYPE_ELEMENT;
 						return nodeOf(ELEMENT_DECL_START);
 					} else if (next('A', 'T', 'T', 'L', 'I', 'S', 'T')) {
 						readChar();
-						_m = MODE_DOCTYPE_ATTLIST;
+						_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_ATTLIST : MODE_DOCTYPE_ATTLIST;
 						return nodeOf(ATTLIST_DECL_START);
 					} else if (next('E', 'N', 'T', 'I', 'T', 'Y')) {
 						readChar();
-						_m = MODE_DOCTYPE_ENTITY;
+						_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_ENTITY : MODE_DOCTYPE_ENTITY;
 						return nodeOf(ENTITY_DECL_START);
 					} else if (next('N', 'O', 'T', 'A', 'T', 'I', 'O', 'N')) {
 						readChar();
-						_m = MODE_DOCTYPE_NOTATION;
+						_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_NOTATION : MODE_DOCTYPE_NOTATION;
 						return nodeOf(NOTATION_DECL_START);
+					} else if (_m == MODE_EXTERNAL && next('[')) {
+						readChar();
+						return nodeOf(SECTION_START);
 					}
 				} else if (next('?')) {
-					readChar();
-					_m = MODE_DOCTYPE_PI;
-					return nodeOf(PI_START);
+					int i = _reader.to();
+					if (next('x', 'm', 'l')) {
+						readChar();
+						if (isNameChar(_c)) {
+							_reader.reset(i);
+							readChar();
+							_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_PI : MODE_DOCTYPE_PI;
+							return nodeOf(PI_START);
+						} else {
+							_m = MODE_EXTERNAL_XML;
+							return nodeOf(XML_START);
+						}
+					} else {
+						readChar();
+						_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_PI : MODE_DOCTYPE_PI;
+						return nodeOf(PI_START);
+					}
 				}
 				break;
 			case '>':
 				readChar();
-				_m = _m == MODE_DOCTYPE ? 0 : MODE_DOCTYPE;
+				_m = _m > MODE_EXTERNAL ? MODE_EXTERNAL : _m > MODE_DOCTYPE ? MODE_DOCTYPE : 0;
 				return nodeOf(TAG_END);
-			case '[':
 			case ']':
+				if (_m == MODE_EXTERNAL && next(']', '>')) {
+					readChar();
+					return nodeOf(SECTION_END);
+				}
+				//FALLTHOUGH
+			case '[':
 			case '(':
 			case '|':
 			case ',':
@@ -311,7 +341,7 @@ public class Lexer {
 					return nodeOf('%');
 				}
 			case 'A':
-				if (_m == MODE_DOCTYPE_ELEMENT) {
+				if (_m == MODE_DOCTYPE_ELEMENT || _m == MODE_EXTERNAL_ELEMENT) {
 					if (next('N', 'Y')) {
 						readChar();
 						return nodeOf(ANY);
@@ -320,7 +350,7 @@ public class Lexer {
 				readChar();
 				return parseName();
 			case 'C':
-				if (_m == MODE_DOCTYPE_ATTLIST) {
+				if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
 					if (next('D', 'A', 'T', 'A')) {
 						readChar();
 						return nodeOf(TYPE_CDATA);
@@ -329,7 +359,7 @@ public class Lexer {
 				readChar();
 				return parseName();
 			case 'E':
-				if (_m == MODE_DOCTYPE_ATTLIST) {
+				if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
 					if (next('N', 'T', 'I', 'T', 'I', 'E', 'S')) {
 						readChar();
 						return nodeOf(TYPE_ENTITIES);
@@ -337,7 +367,7 @@ public class Lexer {
 						readChar();
 						return nodeOf(TYPE_ENTITY);
 					}
-				} else if (_m == MODE_DOCTYPE_ELEMENT) {
+				} else if (_m == MODE_DOCTYPE_ELEMENT || _m == MODE_EXTERNAL_ELEMENT) {
 					if (next('M', 'P', 'T', 'Y')) {
 						readChar();
 						return nodeOf(EMPTY);
@@ -346,7 +376,7 @@ public class Lexer {
 				readChar();
 				return parseName();
 			case 'I':
-				if (_m == MODE_DOCTYPE_ATTLIST) {
+				if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
 					if (next('D', 'R', 'E', 'F', 'S')) {
 						readChar();
 						return nodeOf(TYPE_IDREFS);
@@ -357,11 +387,20 @@ public class Lexer {
 						readChar();
 						return nodeOf(TYPE_ID);
 					}
+				} else if (_m == MODE_EXTERNAL) {
+					if (next('G', 'N', 'O', 'R', 'E')) {
+						_m = MODE_EXTERNAL_IGNORE;
+						readChar();
+						return nodeOf(IGNORE);
+					} else if (next('N', 'C', 'L', 'U', 'D', 'E')) {
+						readChar();
+						return nodeOf(INCLUDE);
+					} 					
 				}
 				readChar();
 				return parseName();
 			case 'N':
-				if (_m == MODE_DOCTYPE_ATTLIST) {
+				if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
 					if (next('M', 'T', 'O', 'K', 'E', 'N', 'S')) {
 						readChar();
 						return nodeOf(TYPE_NMTOKENS);
@@ -372,7 +411,7 @@ public class Lexer {
 						readChar();
 						return nodeOf(TYPE_NOTATION);
 					}
-				} else if (_m == MODE_DOCTYPE_ENTITY) {
+				} else if (_m == MODE_DOCTYPE_ENTITY || _m == MODE_EXTERNAL_ENTITY) {
 					if (next('D', 'A', 'T', 'A')) {
 						readChar();
 						return nodeOf(NDATA);
@@ -383,7 +422,9 @@ public class Lexer {
 			case 'P':
 				if (_m == MODE_DOCTYPE
 					|| _m == MODE_DOCTYPE_ENTITY
-					|| _m == MODE_DOCTYPE_NOTATION) {
+					|| _m == MODE_DOCTYPE_NOTATION
+					|| _m == MODE_EXTERNAL_ENTITY
+					|| _m == MODE_EXTERNAL_NOTATION) {
 					if (next('U', 'B', 'L', 'I', 'C')) {
 						readChar();
 						return nodeOf(PUBLIC);
@@ -394,7 +435,9 @@ public class Lexer {
 			case 'S':
 				if (_m == MODE_DOCTYPE
 					|| _m == MODE_DOCTYPE_ENTITY
-					|| _m == MODE_DOCTYPE_NOTATION) {
+					|| _m == MODE_DOCTYPE_NOTATION
+					|| _m == MODE_EXTERNAL_ENTITY
+					|| _m == MODE_EXTERNAL_NOTATION) {
 					if (next('Y', 'S', 'T', 'E', 'M')) {
 						readChar();
 						return nodeOf(SYSTEM);
@@ -412,11 +455,11 @@ public class Lexer {
 					int q = _c;
 					readChar();
 					return parsePubidLiteral(q);
-				} else if (_m == MODE_DOCTYPE_ATTLIST) {
+				} else if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
 					int q = _c;
 					readChar();
 					return parseAttValue(q);
-				} else if (_m == MODE_DOCTYPE_ENTITY) {
+				} else if (_m == MODE_DOCTYPE_ENTITY || _m == MODE_EXTERNAL_ENTITY) {
 					int q = _c;
 					readChar();
 					return parseEntityValue(q);
@@ -432,6 +475,25 @@ public class Lexer {
 				}
 				break;
 			}
+		} else if (_m == MODE_EXTERNAL_IGNORE) {
+			if (preferred == '[') {
+				switch (_c) {
+				case HT:
+				case LF:
+				case CR:
+				case SP:
+					readChar();
+					return parseWhiteSpace();
+				case '[':
+					readChar();
+					return nodeOf('[');
+				default:
+					readChar();
+					return nodeOf(ILLEGAL_CHARACTER);
+						
+				}
+			}
+			return parseIgnoreSectionContents();
 		} else {
 			throw new RuntimeException("Lexer::read: BUG!");
 		}
@@ -766,6 +828,28 @@ public class Lexer {
 			readChar();
 		}
 		return nodeOf(CHAR_DATA);
+	}
+
+	private Node parseIgnoreSectionContents() {
+		int depth = 1;
+		while (true) {
+			if (_c == EOF) {
+				return nodeOf(PREMATURE_EOF);
+			} else if (_c == ']' && peek(']', '>')) {
+				if (--depth == 0) {
+					break;
+				}
+				readChar();
+				readChar();
+			} else if (_c == '<' && next('!', '[')) {
+				depth++;
+			} else if (!isChar(_c)) {
+				return nodeOf(ILLEGAL_CHARACTER);
+			}
+			readChar();
+		}
+		_m = MODE_EXTERNAL;
+		return nodeOf(IGNORE_SECTION_CONTENTS);
 	}
 
 	private int readChar() {

@@ -30,12 +30,21 @@ import com.hideakin.yanimu.xml.ParameterEntityReference;
 
 import static com.hideakin.yanimu.xml.Node.*;
 
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 
+//
+// Notes:
+// HTTP(S) access to external DTDs are not supported.
+// XML catalog is not supported.
+//
 public class Processor {
 
 	private final byte[] _content;
@@ -46,15 +55,28 @@ public class Processor {
 	private Node _n;
 	private final EntityManager _em;
 	private final TextMessageManager _tm;
+	private final List<Object> _markupDeclarations;
 
 	public Processor(byte[] content) {
 		_content = content;
 		_tm = new TextMessageManager();
 		_em = new EntityManager(_tm);
+		_markupDeclarations = new ArrayList<>();
+	}
+
+	private Processor(byte[] content, EntityManager em, TextMessageManager tm, List<Object> md) {
+		_content = content;
+		_tm = tm;
+		_em = em;
+		_markupDeclarations = md;
 	}
 
 	public String[] warnings() {
 		return _tm.warnings();
+	}
+
+	public String[] information() {
+		return _tm.information();
 	}
 
 	public List<Node> parse() throws Exception {
@@ -219,7 +241,6 @@ public class Processor {
 	private void parseDoctypeDeclaration() throws Exception {
 		String name;
 		ExternalIdentifiers extid = null;
-		List<Object> declarations = new ArrayList<>();
 		push();
 		read();
 		if (_n.type == S) {
@@ -242,28 +263,41 @@ public class Processor {
 				}
 			}
 		}
+		if (extid != null) {
+			processExternalDocument(name, extid);
+		}
 		if (_n.type == '[') {
 			read();
 			while (_n.type != ']') {
-				if (_n.type == ELEMENT_DECL_START) {
+				switch (_n.type) {
+				case ELEMENT_DECL_START:
 					ElementTypeDeclaration etd = parseElementDecl();
-					declarations.add(etd);
-				} else if (_n.type == ATTLIST_DECL_START) {
+					_markupDeclarations.add(etd);
+					break;
+				case ATTLIST_DECL_START:
 					AttributeListDeclaration ald = parseAttlistDecl();
-					declarations.add(ald);
-				} else if (_n.type == ENTITY_DECL_START) {
+					_markupDeclarations.add(ald);
+					break;
+				case ENTITY_DECL_START:
 					EntityDeclaration ed = parseEntityDecl();
-					declarations.add(ed);
-				} else if (_n.type == NOTATION_DECL_START) {
+					_markupDeclarations.add(ed);
+					break;
+				case NOTATION_DECL_START:
 					NotationDeclaration nd = parseNotationDecl();
-					declarations.add(nd);
-				} else if (_n.type == PI_START) {
-					parseProcessingInstruction();
-				} else if (_n.type == COMMENT) {
+					_markupDeclarations.add(nd);
+					break;
+				case PI_START:
+					ProcessingInstruction pi = parseProcessingInstruction();
+					_markupDeclarations.add(pi);
+					break;
+				case COMMENT:
+					_markupDeclarations.add(_n);
 					read();
-				} else if (_n.type == S) {
+					break;
+				case S:
 					read();
-				} else {
+					break;
+				default:
 					throw new ParseException("Internal subset is expected.", _n.start);
 				}
 			}
@@ -277,7 +311,7 @@ public class Processor {
 		} else {
 			throw new ParseException("> is expected.", _n.start);
 		}
-		DocumentTypeDeclaration dtd = new DocumentTypeDeclaration(pop(), name, extid, declarations);
+		DocumentTypeDeclaration dtd = new DocumentTypeDeclaration(pop(), name, extid, _markupDeclarations);
 		_nn.add(dtd);
 	}
 
@@ -908,7 +942,7 @@ public class Processor {
 		}
 	}
 
-	private void parseProcessingInstruction() throws Exception {
+	private ProcessingInstruction parseProcessingInstruction() throws Exception {
 		String name;
 		String body;
 		push();
@@ -936,6 +970,7 @@ public class Processor {
 		}
 		ProcessingInstruction pi = new ProcessingInstruction(pop(), name, body); 
 		_nn.add(pi);
+		return pi;
 	}
 
 	private void parseElement(Element parent) throws Exception {
@@ -1082,7 +1117,9 @@ public class Processor {
 				if (_lexers.isEmpty()) {
 					break;
 				}
+				int mode = _lexer.mode();
 				_lexer = _lexers.pop();
+				_lexer.setMode(mode);
 				_n = _lexer.read(preferred);
 				if (sp && _n.type == S) {
 					if (_lexers.isEmpty()) {
@@ -1092,7 +1129,8 @@ public class Processor {
 				}
 			} else if (_n.type == PEREFERENCE) {
 				int mode = _lexer.mode();
-				if (Lexer.MODE_DOCTYPE <= mode && mode <= Lexer.MODE_DOCTYPE_NOTATION) {
+				if ((Lexer.MODE_DOCTYPE <= mode && mode <= Lexer.MODE_DOCTYPE_NOTATION)
+						|| (Lexer.MODE_EXTERNAL <= mode && mode <= Lexer.MODE_EXTERNAL_IGNORE)) {
 					String value = _em.getParameterEntity(((ParameterEntityReference)_n).name);
 					if (value != null) {
 						if (_lexers.isEmpty()) {
@@ -1119,4 +1157,228 @@ public class Processor {
 		return _n;
 	}
 
+	private void processExternalDocument(String name, ExternalIdentifiers extid) {
+		Path path = null;
+		if (extid.pubidLiteral != null) {
+			String[] parts = extid.pubidLiteral.split("//");
+			if (parts.length == 4) {
+				String organization = parts[0];
+				String dtdName = parts[1];
+				String version = parts[2];
+				String language = parts[3];
+				_tm.addInformation("DTD %s PUBID org=\"%s\" dtd=\"%s\" ver=\"%s\" lang=\"%s\"", name, organization, dtdName, version, language);
+				_tm.addInformation("DTD %s Catalog not supported.", name, organization, dtdName, version, language);
+			} else {
+				_tm.addWarning("DTD %s PUBID %s cannot be parsed.", name, extid.pubidLiteral);
+			}
+		}
+		if (extid.systemLiteral != null) {
+			if (extid.systemLiteral.matches("^(?i)https?://.*")) {
+				_tm.addInformation("DTD %s Processor doesn't load document from %s.", name, extid.systemLiteral);
+			} else if (extid.systemLiteral.matches("^(?i)file://.*")) {
+				path = Path.of(URI.create(extid.systemLiteral));
+			} else {
+				path = Path.of(extid.systemLiteral);
+			}
+		}
+		if (path != null) {
+			try {
+				byte[] content = Files.readAllBytes(path);
+				Processor processor = new Processor(content, _em, _tm, _markupDeclarations);
+				processor.parseExternalSubset();
+				_tm.addInformation("DTD %s Processor loaded external document from %s.", name, extid.systemLiteral);
+			} catch (NoSuchFileException e) {
+				_tm.addWarning("DTD %s Processor failed to load external document from %s: No such file.", name, extid.systemLiteral);
+			} catch (Exception e) {
+				_tm.addWarning("DTD %s Processor failed to load external document from %s: %s", name, extid.systemLiteral, e.getMessage());
+			}
+		}
+	}
+
+	public List<Node> parseExternalSubset() throws Exception {
+		_lexer = new Lexer(_content, Lexer.MODE_EXTERNAL);
+		_nn = new ArrayList<>();
+		_n = _lexer.read();
+		if (_n.type == XML_START) {
+			parseTextDeclaration();
+		}
+		while (parseExternalSubsetDeclaration()) {
+			continue;
+		}
+		if (_n.type != EOF) {
+			throw new ParseException("EOF is expected.", _n.start);
+		}
+		return _nn;
+	}
+
+	private void parseTextDeclaration() throws Exception {
+		String name;
+		String version = null;
+		String encoding = null;
+		push();
+		read();
+		if (_n.type == S) {
+			read();
+		} else {
+			throw new ParseException("White space is expected.", _n.start);
+		}
+		if (_n.type == NAME) {
+			name = _n.toString();
+		} else {
+			throw new ParseException("encoding is expected.", _n.start);
+		}
+		if (name.equals("version")) {
+			read();
+			if (_n.type == S) {
+				read();
+			}
+			if (_n.type == EQ) {
+				read();
+			} else {
+				throw new ParseException("Equal sign is expected.", _n.start);
+			}
+			if (_n.type == S) {
+				read();
+			}
+			if (_n.type == ATT_VALUE) {
+				version = ((QuotedString)_n).innerText;
+				if (!version.matches("1\\.[0-9]+")) {
+					throw new ParseException("Malformed version number.", _n.start);
+				}
+				read();
+			} else {
+				throw new ParseException("version number is expected.", _n.start);
+			}
+			if (_n.type == S) {
+				read();
+			} else {
+				throw new ParseException("White space is expected.", _n.start);
+			}
+			if (_n.type == NAME) {
+				name = _n.toString();
+			} else {
+				throw new ParseException("encoding is expected.", _n.start);
+			}
+		}
+		if (name.equals("encoding")) {
+			read();
+		} else {
+			throw new ParseException("encoding is expected.", _n.start);
+		}
+		if (_n.type == S) {
+			read();
+		}
+		if (_n.type == EQ) {
+			read();
+		} else {
+			throw new ParseException("Equal sign is expected.", _n.start);
+		}
+		if (_n.type == S) {
+			read();
+		}
+		if (_n.type == ATT_VALUE) {
+			encoding = ((QuotedString)_n).innerText;
+			read();
+		} else {
+			throw new ParseException("encoding name is expected.", _n.start);
+		}
+		if (_n.type == S) {
+			read();
+		}
+		if (_n.type == XML_END) {
+			read();
+		} else {
+			throw new ParseException("?> is expected.", _n.start);
+		}
+		XmlDeclaration t = new XmlDeclaration(pop(), version, encoding, null);
+		_nn.add(t);
+	}
+
+	private boolean parseExternalSubsetDeclaration() throws Exception {
+		switch (_n.type) {
+		case ELEMENT_DECL_START:
+			ElementTypeDeclaration etd = parseElementDecl();
+			_markupDeclarations.add(etd);
+			return true;
+		case ATTLIST_DECL_START:
+			AttributeListDeclaration ald = parseAttlistDecl();
+			_markupDeclarations.add(ald);
+			return true;
+		case ENTITY_DECL_START:
+			EntityDeclaration ed = parseEntityDecl();
+			_markupDeclarations.add(ed);
+			return true;
+		case NOTATION_DECL_START:
+			NotationDeclaration nd = parseNotationDecl();
+			_markupDeclarations.add(nd);
+			return true;
+		case PI_START:
+			ProcessingInstruction pi = parseProcessingInstruction();
+			_markupDeclarations.add(pi);
+			return true;
+		case COMMENT:
+			_markupDeclarations.add(_n);
+			read();
+			return true;
+		case S:
+			read();
+			return true;
+		case SECTION_START:
+			parseConditionalSection();
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	private void parseConditionalSection() throws Exception {
+		read();
+		if (_n.type == S) {
+			read();
+		}
+		switch (_n.type) {
+		case INCLUDE:
+			read();
+			if (_n.type == S) {
+				read();
+			}
+			if (_n.type == '[') {
+				read();
+			} else {
+				throw new ParseException("[ is expected.", _n.start);
+			}
+			while (parseExternalSubsetDeclaration()) {
+				continue;
+			}
+			if (_n.type == SECTION_END) {
+				read();
+			} else {
+				throw new ParseException("]]> is expected.", _n.start);
+			}
+			break;
+		case IGNORE:
+			read('[');
+			if (_n.type == S) {
+				read('[');
+			}
+			if (_n.type == '[') {
+				read();
+			} else {
+				throw new ParseException("[ is expected.", _n.start);
+			}
+			if (_n.type == IGNORE_SECTION_CONTENTS) {
+				read();
+			} else {
+				throw new ParseException("ignore section contents are expected.", _n.start);
+			}
+			if (_n.type == SECTION_END) {
+				read();
+			} else {
+				throw new ParseException("]]> is expected.", _n.start);
+			}
+			break;
+		default:
+			throw new ParseException("INCLUDE or IGNORE is expected.", _n.start);
+		}
+	}
 }

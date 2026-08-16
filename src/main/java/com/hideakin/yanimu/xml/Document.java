@@ -15,6 +15,8 @@ public class Document {
 	protected XmlDeclaration _xmlDeclaration;
 	protected DocumentTypeDeclaration _dtd;
 	protected Element _root;
+	protected String[] _warnings;
+	protected String[] _information;
 
 	public Document() {
 	}
@@ -68,6 +70,8 @@ public class Document {
 		_xmlDeclaration = null;
 		_dtd = null;
 		_root = null;
+		_warnings = null;
+		_information = null;
 		Processor processor = new Processor(content);
 		_layout = processor.parse();
 		if (_layout.get(0) instanceof XmlDeclaration xmlDeclaration) {
@@ -81,6 +85,16 @@ public class Document {
 				_dtd = dtd;
 			}
 		}
+		_warnings = processor.warnings();
+		_information = processor.information();
+	}
+
+	public String[] warnings() {
+		return _warnings;
+	}
+
+	public String[] information() {
+		return _information;
 	}
 
 }

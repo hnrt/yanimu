@@ -55,6 +55,11 @@ public class Node {
 	public static final int REQUIRED = 2006001;
 	public static final int IMPLIED = 2006002;
 	public static final int FIXED = 2006003;
+	public static final int SECTION_START = 2006101;
+	public static final int SECTION_END = 2006102;
+	public static final int INCLUDE = 2006201;
+	public static final int IGNORE = 2006301;
+	public static final int IGNORE_SECTION_CONTENTS = 2006400;
 	public static final int CHAR_REF = 2006600;
 	public static final int ENTITY_REF = 2006800;
 	public static final int PEREFERENCE = 2006900;
