@@ -280,7 +280,7 @@ public class Lexer {
 				readChar();
 				return nodeOf(c);
 			case ')':
-				if (next('*')) {
+				if (preferred == PCDATA_END && next('*')) {
 					readChar();
 					return nodeOf(PCDATA_END);
 				} else {

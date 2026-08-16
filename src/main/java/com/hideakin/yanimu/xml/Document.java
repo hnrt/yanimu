@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import com.hideakin.yanimu.xml.doctype.DocumentTypeDeclaration;
 import com.hideakin.yanimu.xml.internal.Processor;
 
 public class Document {
@@ -12,6 +13,7 @@ public class Document {
 	protected Path _path;
 	protected List<Node> _layout;
 	protected XmlDeclaration _xmlDeclaration;
+	protected DocumentTypeDeclaration _dtd;
 	protected Element _root;
 
 	public Document() {
@@ -45,6 +47,10 @@ public class Document {
 		return _xmlDeclaration != null ? _xmlDeclaration.standalone : null;
 	}
 
+	public DocumentTypeDeclaration dtd() {
+		return _dtd;
+	}
+
 	public Element root() {
 		return _root;
 	}
@@ -60,6 +66,7 @@ public class Document {
 	public void load(byte[] content) throws Exception {
 		_layout = null;
 		_xmlDeclaration = null;
+		_dtd = null;
 		_root = null;
 		Processor processor = new Processor(content);
 		_layout = processor.parse();
@@ -70,6 +77,8 @@ public class Document {
 			if (node instanceof Element element) {
 				_root = element;
 				break;
+			} else if (node instanceof DocumentTypeDeclaration dtd) {
+				_dtd = dtd;
 			}
 		}
 	}

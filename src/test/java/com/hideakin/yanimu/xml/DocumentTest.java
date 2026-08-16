@@ -16,6 +16,7 @@ import com.hideakin.yanimu.xml.doctype.InternalParameterEntityDefinition;
 import com.hideakin.yanimu.xml.doctype.NotationDeclaration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -33,8 +34,13 @@ public class DocumentTest {
 			doc.load(new ByteArrayInputStream(source.getBytes()));
 			assertEquals("1.0", doc.version());
 			assertEquals("Hello, world!", doc.root().innerText());
+			byte[] content = source.getBytes();
+			int end = checkOffset("test1", doc.layout(), 0);
+			System.out.printf("test1: content.length=%d actual=%d\n", content.length, end);
+			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
+			fail(e.getMessage());
 		}
 	}
 
@@ -45,12 +51,17 @@ public class DocumentTest {
 				+ "<greeting abc:xyz='123'>Hello, world!</greeting>";
 		Document doc = new Document();
 		try {
-			doc.load(source.getBytes());
+			byte[] content = source.getBytes();
+			doc.load(content);
 			assertEquals("UTF-8", doc.encoding());
 			assertEquals("Hello, world!", doc.root().innerText());
 			assertEquals("123", doc.root().attribute("abc:xyz"));
+			int end = checkOffset("test2", doc.layout(), 0);
+			System.out.printf("test2: content.length=%d actual=%d\n", content.length, end);
+			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
+			fail(e.getMessage());
 		}
 	}
 
@@ -79,6 +90,7 @@ public class DocumentTest {
 			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
+			fail(e.getMessage());
 		}
 	}
 
@@ -102,6 +114,7 @@ public class DocumentTest {
 			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
+			fail(e.getMessage());
 		}
 	}
 
@@ -119,10 +132,29 @@ public class DocumentTest {
 				+ "  <!ENTITY hatch-pic\r\n"
 				+ "         SYSTEM \"../grafix/OpenHatch.gif\"\r\n"
 				+ "         NDATA gif >"
+				+ "  <!ENTITY % div.mix 'A'>\r\n"
+				+ "  <!ENTITY % dict.mix 'B'>\r\n"
+				+ "  <!ENTITY % font \"W\" >\r\n"
+				+ "  <!ENTITY % phrase \"X\" >\r\n"
+				+ "  <!ENTITY % special \"Y\" >\r\n"
+				+ "  <!ENTITY % form \"Z\" >\r\n"
 				+ "  <!ELEMENT br EMPTY>\r\n"
 				+ "  <!ELEMENT p (#PCDATA|emph)* >\r\n"
 				+ "  <!ELEMENT %name.para; %content.para; >\r\n"
 				+ "  <!ELEMENT container ANY>\r\n"
+				+ "  <!ELEMENT spec (front, body, back?)>\r\n"
+				+ "  <!ELEMENT div1 (head, (p | list | note)*, div2*)>\r\n"
+				+ "  <!ELEMENT dictionary-body (%div.mix; | %dict.mix;)*>\r\n"
+				+ "  <!ELEMENT p (#PCDATA|a|ul|b|i|em)*>\r\n"
+				+ "  <!ELEMENT p (#PCDATA | %font; | %phrase; | %special; | %form;)* >\r\n"
+				+ "  <!ELEMENT b (#PCDATA)>\r\n"
+				+ "  <!ATTLIST termdef\r\n"
+				+ "          id      ID      #REQUIRED\r\n"
+				+ "          name    CDATA   #IMPLIED>\r\n"
+				+ "  <!ATTLIST list\r\n"
+				+ "          type    (bullets|ordered|glossary)  \"ordered\">\r\n"
+				+ "  <!ATTLIST form\r\n"
+				+ "          method  CDATA   #FIXED \"POST\">\r\n"
 				+ "]>\r\n"
 				+ "<greeting>\r\n"
 				+ "  <abc id='1'>1</abc>\r\n"
@@ -153,6 +185,7 @@ public class DocumentTest {
 			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
+			fail(e.getMessage());
 		}
 	}
 
@@ -170,6 +203,7 @@ public class DocumentTest {
 			assertEquals(content.length - 3, end);
 		} catch (Exception e) {
 			e.printStackTrace();
+			fail(e.getMessage());
 		}
 	}
 
@@ -183,6 +217,7 @@ public class DocumentTest {
 			assertEquals("Hello, world!", doc.root().innerText());
 		} catch (Exception e) {
 			e.printStackTrace();
+			fail(e.getMessage());
 		}
 	}
 
@@ -201,6 +236,7 @@ public class DocumentTest {
 				+ "    <test id='3'>30</test>\r\n"
 				+ "    <test id='4'>400</test>\r\n"
 				+ "  </tests>\r\n"
+				+ "  <options xyzzy=\"&lt;waldo&gt;\"/>\r\n"
 				+ "</greeting>\r\n";
 		Document doc = new Document();
 		try {
@@ -215,11 +251,110 @@ public class DocumentTest {
 			assertEquals("30", elements.get(1).innerText());
 			assertEquals("400", elements.get(2).innerText());
 			assertEquals("void func(int x) {\n\treturn x < 100 ? x * 4 : x * 2;\n}//<>&bogus;", doc.root().getElements("code").get(0).innerText());
+			assertEquals("<waldo>", doc.root().getElements("options").get(0).attribute("xyzzy"));
 			int end = checkOffset("test8", doc.layout(), 0);
 			System.out.printf("test8: content.length=%d actual=%d\n", content.length, end);
 			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void test9() {
+		String source = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n"
+		+ "<!DOCTYPE library [\r\n"
+		+ "    <!-- ENTITY 定義 -->\r\n"
+		+ "    <!ENTITY authorDefault \"Unknown Author\">\r\n"
+		+ "    <!ENTITY copyright \"(C) 2026 Example Library\">\r\n"
+		+ "\r\n"
+		+ "    <!-- 要素定義 -->\r\n"
+		+ "    <!ELEMENT library (meta, books, logs)>\r\n"
+		+ "    <!ELEMENT meta (name, created)>\r\n"
+		+ "    <!ELEMENT name (#PCDATA)>\r\n"
+		+ "    <!ELEMENT created (#PCDATA)>\r\n"
+		+ "\r\n"
+		+ "    <!ELEMENT books (book+)>\r\n"
+		+ "    <!ELEMENT book (title, author?, description?, tags?)>\r\n"
+		+ "\r\n"
+		+ "    <!-- 属性定義 -->\r\n"
+		+ "    <!ATTLIST book\r\n"
+		+ "        id ID #REQUIRED\r\n"
+		+ "        category CDATA #IMPLIED\r\n"
+		+ "        status (draft | published | archived) \"draft\"\r\n"
+		+ "    >\r\n"
+		+ "\r\n"
+		+ "    <!ELEMENT title (#PCDATA)>\r\n"
+		+ "    <!ELEMENT author (#PCDATA)>\r\n"
+		+ "    <!ELEMENT description (#PCDATA | note | highlight)*>\r\n"
+		+ "    <!ELEMENT note (#PCDATA)>\r\n"
+		+ "    <!ELEMENT highlight (#PCDATA)>\r\n"
+		+ "\r\n"
+		+ "    <!ELEMENT tags (tag*)>\r\n"
+		+ "    <!ELEMENT tag (#PCDATA)>\r\n"
+		+ "\r\n"
+		+ "    <!-- ログ要素（再帰構造） -->\r\n"
+		+ "    <!ELEMENT logs (log*)>\r\n"
+		+ "    <!ELEMENT log (message, log*)>\r\n"
+		+ "    <!ELEMENT message (#PCDATA)>\r\n"
+		+ "]>\r\n"
+		+ "<library>\r\n"
+		+ "    <meta>\r\n"
+		+ "        <name>Sample Library</name>\r\n"
+		+ "        <created>2026-08-16</created>\r\n"
+		+ "    </meta>\r\n"
+		+ "\r\n"
+		+ "    <books>\r\n"
+		+ "        <book id=\"b001\" category=\"fiction\" status=\"published\">\r\n"
+		+ "            <title>XML Adventures</title>\r\n"
+		+ "            <author>&authorDefault;</author>\r\n"
+		+ "            <description>\r\n"
+		+ "                <![CDATA[\r\n"
+		+ "                    This book explores XML parsing techniques.\r\n"
+		+ "                ]]>\r\n"
+		+ "                <note>Includes DTD and ENTITY examples.</note>\r\n"
+		+ "                <highlight>Recommended for parser testing.</highlight>\r\n"
+		+ "            </description>\r\n"
+		+ "            <tags>\r\n"
+		+ "                <tag>XML</tag>\r\n"
+		+ "                <tag>Parser</tag>\r\n"
+		+ "                <tag>DTD</tag>\r\n"
+		+ "            </tags>\r\n"
+		+ "        </book>\r\n"
+		+ "\r\n"
+		+ "        <book id=\"b002\" status=\"draft\">\r\n"
+		+ "            <title>Advanced Parsing</title>\r\n"
+		+ "            <author>Hanako</author>\r\n"
+		+ "            <description>Work in progress.</description>\r\n"
+		+ "        </book>\r\n"
+		+ "    </books>\r\n"
+		+ "\r\n"
+		+ "    <logs>\r\n"
+		+ "        <log>\r\n"
+		+ "            <message>Library initialized.</message>\r\n"
+		+ "            <log>\r\n"
+		+ "                <message>Books loaded.</message>\r\n"
+		+ "            </log>\r\n"
+		+ "        </log>\r\n"
+		+ "    </logs>\r\n"
+		+ "\r\n"
+		+ "    <!-- ENTITY 展開確認用 -->\r\n"
+		+ "    <footer>&copyright;</footer>\r\n"
+		+ "</library>\r\n";
+		Document doc = new Document();
+		try {
+			byte[] content = source.getBytes(); 
+			doc.load(content);
+			int end = checkOffset("test9", doc.layout(), 0);
+			System.out.printf("test9: content.length=%d actual=%d\n", content.length, end);
+			assertEquals(content.length, end);
+			List<Element> authors = doc.root().getElements("author");
+			assertEquals("Unknown Author", authors.get(0).innerText());
+			assertEquals("Hanako", authors.get(1).innerText());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
 		}
 	}
 

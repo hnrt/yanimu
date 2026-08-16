@@ -81,38 +81,44 @@ public class Element extends Node {
 
 	public List<Element> getElements(String name) {
 		List<Element> elements = new ArrayList<>();
-		for (Node child : children) {
-			if (child instanceof Element element) {
-				if (element.name.equals(name)) {
-					elements.add(element);
+		if (children != null) {
+			for (Node child : children) {
+				if (child instanceof Element element) {
+					if (element.name.equals(name)) {
+						elements.add(element);
+					}
+					elements.addAll(element.getElements(name));
 				}
-				elements.addAll(element.getElements(name));
 			}
 		}
 		return elements;
 	}
 
 	private static byte[] buildSequence(byte[] startTag, List<Node> childList, List<Node> endList) {
-		int n = startTag.length;
-		for (Node node : childList) {
-			n += node.sequence.length;
+		if (endList != null) {
+			int n = startTag.length;
+			for (Node node : childList) {
+				n += node.sequence.length;
+			}
+			for (Node node : endList) {
+				n += node.sequence.length;
+			}
+			byte[] sequence = new byte[n];
+			int i = 0;
+			System.arraycopy(startTag, 0, sequence, i, startTag.length);
+			i += startTag.length;
+			for (Node node : childList) {
+				System.arraycopy(node.sequence, 0, sequence, i, node.sequence.length);
+				i += node.sequence.length;
+			}
+			for (Node node : endList) {
+				System.arraycopy(node.sequence, 0, sequence, i, node.sequence.length);
+				i += node.sequence.length;
+			}
+			return sequence;
+		} else {
+			return startTag;
 		}
-		for (Node node : endList) {
-			n += node.sequence.length;
-		}
-		byte[] sequence = new byte[n];
-		int i = 0;
-		System.arraycopy(startTag, 0, sequence, i, startTag.length);
-		i += startTag.length;
-		for (Node node : childList) {
-			System.arraycopy(node.sequence, 0, sequence, i, node.sequence.length);
-			i += node.sequence.length;
-		}
-		for (Node node : endList) {
-			System.arraycopy(node.sequence, 0, sequence, i, node.sequence.length);
-			i += node.sequence.length;
-		}
-		return sequence;
 	}
 
 }

@@ -340,9 +340,9 @@ public class Processor {
 			read();
 		}
 		if (_n.type == PCDATA) {
-			read();
+			read(PCDATA_END);
 			if (_n.type == S) {
-				read();
+				read(PCDATA_END);
 			}
 			if (_n.type == ')') {
 				read();
@@ -360,12 +360,12 @@ public class Processor {
 					}
 					if (_n.type == NAME) {
 						choiceList.add(_n.toString());
-						read();
+						read(PCDATA_END);
 					} else {
 						throw new ParseException("Name is expected.", _n.start);
 					}
 					if (_n.type == S) {
-						read();
+						read(PCDATA_END);
 					}
 				} while (_n.type == '|');
 				if (_n.type == PCDATA_END) {
@@ -378,26 +378,61 @@ public class Processor {
 				throw new ParseException(") or )* is expected.", _n.start);
 			}
 		} else {
-			ContentParticle cp = parseChildren();
-			cs = new ContentSpec(cp);
+			Object choiceOrSequence;
+			ContentParticle cp = parseCP();
+			if (_n.type == S) {
+				read();
+			}
+			if (_n.type == '|') {
+				ContentChoice choice = new ContentChoice(cp);
+				do {
+					read();
+					if (_n.type == S) {
+						read();
+					}
+					cp = parseCP();
+					choice.add(cp);
+					if (_n.type == S) {
+						read();
+					}
+				} while (_n.type == '|');
+				choiceOrSequence = choice;
+			} else if (_n.type == ',') {
+				ContentSequence seq = new ContentSequence(cp);
+				do {
+					read();
+					if (_n.type == S) {
+						read();
+					}
+					cp = parseCP();
+					seq.add(cp);
+					if (_n.type == S) {
+						read();
+					}
+				} while (_n.type == ',');
+				choiceOrSequence = seq;
+			} else {
+				choiceOrSequence = new ContentSequence(cp);
+			}
+			if (_n.type == ')') {
+				read();
+			} else {
+				throw new ParseException(") is expected.", _n.start);
+			}
+			if (_n.type == '?') {
+				read();
+				cs = new ContentSpec(new ContentParticle(choiceOrSequence, '?'));
+			} else if (_n.type == '*') {
+				read();
+				cs = new ContentSpec(new ContentParticle(choiceOrSequence, '*'));
+			} else if (_n.type == '+') {
+				read();
+				cs = new ContentSpec(new ContentParticle(choiceOrSequence, '+'));
+			} else {
+				cs = new ContentSpec(new ContentParticle(choiceOrSequence));
+			}
 		}
 		return cs;
-	}
-
-	private ContentParticle parseChildren() throws Exception {
-		Object target = parseChoiceOrSequence();
-		if (_n.type == '?') {
-			read();
-			return new ContentParticle(target, '?');
-		} else if (_n.type == '*') {
-			read();
-			return new ContentParticle(target, '*');
-		} else if (_n.type == '+') {
-			read();
-			return new ContentParticle(target, '+');
-		} else {
-			return new ContentParticle(target);
-		}
 	}
 
 	private Object parseChoiceOrSequence() throws Exception {
