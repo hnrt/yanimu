@@ -10,6 +10,8 @@ import com.hideakin.yanimu.xml.QuotedString;
 
 import static com.hideakin.yanimu.xml.Node.*;
 
+import java.nio.charset.StandardCharsets;
+
 public class NodeFactory {
 
 	private static class NodeX extends Node {
@@ -68,7 +70,7 @@ public class NodeFactory {
 	}
 
 	private byte[] pop() {
-		byte[] sequence = _buffer.toString().getBytes();
+		byte[] sequence = _buffer.toString().getBytes(StandardCharsets.UTF_8);
 		_buffer.setLength(0);
 		_offset += sequence.length;
 		return sequence;

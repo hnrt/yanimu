@@ -348,7 +348,7 @@ public class DocumentTest {
 				+ "</library>\r\n";
 		Document doc = new Document();
 		try {
-			byte[] content = source.getBytes(); 
+			byte[] content = source.getBytes(StandardCharsets.UTF_8);
 			doc.load(content);
 			int end = checkOffset("test09", doc.layout(), 0);
 			System.out.printf("test09: content.length=%d actual=%d\n", content.length, end);
@@ -356,6 +356,12 @@ public class DocumentTest {
 			List<Element> authors = doc.root().getElements("author");
 			assertEquals("Unknown Author", authors.get(0).innerText());
 			assertEquals("Hanako", authors.get(1).innerText());
+			for (String message : doc.warnings()) {
+				System.out.printf("test09: WARN: %s\n", message);
+			}
+			for (String message : doc.information()) {
+				System.out.printf("test09: INFO: %s\n", message);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
