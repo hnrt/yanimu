@@ -6,7 +6,7 @@ public class CDATASection extends Node {
 
 	public CDATASection(int offset, byte[] sequence) {
 		super(CD_SECT, offset, sequence);
-		this.innerText = new String(sequence, 10, sequence.length - 13);
+		this.innerText = new String(sequence, 9, sequence.length - 12);
 	}
 
 }

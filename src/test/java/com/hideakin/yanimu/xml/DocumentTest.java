@@ -232,7 +232,7 @@ public class DocumentTest {
 				+ "  <!ENTITY single-line-comment '//'>\r\n"
 				+ "]>\r\n"
 				+ "<greeting>\r\n"
-				+ "  <code><![CDATA[[void func(int x) {\n"
+				+ "  <code><![CDATA[void func(int x) {\n"
 				+ "\treturn x < 100 ? x * 4 : x * 2;\n"
 				+ "}]]>&single-line-comment;&#60;&gt;&bogus;<!--@@@--></code>\r\n"
 				+ "  <tests>\r\n"
