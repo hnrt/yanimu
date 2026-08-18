@@ -1,5 +1,6 @@
 package com.hideakin.yanimu.xml;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class Node {
@@ -10,6 +11,7 @@ public class Node {
 
 	// Character.MAX_CODE_POINT : 0x10FFFF = 1114111
 
+	public static final int DOCUMENT = 2000100;
 	public static final int S = 2000300;
 	public static final int NAME = 2000500;
 	public static final int NMTOKEN = 2000700;
@@ -25,14 +27,16 @@ public class Node {
 	public static final int PI_END = 2001603;
 	public static final int CD_SECT = 2001800;
 	public static final int XML_DECL = 2002300;
-	public static final int XML_START = 2002301;
 	public static final int XML_END = 2002302;
 	public static final int DOCTYPE_DECL = 2002800;
 	public static final int DOCTYPE_DECL_START = 2002801;
 	public static final int ELEMENT = 2003900;
-	public static final int STAG_START = 2004001;
+	public static final int STAG = 2004000;
+	public static final int TAG_START = 2004001;
 	public static final int ATTRIBUTE = 2004100;
+	public static final int ETAG = 2004200;
 	public static final int ETAG_START = 2004201;
+	public static final int EETAG = 2004400;
 	public static final int EETAG_END = 2004401;
 	public static final int ELEMENT_DECL = 2004500;
 	public static final int ELEMENT_DECL_START = 2004501;
@@ -81,42 +85,58 @@ public class Node {
 	public static final int MALFORMED_PEREFERENCE = 3006900;
 
 	public final int type;
-	public final int start;
-	public final int end;
-	public final byte[] sequence;
+	protected byte[] _sequence;
 
-	protected Node(int type, int offset, byte[] sequence) {
+	protected Node(int type) {
 		this.type = type;
-		this.start = offset;
-		this.end = offset + sequence.length;
-		this.sequence = sequence;
+		_sequence = null;
+	}
+
+	protected Node(int type, byte[] sequence) {
+		this.type = type;
+		_sequence = sequence;
 	}
 
 	protected Node(int type, List<Node> nodeList) {
-		this(type, nodeList.get(0).start, buildSequence(nodeList));
+		this(type, buildSequence(nodeList));
 	}
 
-	protected Node(int type, int offset, List<Node> nodeList) {
-		this(type, offset, buildSequence(nodeList));
+	public byte[] sequence() {
+		return _sequence;
+	}
+
+	public void clearSequence() {
+		_sequence = null;
+	}
+
+	public void setSequence(byte[] sequence) {
+		_sequence = sequence;
+	}
+
+	public void setSequence(String string) {
+		_sequence = string.getBytes(StandardCharsets.UTF_8);
 	}
 
 	@Override
 	public String toString() {
-		return sequence != null ? new String(sequence) : "";
+		byte[] s = sequence();
+		return s != null ? new String(s, StandardCharsets.UTF_8) : "";
 	}
 
-	private static byte[] buildSequence(List<Node> nodeList) {
-		int n = 0;
+	protected static byte[] buildSequence(List<Node> nodeList) {
+		int requiredLength = 0;
 		for (Node node : nodeList) {
-			n += node.sequence.length;
+			requiredLength += node.sequence().length;
 		}
-		byte[] sequence = new byte[n];
-		int i = 0;
+		byte[] destination = new byte[requiredLength];
+		int offset = 0;
 		for (Node node : nodeList) {
-			System.arraycopy(node.sequence, 0, sequence, i, node.sequence.length);
-			i += node.sequence.length;
+			byte[] source = node.sequence(); 
+			int length = source.length;
+			System.arraycopy(source, 0, destination, offset, length);
+			offset += length;
 		}
-		return sequence;
+		return destination;
 	}
 
 }

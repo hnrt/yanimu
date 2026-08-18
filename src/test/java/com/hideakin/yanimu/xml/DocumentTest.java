@@ -39,9 +39,8 @@ public class DocumentTest {
 			assertEquals("1.0", doc.version());
 			assertEquals("Hello, world!", doc.root().innerText());
 			byte[] content = source.getBytes();
-			int end = checkOffset("test01", doc.layout(), 0);
+			int end = checkDocument("test01", doc, content);
 			System.out.printf("test01: content.length=%d actual=%d\n", content.length, end);
-			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -60,9 +59,8 @@ public class DocumentTest {
 			assertEquals("UTF-8", doc.encoding());
 			assertEquals("Hello, world!", doc.root().innerText());
 			assertEquals("123", doc.root().attribute("abc:xyz"));
-			int end = checkOffset("test02", doc.layout(), 0);
+			int end = checkDocument("test02", doc, content);
 			System.out.printf("test02: content.length=%d actual=%d\n", content.length, end);
-			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -89,9 +87,8 @@ public class DocumentTest {
 			assertEquals("ABC", doc.root().attribute(-1));
 			assertEquals(null, doc.root().attribute("opq"));
 			assertEquals(null, doc.root().attribute(2));
-			int end = checkOffset("test03", doc.layout(), 0);
+			int end = checkDocument("test03", doc, content);
 			System.out.printf("test03: content.length=%d actual=%d\n", content.length, end);
-			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -113,9 +110,8 @@ public class DocumentTest {
 			doc.load(content);
 			assertEquals("no", doc.standalone());
 			assertEquals("Hello, world!", doc.root().innerText());
-			int end = checkOffset("test04", doc.layout(), 0);
+			int end = checkDocument("test04", doc, content);
 			System.out.printf("test04: content.length=%d end=%d\n", content.length, end);
-			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -184,9 +180,8 @@ public class DocumentTest {
 			assertEquals("421", elements.get(5).attribute("id"));
 			assertEquals("422", elements.get(6).attribute("id"));
 			assertEquals("43", elements.get(7).attribute("id"));
-			int end = checkOffset("test05", doc.layout(), 0);
+			int end = checkDocument("test05", doc, content);
 			System.out.printf("test05: content.length=%d end=%d\n", content.length, end);
-			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -202,9 +197,8 @@ public class DocumentTest {
 			byte[] content = source.getBytes(StandardCharsets.UTF_8);
 			doc.load(content);
 			assertEquals("Hello, world!", doc.root().innerText());
-			int end = checkOffset("test06", doc.layout(), 0);
+			int end = checkDocument("test06", doc, Arrays.copyOfRange(content, 3, content.length));
 			System.out.printf("test06: content.length=%d-3=%d actual=%d\n", content.length, content.length - 3, end);
-			assertEquals(content.length - 3, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -256,9 +250,8 @@ public class DocumentTest {
 			assertEquals("400", elements.get(2).innerText());
 			assertEquals("void func(int x) {\n\treturn x < 100 ? x * 4 : x * 2;\n}//<>&bogus;", doc.root().getElements("code").get(0).innerText());
 			assertEquals("<waldo>", doc.root().getElements("options").get(0).attribute("xyzzy"));
-			int end = checkOffset("test08", doc.layout(), 0);
+			int end = checkDocument("test08", doc, content);
 			System.out.printf("test08: content.length=%d actual=%d\n", content.length, end);
-			assertEquals(content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -350,9 +343,8 @@ public class DocumentTest {
 		try {
 			byte[] content = source.getBytes(StandardCharsets.UTF_8);
 			doc.load(content);
-			int end = checkOffset("test09", doc.layout(), 0);
+			int end = checkDocument("test09", doc, content);
 			System.out.printf("test09: content.length=%d actual=%d\n", content.length, end);
-			assertEquals(content.length, end);
 			List<Element> authors = doc.root().getElements("author");
 			assertEquals("Unknown Author", authors.get(0).innerText());
 			assertEquals("Hanako", authors.get(1).innerText());
@@ -392,9 +384,8 @@ public class DocumentTest {
 			System.out.printf("test10: Wrote to %s\n", path2);
 			byte[] content1 = source1.getBytes();
 			doc.load(content1);
-			int end = checkOffset("test10", doc.layout(), 0);
+			int end = checkDocument("test10", doc, content1);
 			System.out.printf("test10: content.length=%d actual=%d\n", content1.length, end);
-			assertEquals(content1.length, end);
 			for (String message : doc.warnings()) {
 				System.out.printf("test10: WARN: %s\n", message);
 			}
@@ -415,32 +406,50 @@ public class DocumentTest {
 		}
 	}
 
-	private int checkOffset(String header, List<Node> nodes, int expected) {
-		for (int i = 0; i < nodes.size(); i++) {
-			Node node = nodes.get(i);
-			System.out.printf("%s[%d] %d %d %s\n", header, i, node.start, node.end, sprint(node));
-			assertEquals(expected, node.start);
-			expected += node.sequence.length;
-			assertEquals(expected, node.end);
+	private int checkDocument(String header, Document doc, byte[] expected) {
+		List<Node> nodeList = doc.nodeList();
+		int start = 0;
+		for (int i = 0; i < nodeList.size(); i++) {
+			Node node = nodeList.get(i);
+			int end = start + node.sequence().length;
+			System.out.printf("%s[%d] %d %d %s\n", header, i, start, end, sprint(node));
 			if (node.type == Node.ELEMENT) {
-				Element element = (Element)node;
-				int iend = checkOffset(String.format("%s[%d]S", header, i), element.startLayout, element.start);
-				if (element.endLayout != null) {
-					if (element.children.size() > 0) {
-						iend = checkOffset(String.format("%s[%d]C", header, i), element.children, iend);
-					}
-					iend = checkOffset(String.format("%s[%d]E", header, i), element.endLayout, iend);
-				}
-				assertEquals(expected, iend);
+				assertEquals(end, printElement(String.format("%s[%d]E", header, i), (Element)node, start));
 			} else if (node.type == Node.DOCTYPE_DECL) {
-				DocumentTypeDeclaration dtd = (DocumentTypeDeclaration)node;
-				assertEquals(dtd.end, checkOffset(String.format("%s[%d]DTD", header, i), Arrays.asList(dtd.layout), dtd.start));
-				for (Object obj : dtd.declarations) {
-					printDeclaration(header, obj);
-				}
+				printDocumentTypeDeclaration(String.format("%s[%d]D", header, i), (DocumentTypeDeclaration)node, start);
 			}
+			start = end;
 		}
-		return expected;
+		assertEquals(expected, doc.sequence());
+		return start;
+	}
+
+	private int printElement(String header, Element element, int start) {
+		List<Node> nodeList = element.nodeList();
+		for (int i = 0; i < nodeList.size(); i++) {
+			Node node = nodeList.get(i);
+			int end = start + node.sequence().length;
+			System.out.printf("%s[%d] %d %d %s\n", header, i, start, end, sprint(node));
+			if (node.type == Node.ELEMENT) {
+				assertEquals(end, printElement(String.format("%s[%d]", header, i), (Element)node, start));
+			}
+			start = end;
+		}
+		return start;
+	}
+
+	private int printDocumentTypeDeclaration(String header, DocumentTypeDeclaration dtd, int start) {
+		Node[] nodeList = dtd.layout;
+		for (int i = 0; i < nodeList.length; i++) {
+			Node node = nodeList[i];
+			int end = start + node.sequence().length;
+			System.out.printf("%s[%d] %d %d %s\n", header, i, start, end, sprint(node));
+			start = end;
+		}
+		for (int i = 0; i < dtd.declarations.length; i++) {
+			printDeclaration(header, dtd.declarations[i]);
+		}
+		return start;
 	}
 
 	private String sprint(Node node) {
@@ -450,7 +459,7 @@ public class DocumentTest {
 			return "<...>";
 		case Node.S:
 			buf = new StringBuilder();
-			for (byte c : node.sequence) {
+			for (byte c : node.sequence()) {
 				switch (c) {
 				case 9: buf.append(" HT"); break;
 				case 10: buf.append(" LF"); break;

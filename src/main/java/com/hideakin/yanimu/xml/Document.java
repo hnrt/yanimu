@@ -8,10 +8,10 @@ import java.util.List;
 import com.hideakin.yanimu.xml.doctype.DocumentTypeDeclaration;
 import com.hideakin.yanimu.xml.internal.Processor;
 
-public class Document {
+public class Document extends Node {
 
 	protected Path _path;
-	protected List<Node> _layout;
+	protected List<Node> _nodeList;
 	protected XmlDeclaration _xmlDeclaration;
 	protected DocumentTypeDeclaration _dtd;
 	protected Element _root;
@@ -19,9 +19,11 @@ public class Document {
 	protected String[] _information;
 
 	public Document() {
+		super(DOCUMENT);
 	}
 
 	public Document(Path path) {
+		super(DOCUMENT);
 		_path = path;
 	}
 
@@ -33,8 +35,8 @@ public class Document {
 		_path = path;
 	}
 
-	public List<Node> layout() {
-		return _layout;
+	public List<Node> nodeList() {
+		return _nodeList;
 	}
 
 	public String version() {
@@ -66,20 +68,21 @@ public class Document {
 	}
 
 	public void load(byte[] content) throws Exception {
-		_layout = null;
+		_nodeList = null;
 		_xmlDeclaration = null;
 		_dtd = null;
 		_root = null;
 		_warnings = null;
 		_information = null;
 		Processor processor = new Processor(content);
-		_layout = processor.parse();
-		if (_layout.get(0) instanceof XmlDeclaration xmlDeclaration) {
+		_nodeList = processor.parse();
+		if (_nodeList.get(0) instanceof XmlDeclaration xmlDeclaration) {
 			_xmlDeclaration = xmlDeclaration;
 		}
-		for (Node node : _layout) {
+		for (Node node : _nodeList) {
 			if (node instanceof Element element) {
 				_root = element;
+				_root.setParent(this);
 				break;
 			} else if (node instanceof DocumentTypeDeclaration dtd) {
 				_dtd = dtd;
@@ -95,6 +98,14 @@ public class Document {
 
 	public String[] information() {
 		return _information;
+	}
+
+	@Override
+	public byte[] sequence() {
+		if (_sequence == null) {
+			_sequence = buildSequence(_nodeList);
+		}
+		return _sequence;
 	}
 
 }

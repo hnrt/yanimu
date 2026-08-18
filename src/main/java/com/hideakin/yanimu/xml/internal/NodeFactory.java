@@ -16,52 +16,37 @@ public class NodeFactory {
 
 	private static class NodeX extends Node {
 
-		public NodeX(int type, int offset, byte[] sequence) {
-			super(type, offset, sequence);
+		public NodeX(int type, byte[] sequence) {
+			super(type, sequence);
 		}
 
 	}
 		
 	private StringBuilder _buffer = new StringBuilder();
-	private int _offset;
 
 	public NodeFactory() {
-		this(0);
-	}
-
-	public NodeFactory(int offset) {
-		_offset = offset;
-	}
-
-	public int offset() {
-		return _offset;
-	}
-
-	public void setOffset(int offset) {
-		_offset = offset;
 	}
 
 	public Node nodeOf(int type) {
-		int offset = _offset;
 		byte[] sequence = pop();
 		switch (type) {
 		case ENTITY_VALUE:
 		case ATT_VALUE:
 		case SYSTEM_LITERAL:
 		case PUBID_LITERAL:
-			return new QuotedString(type, offset, sequence);
+			return new QuotedString(type, sequence);
 		case COMMENT:
-			return new Comment(offset, sequence);
+			return new Comment(sequence);
 		case CD_SECT:
-			return new CDATASection(offset, sequence);
+			return new CDATASection(sequence);
 		case CHAR_REF:
-			return new CharRef(offset, sequence);
+			return new CharRef(sequence);
 		case ENTITY_REF:
-			return new EntityRef(offset, sequence);
+			return new EntityRef(sequence);
 		case PEREFERENCE:
-			return new ParameterEntityReference(offset, sequence);
+			return new ParameterEntityReference(sequence);
 		default:
-			return new NodeX(type, offset, sequence);
+			return new NodeX(type, sequence);
 		}
 	}
 
@@ -72,7 +57,6 @@ public class NodeFactory {
 	private byte[] pop() {
 		byte[] sequence = _buffer.toString().getBytes(StandardCharsets.UTF_8);
 		_buffer.setLength(0);
-		_offset += sequence.length;
 		return sequence;
 	}
 

@@ -51,7 +51,7 @@ public class Lexer {
 	}
 
 	public Lexer(byte[] content, int mode, int offset) {
-		_nodeFactory = new NodeFactory(offset);
+		_nodeFactory = new NodeFactory();
 		_reader = _readerFactory.create(content, _nodeFactory);
 		_d = 0;
 		_m = mode;
@@ -78,14 +78,6 @@ public class Lexer {
 		_m = mode;
 	}
 
-	public int offset() {
-		return _nodeFactory.offset();
-	}
-
-	public void setOffset(int offset) {
-		_nodeFactory.setOffset(offset);
-	}
-
 	public Node read() {
 		return read(0);
 	}
@@ -93,7 +85,12 @@ public class Lexer {
 	public Node read(int preferred) {
 		if (_c == EOF) {
 			return nodeOf(EOF);
-		} else if (_m == MODE_STAG || _m == MODE_ETAG || _m == MODE_XML || _m == MODE_EXTERNAL_XML) {
+		}
+		switch (_m) {
+		case MODE_STAG:
+		case MODE_ETAG:
+		case MODE_XML:
+		case MODE_EXTERNAL_XML:
 			switch (_c) {
 			case HT:
 			case LF:
@@ -135,7 +132,10 @@ public class Lexer {
 				}
 				break;
 			}
-		} else if (_m == MODE_PI || _m == MODE_DOCTYPE_PI || _m == MODE_EXTERNAL_PI) {
+			break;
+		case MODE_PI:
+		case MODE_DOCTYPE_PI:
+		case MODE_EXTERNAL_PI:
 			switch (_c) {
 			case HT:
 			case LF:
@@ -160,342 +160,329 @@ public class Lexer {
 				readChar();
 				return parsePI();
 			}
-		} else if (_d > 0) {
-			switch (_c) {
-			case '<':
-				if (next('!', '-', '-')) {
-					readChar();
-					return parseComment();
-				} else if (next('?')) {
-					readChar();
-					_m = MODE_PI;
-					return nodeOf(PI_START);
-				} else if (next('!', '[', 'C', 'D', 'A', 'T', 'A', '[')) {
-					readChar();
-					return parseCDSect();
-				} else if (next('/')) {
-					readChar();
-					_m = MODE_ETAG;
-					return nodeOf(ETAG_START);
-				} else {
-					readChar();
-					_m = MODE_STAG;
-					return nodeOf(STAG_START);
-				}
-			case '&':
-				readChar();
-				return parseReference();
-			case ']':
-				if (next(']', '>')) {
-					break;
-				}
-				//FALLTHROUGH
-			default:
-				readChar();
-				return parseCharData();
-			}
-		} else if (_m == 0) {
-			switch (_c) {
-			case HT:
-			case LF:
-			case CR:
-			case SP:
-				readChar();
-				return parseWhiteSpace();
-			case '<':
-				if (next('!', '-', '-')) {
-					readChar();
-					return parseComment();
-				} else if (next('?')) {
-					int i = _reader.to();
-					if (next('x', 'm', 'l')) {
+		default:
+			if (_d > 0) {
+				switch (_c) {
+				case '<':
+					if (next('!', '-', '-')) {
 						readChar();
-						if (isNameChar(_c)) {
-							_reader.reset(i);
-							readChar();
-							_m = MODE_PI;
-							return nodeOf(PI_START);
-						} else {
-							_m = MODE_XML;
-							return nodeOf(XML_START);
-						}
-					} else {
+						return parseComment();
+					} else if (next('?')) {
 						readChar();
 						_m = MODE_PI;
 						return nodeOf(PI_START);
-					}
-				} else if (next('!', 'D', 'O', 'C', 'T', 'Y', 'P', 'E')) {
-					readChar();
-					_m = MODE_DOCTYPE;
-					return nodeOf(DOCTYPE_DECL_START);
-				} else {
-					readChar();
-					_m = MODE_STAG;
-					return nodeOf(STAG_START);
-				}
-			default:
-				break;
-			}
-		} else if (MODE_DOCTYPE <= _m && _m <= MODE_EXTERNAL_NOTATION) {
-			switch (_c) {
-			case HT:
-			case LF:
-			case CR:
-			case SP:
-				readChar();
-				return parseWhiteSpace();
-			case '<':
-				if (next('!')) {
-					if (next('-', '-')) {
+					} else if (next('!', '[', 'C', 'D', 'A', 'T', 'A', '[')) {
 						readChar();
-						return parseComment();
-					} else if (next('E', 'L', 'E', 'M', 'E', 'N', 'T')) {
+						return parseCDSect();
+					} else if (next('/')) {
 						readChar();
-						_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_ELEMENT : MODE_DOCTYPE_ELEMENT;
-						return nodeOf(ELEMENT_DECL_START);
-					} else if (next('A', 'T', 'T', 'L', 'I', 'S', 'T')) {
-						readChar();
-						_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_ATTLIST : MODE_DOCTYPE_ATTLIST;
-						return nodeOf(ATTLIST_DECL_START);
-					} else if (next('E', 'N', 'T', 'I', 'T', 'Y')) {
-						readChar();
-						_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_ENTITY : MODE_DOCTYPE_ENTITY;
-						return nodeOf(ENTITY_DECL_START);
-					} else if (next('N', 'O', 'T', 'A', 'T', 'I', 'O', 'N')) {
-						readChar();
-						_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_NOTATION : MODE_DOCTYPE_NOTATION;
-						return nodeOf(NOTATION_DECL_START);
-					} else if (_m == MODE_EXTERNAL && next('[')) {
-						readChar();
-						return nodeOf(SECTION_START);
-					}
-				} else if (next('?')) {
-					int i = _reader.to();
-					if (next('x', 'm', 'l')) {
-						readChar();
-						if (isNameChar(_c)) {
-							_reader.reset(i);
-							readChar();
-							_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_PI : MODE_DOCTYPE_PI;
-							return nodeOf(PI_START);
-						} else {
-							_m = MODE_EXTERNAL_XML;
-							return nodeOf(XML_START);
-						}
+						_m = MODE_ETAG;
+						return nodeOf(ETAG_START);
 					} else {
 						readChar();
-						_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_PI : MODE_DOCTYPE_PI;
-						return nodeOf(PI_START);
+						_m = MODE_STAG;
+						return nodeOf(TAG_START);
 					}
-				}
-				break;
-			case '>':
-				readChar();
-				_m = _m > MODE_EXTERNAL ? MODE_EXTERNAL : _m > MODE_DOCTYPE ? MODE_DOCTYPE : 0;
-				return nodeOf(TAG_END);
-			case ']':
-				if (_m == MODE_EXTERNAL && next(']', '>')) {
+				case '&':
 					readChar();
-					return nodeOf(SECTION_END);
-				}
-				//FALLTHOUGH
-			case '[':
-			case '(':
-			case '|':
-			case ',':
-			case '?':
-			case '*':
-			case '+':
-				int c = _c;
-				readChar();
-				return nodeOf(c);
-			case ')':
-				if (preferred == PCDATA_END && next('*')) {
-					readChar();
-					return nodeOf(PCDATA_END);
-				} else {
-					readChar();
-					return nodeOf(')');
-				}
-			case '#':
-				if (next('P', 'C', 'D', 'A', 'T', 'A')) {
-					readChar();
-					return nodeOf(PCDATA);
-				} else if (next('R', 'E', 'Q', 'U', 'I', 'R', 'E', 'D')) {
-					readChar();
-					return nodeOf(REQUIRED);
-				} else if (next('I', 'M', 'P', 'L', 'I', 'E', 'D')) {
-					readChar();
-					return nodeOf(IMPLIED);
-				} else if (next('F', 'I', 'X', 'E', 'D')) {
-					readChar();
-					return nodeOf(FIXED);
-				}
-				break;
-			case '%':
-				readChar();
-				if (isNameStartChar(_c)) {
-					readChar();
-					return parsePEReference();
-				} else {
-					return nodeOf('%');
-				}
-			case 'A':
-				if (_m == MODE_DOCTYPE_ELEMENT || _m == MODE_EXTERNAL_ELEMENT) {
-					if (next('N', 'Y')) {
-						readChar();
-						return nodeOf(ANY);
+					return parseReference();
+				case ']':
+					if (next(']', '>')) {
+						break;
 					}
-				}
-				readChar();
-				return parseName();
-			case 'C':
-				if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
-					if (next('D', 'A', 'T', 'A')) {
-						readChar();
-						return nodeOf(TYPE_CDATA);
-					}
-				}
-				readChar();
-				return parseName();
-			case 'E':
-				if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
-					if (next('N', 'T', 'I', 'T', 'I', 'E', 'S')) {
-						readChar();
-						return nodeOf(TYPE_ENTITIES);
-					} else if (next('N', 'T', 'I', 'T', 'Y')) {
-						readChar();
-						return nodeOf(TYPE_ENTITY);
-					}
-				} else if (_m == MODE_DOCTYPE_ELEMENT || _m == MODE_EXTERNAL_ELEMENT) {
-					if (next('M', 'P', 'T', 'Y')) {
-						readChar();
-						return nodeOf(EMPTY);
-					}
-				}
-				readChar();
-				return parseName();
-			case 'I':
-				if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
-					if (next('D', 'R', 'E', 'F', 'S')) {
-						readChar();
-						return nodeOf(TYPE_IDREFS);
-					} else if (next('D', 'R', 'E', 'F')) {
-						readChar();
-						return nodeOf(TYPE_IDREF);
-					} else if (next('D')) {
-						readChar();
-						return nodeOf(TYPE_ID);
-					}
-				} else if (_m == MODE_EXTERNAL) {
-					if (next('G', 'N', 'O', 'R', 'E')) {
-						_m = MODE_EXTERNAL_IGNORE;
-						readChar();
-						return nodeOf(IGNORE);
-					} else if (next('N', 'C', 'L', 'U', 'D', 'E')) {
-						readChar();
-						return nodeOf(INCLUDE);
-					} 					
-				}
-				readChar();
-				return parseName();
-			case 'N':
-				if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
-					if (next('M', 'T', 'O', 'K', 'E', 'N', 'S')) {
-						readChar();
-						return nodeOf(TYPE_NMTOKENS);
-					} else if (next('M', 'T', 'O', 'K', 'E', 'N')) {
-						readChar();
-						return nodeOf(TYPE_NMTOKEN);
-					} else if (next('O', 'T', 'A', 'T', 'I', 'O', 'N')) {
-						readChar();
-						return nodeOf(TYPE_NOTATION);
-					}
-				} else if (_m == MODE_DOCTYPE_ENTITY || _m == MODE_EXTERNAL_ENTITY) {
-					if (next('D', 'A', 'T', 'A')) {
-						readChar();
-						return nodeOf(NDATA);
-					}
-				}
-				readChar();
-				return parseName();
-			case 'P':
-				if (_m == MODE_DOCTYPE
-					|| _m == MODE_DOCTYPE_ENTITY
-					|| _m == MODE_DOCTYPE_NOTATION
-					|| _m == MODE_EXTERNAL_ENTITY
-					|| _m == MODE_EXTERNAL_NOTATION) {
-					if (next('U', 'B', 'L', 'I', 'C')) {
-						readChar();
-						return nodeOf(PUBLIC);
-					}
-				}
-				readChar();
-				return parseName();
-			case 'S':
-				if (_m == MODE_DOCTYPE
-					|| _m == MODE_DOCTYPE_ENTITY
-					|| _m == MODE_DOCTYPE_NOTATION
-					|| _m == MODE_EXTERNAL_ENTITY
-					|| _m == MODE_EXTERNAL_NOTATION) {
-					if (next('Y', 'S', 'T', 'E', 'M')) {
-						readChar();
-						return nodeOf(SYSTEM);
-					}
-				}
-				readChar();
-				return parseName();
-			case '\"':
-			case '\'':
-				if (preferred == SYSTEM_LITERAL) {
-					int q = _c;
-					readChar();
-					return parseSystemLiteral(q);
-				} else if (preferred == PUBID_LITERAL) {
-					int q = _c;
-					readChar();
-					return parsePubidLiteral(q);
-				} else if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
-					int q = _c;
-					readChar();
-					return parseAttValue(q);
-				} else if (_m == MODE_DOCTYPE_ENTITY || _m == MODE_EXTERNAL_ENTITY) {
-					int q = _c;
-					readChar();
-					return parseEntityValue(q);
-				}
-				break;
-			default:
-				if (preferred == NMTOKEN && isNameChar(_c)) {
-					readChar();
-					return parseNmtoken();
-				} else if (isNameStartChar(_c)) {
-					readChar();
-					return parseName();
-				}
-				break;
-			}
-		} else if (_m == MODE_EXTERNAL_IGNORE) {
-			if (preferred == '[') {
-				switch (_c) {
-				case HT:
-				case LF:
-				case CR:
-				case SP:
-					readChar();
-					return parseWhiteSpace();
-				case '[':
-					readChar();
-					return nodeOf('[');
+					//FALLTHROUGH
 				default:
 					readChar();
-					return nodeOf(ILLEGAL_CHARACTER);
-						
+					return parseCharData();
+				}
+			} else {
+				switch (_m) {
+				case 0:
+					switch (_c) {
+					case HT:
+					case LF:
+					case CR:
+					case SP:
+						readChar();
+						return parseWhiteSpace();
+					case '<':
+						if (next('!', '-', '-')) {
+							readChar();
+							return parseComment();
+						} else if (next('?')) {
+							readChar();
+							_m = MODE_PI;
+							return nodeOf(PI_START);
+						} else if (next('!', 'D', 'O', 'C', 'T', 'Y', 'P', 'E')) {
+							readChar();
+							_m = MODE_DOCTYPE;
+							return nodeOf(DOCTYPE_DECL_START);
+						} else {
+							readChar();
+							_m = MODE_STAG;
+							return nodeOf(TAG_START);
+						}
+					default:
+						break;
+					}
+					break;
+				case MODE_DOCTYPE:
+				case MODE_DOCTYPE_ELEMENT:
+				case MODE_DOCTYPE_ATTLIST:
+				case MODE_DOCTYPE_ENTITY:
+				case MODE_DOCTYPE_NOTATION:
+				case MODE_EXTERNAL:
+				case MODE_EXTERNAL_ELEMENT:
+				case MODE_EXTERNAL_ATTLIST:
+				case MODE_EXTERNAL_ENTITY:
+				case MODE_EXTERNAL_NOTATION:
+					switch (_c) {
+					case HT:
+					case LF:
+					case CR:
+					case SP:
+						readChar();
+						return parseWhiteSpace();
+					case '<':
+						if (next('!')) {
+							if (next('-', '-')) {
+								readChar();
+								return parseComment();
+							} else if (next('E', 'L', 'E', 'M', 'E', 'N', 'T')) {
+								readChar();
+								_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_ELEMENT : MODE_DOCTYPE_ELEMENT;
+								return nodeOf(ELEMENT_DECL_START);
+							} else if (next('A', 'T', 'T', 'L', 'I', 'S', 'T')) {
+								readChar();
+								_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_ATTLIST : MODE_DOCTYPE_ATTLIST;
+								return nodeOf(ATTLIST_DECL_START);
+							} else if (next('E', 'N', 'T', 'I', 'T', 'Y')) {
+								readChar();
+								_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_ENTITY : MODE_DOCTYPE_ENTITY;
+								return nodeOf(ENTITY_DECL_START);
+							} else if (next('N', 'O', 'T', 'A', 'T', 'I', 'O', 'N')) {
+								readChar();
+								_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_NOTATION : MODE_DOCTYPE_NOTATION;
+								return nodeOf(NOTATION_DECL_START);
+							} else if (_m == MODE_EXTERNAL && next('[')) {
+								readChar();
+								return nodeOf(SECTION_START);
+							}
+						} else if (next('?')) {
+							_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_PI : MODE_DOCTYPE_PI;
+							return nodeOf(PI_START);
+						}
+						break;
+					case '>':
+						readChar();
+						_m = _m > MODE_EXTERNAL ? MODE_EXTERNAL : _m > MODE_DOCTYPE ? MODE_DOCTYPE : 0;
+						return nodeOf(TAG_END);
+					case ']':
+						if (_m == MODE_EXTERNAL && next(']', '>')) {
+							readChar();
+							return nodeOf(SECTION_END);
+						}
+						//FALLTHOUGH
+					case '[':
+					case '(':
+					case '|':
+					case ',':
+					case '?':
+					case '*':
+					case '+':
+						int c = _c;
+						readChar();
+						return nodeOf(c);
+					case ')':
+						if (preferred == PCDATA_END && next('*')) {
+							readChar();
+							return nodeOf(PCDATA_END);
+						} else {
+							readChar();
+							return nodeOf(')');
+						}
+					case '#':
+						if (next('P', 'C', 'D', 'A', 'T', 'A')) {
+							readChar();
+							return nodeOf(PCDATA);
+						} else if (next('R', 'E', 'Q', 'U', 'I', 'R', 'E', 'D')) {
+							readChar();
+							return nodeOf(REQUIRED);
+						} else if (next('I', 'M', 'P', 'L', 'I', 'E', 'D')) {
+							readChar();
+							return nodeOf(IMPLIED);
+						} else if (next('F', 'I', 'X', 'E', 'D')) {
+							readChar();
+							return nodeOf(FIXED);
+						}
+						break;
+					case '%':
+						readChar();
+						if (isNameStartChar(_c)) {
+							readChar();
+							return parsePEReference();
+						} else {
+							return nodeOf('%');
+						}
+					case 'A':
+						if (_m == MODE_DOCTYPE_ELEMENT || _m == MODE_EXTERNAL_ELEMENT) {
+							if (next('N', 'Y')) {
+								readChar();
+								return nodeOf(ANY);
+							}
+						}
+						readChar();
+						return parseName();
+					case 'C':
+						if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
+							if (next('D', 'A', 'T', 'A')) {
+								readChar();
+								return nodeOf(TYPE_CDATA);
+							}
+						}
+						readChar();
+						return parseName();
+					case 'E':
+						if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
+							if (next('N', 'T', 'I', 'T', 'I', 'E', 'S')) {
+								readChar();
+								return nodeOf(TYPE_ENTITIES);
+							} else if (next('N', 'T', 'I', 'T', 'Y')) {
+								readChar();
+								return nodeOf(TYPE_ENTITY);
+							}
+						} else if (_m == MODE_DOCTYPE_ELEMENT || _m == MODE_EXTERNAL_ELEMENT) {
+							if (next('M', 'P', 'T', 'Y')) {
+								readChar();
+								return nodeOf(EMPTY);
+							}
+						}
+						readChar();
+						return parseName();
+					case 'I':
+						if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
+							if (next('D', 'R', 'E', 'F', 'S')) {
+								readChar();
+								return nodeOf(TYPE_IDREFS);
+							} else if (next('D', 'R', 'E', 'F')) {
+								readChar();
+								return nodeOf(TYPE_IDREF);
+							} else if (next('D')) {
+								readChar();
+								return nodeOf(TYPE_ID);
+							}
+						} else if (_m == MODE_EXTERNAL) {
+							if (next('G', 'N', 'O', 'R', 'E')) {
+								_m = MODE_EXTERNAL_IGNORE;
+								readChar();
+								return nodeOf(IGNORE);
+							} else if (next('N', 'C', 'L', 'U', 'D', 'E')) {
+								readChar();
+								return nodeOf(INCLUDE);
+							} 					
+						}
+						readChar();
+						return parseName();
+					case 'N':
+						if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
+							if (next('M', 'T', 'O', 'K', 'E', 'N', 'S')) {
+								readChar();
+								return nodeOf(TYPE_NMTOKENS);
+							} else if (next('M', 'T', 'O', 'K', 'E', 'N')) {
+								readChar();
+								return nodeOf(TYPE_NMTOKEN);
+							} else if (next('O', 'T', 'A', 'T', 'I', 'O', 'N')) {
+								readChar();
+								return nodeOf(TYPE_NOTATION);
+							}
+						} else if (_m == MODE_DOCTYPE_ENTITY || _m == MODE_EXTERNAL_ENTITY) {
+							if (next('D', 'A', 'T', 'A')) {
+								readChar();
+								return nodeOf(NDATA);
+							}
+						}
+						readChar();
+						return parseName();
+					case 'P':
+						if (_m == MODE_DOCTYPE
+							|| _m == MODE_DOCTYPE_ENTITY
+							|| _m == MODE_DOCTYPE_NOTATION
+							|| _m == MODE_EXTERNAL_ENTITY
+							|| _m == MODE_EXTERNAL_NOTATION) {
+							if (next('U', 'B', 'L', 'I', 'C')) {
+								readChar();
+								return nodeOf(PUBLIC);
+							}
+						}
+						readChar();
+						return parseName();
+					case 'S':
+						if (_m == MODE_DOCTYPE
+							|| _m == MODE_DOCTYPE_ENTITY
+							|| _m == MODE_DOCTYPE_NOTATION
+							|| _m == MODE_EXTERNAL_ENTITY
+							|| _m == MODE_EXTERNAL_NOTATION) {
+							if (next('Y', 'S', 'T', 'E', 'M')) {
+								readChar();
+								return nodeOf(SYSTEM);
+							}
+						}
+						readChar();
+						return parseName();
+					case '\"':
+					case '\'':
+						if (preferred == SYSTEM_LITERAL) {
+							int q = _c;
+							readChar();
+							return parseSystemLiteral(q);
+						} else if (preferred == PUBID_LITERAL) {
+							int q = _c;
+							readChar();
+							return parsePubidLiteral(q);
+						} else if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
+							int q = _c;
+							readChar();
+							return parseAttValue(q);
+						} else if (_m == MODE_DOCTYPE_ENTITY || _m == MODE_EXTERNAL_ENTITY) {
+							int q = _c;
+							readChar();
+							return parseEntityValue(q);
+						}
+						break;
+					default:
+						if (preferred == NMTOKEN && isNameChar(_c)) {
+							readChar();
+							return parseNmtoken();
+						} else if (isNameStartChar(_c)) {
+							readChar();
+							return parseName();
+						}
+						break;
+					}
+					break;
+				case MODE_EXTERNAL_IGNORE:
+					if (preferred == '[') {
+						switch (_c) {
+						case HT:
+						case LF:
+						case CR:
+						case SP:
+							readChar();
+							return parseWhiteSpace();
+						case '[':
+							readChar();
+							return nodeOf('[');
+						default:
+							readChar();
+							return nodeOf(ILLEGAL_CHARACTER);
+								
+						}
+					}
+					return parseIgnoreSectionContents();
+				default:
+					throw new RuntimeException("Lexer::read: BUG!");
 				}
 			}
-			return parseIgnoreSectionContents();
-		} else {
-			throw new RuntimeException("Lexer::read: BUG!");
 		}
 		readChar();
 		return nodeOf(ILLEGAL_CHARACTER);

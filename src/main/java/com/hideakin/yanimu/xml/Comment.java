@@ -1,12 +1,16 @@
 package com.hideakin.yanimu.xml;
 
+import java.nio.charset.StandardCharsets;
+
 public class Comment extends Node {
 
-	public final String innerText;
+	public Comment(byte[] sequence) {
+		super(COMMENT, sequence);
+	}
 
-	public Comment(int offset, byte[] sequence) {
-		super(COMMENT, offset, sequence);
-		this.innerText = new String(sequence, 4, sequence.length - 7);
+	public String innerText() {
+		byte[] s = sequence();
+		return new String(s, 4, s.length - 7, StandardCharsets.UTF_8);
 	}
 
 }

@@ -1,12 +1,16 @@
 package com.hideakin.yanimu.xml;
 
+import java.nio.charset.StandardCharsets;
+
 public class CDATASection extends Node {
 
-	public final String innerText;
+	public CDATASection(byte[] sequence) {
+		super(CD_SECT, sequence);
+	}
 
-	public CDATASection(int offset, byte[] sequence) {
-		super(CD_SECT, offset, sequence);
-		this.innerText = new String(sequence, 9, sequence.length - 12);
+	public String innerText() {
+		byte[] s = sequence();
+		return new String(s, 9, s.length - 12, StandardCharsets.UTF_8);
 	}
 
 }

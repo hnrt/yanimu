@@ -4,8 +4,8 @@ public class CharRef extends Node {
 
 	public final int codepoint;
 
-	public CharRef(int offset, byte[] sequence) {
-		super(CHAR_REF, offset, sequence);
+	public CharRef(byte[] sequence) {
+		super(CHAR_REF, sequence);
 		int i = 2;
 		int c = sequence[i++];
 		int d = 0;
@@ -20,6 +20,16 @@ public class CharRef extends Node {
 			} while ((c = sequence[i++]) != ';');
 		}
 		this.codepoint = d;
+	}
+
+	@Override
+	public void setSequence(byte[] sequence) {
+		throw new RuntimeException("CharRef::setSequence: Unable to change!");
+	}
+
+	@Override
+	public void setSequence(String string) {
+		throw new RuntimeException("CharRef::setSequence: Unable to change!");
 	}
 
 }

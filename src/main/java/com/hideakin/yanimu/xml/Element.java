@@ -5,70 +5,146 @@ import java.util.List;
 
 public class Element extends Node {
 
-	public final List<Node> startLayout;
-	public final List<Node> children;
-	public final List<Node> endLayout;
+	protected final List<Node> _nodeList = new ArrayList<>();
+	protected StartTag _startTag;
+	protected Object _parent;
 	public final String name;
-	public final List<Attribute> attributes;
-	public Element parent;
 
-	public Element(List<Node> nodeList, String name, List<Attribute> attributes, Element parent) {
-		super(ELEMENT, nodeList);
-		this.startLayout = nodeList;
-		this.children = null;
-		this.endLayout = null;
-		this.name = name;
-		this.attributes = attributes;
-		this.parent = parent;
+	public Element(StartTag startTag, Element parent) {
+		super(ELEMENT);
+		_nodeList.add(startTag);
+		_startTag = startTag;
+		_parent = parent;
+		name = startTag.name;
 	}
 
-	public Element(Element startTag, List<Node> childList, List<Node> endList) {
-		super(ELEMENT, startTag.start, buildSequence(startTag.sequence, childList, endList));
-		this.startLayout = startTag.startLayout;
-		this.children = childList;
-		this.endLayout = endList;
-		this.name = startTag.name;
-		this.attributes = startTag.attributes;
-		this.parent = startTag.parent;
-		for (Node child : childList) {
-			if (child instanceof Element childElement) {
-				childElement.parent = this;
-			}
+	public void set(List<Node> nodeList, EndTag endTag) {
+		if (_startTag.type == STAG && _nodeList.size() == 1) {
+			_nodeList.addAll(nodeList);
+			_nodeList.add(endTag);
+		} else {
+			throw new RuntimeException("Element::set: Incorrectly called!");
 		}
 	}
 
-	public String attribute(String key) {
-		for (Attribute a : attributes) {
-			if (a.key.equals(key)) {
-				return a.value;
+	@Override
+	public byte[] sequence() {
+		if (_sequence == null) {
+			_sequence = buildSequence(_nodeList);
+		}
+		return _sequence;
+	}
+
+	@Override
+	public void setSequence(byte[] sequence) {
+		_sequence = sequence;
+		if (_parent instanceof Node node) {
+			node.clearSequence();
+		}
+	}
+
+	@Override
+	public void clearSequence() {
+		_sequence = null;
+		if (_parent instanceof Node node) {
+			node.clearSequence();
+		}
+	}
+
+	public Element parent() {
+		if (_parent instanceof Element element) {
+			return element;
+		} else {
+			return null;
+		}
+	}
+
+	public void setParent(Object parent) {
+		_parent = parent;
+	}
+
+	public Document document() {
+		if (_parent instanceof Element element) {
+			return element.document();
+		} else if (_parent instanceof Document _document) {
+			return _document;
+		} else {
+			return null;
+		}
+	}
+
+	public List<Node> nodeList() {
+		return _nodeList;
+	}
+
+	public StartTag startTag() {
+		return _startTag;
+	}
+
+	public EndTag endTag() {
+		if (_startTag.type == STAG) {
+			Node node = _nodeList.get(_nodeList.size() - 1);
+			if (node.type == ETAG) {
+				return (EndTag)node;
 			}
 		}
 		return null;
 	}
 
+	public int attributeCount() {
+		return _startTag.attributeCount();
+	}
+
 	public String attribute(int index) {
-		if (index < 0) {
-			index += attributes.size();
+		return _startTag.attribute(index);
+	}
+
+	public String attribute(int index, String defaultValue) {
+		return _startTag.attribute(index, defaultValue);
+	}
+
+	public String attribute(String key) {
+		return _startTag.attribute(key);
+	}
+
+	public String attribute(String key, String defaultValue) {
+		return _startTag.attribute(key, defaultValue);
+	}
+
+	public List<String> attributeKeys() {
+		return _startTag.attributeKeys();
+	}
+
+	public void addChild(Node node) {
+		if (_startTag.type == EETAG) {
+			_startTag = _startTag.clone(STAG);
+			_nodeList.clear();
+			_nodeList.add(_startTag);
+			_nodeList.add(node);
+			_nodeList.add(new EndTag(name));
+		} else {
+			int lastIndex = _nodeList.size() - 1;
+			_nodeList.add(lastIndex, node);
 		}
-		return 0 <= index && index < attributes.size() ? attributes.get(index).value : null;
+		clearSequence();
 	}
 
 	public String innerText() {
-		if (children.size() > 0) {
+		if (_startTag.type == STAG) {
 			StringBuilder buffer = new StringBuilder();
-			for (Node child : children) {
-				switch (child.type) {
+			for (Node node : _nodeList) {
+				switch (node.type) {
 				case CHAR_DATA:
-					buffer.append(child.toString());
+					buffer.append(node.toString());
 					break;
 				case ENTITY_REF:
-					buffer.append(((EntityRef)child).translated);
+					buffer.append(((EntityRef)node).translated);
 					break;
 				case CHAR_REF:
-					buffer.appendCodePoint(((CharRef)child).codepoint);
+					buffer.appendCodePoint(((CharRef)node).codepoint);
 					break;
 				case CD_SECT:
-					buffer.append(((CDATASection)child).innerText);
+					buffer.append(((CDATASection)node).innerText());
 					break;
 				default:
 					break;
@@ -80,45 +156,18 @@ public class Element extends Node {
 	}
 
 	public List<Element> getElements(String name) {
-		List<Element> elements = new ArrayList<>();
-		if (children != null) {
-			for (Node child : children) {
-				if (child instanceof Element element) {
+		List<Element> elementList = new ArrayList<>();
+		if (_startTag.type == STAG) {
+			for (Node node : _nodeList) {
+				if (node instanceof Element element) {
 					if (element.name.equals(name)) {
-						elements.add(element);
+						elementList.add(element);
 					}
-					elements.addAll(element.getElements(name));
+					elementList.addAll(element.getElements(name));
 				}
 			}
 		}
-		return elements;
-	}
-
-	private static byte[] buildSequence(byte[] startTag, List<Node> childList, List<Node> endList) {
-		if (endList != null) {
-			int n = startTag.length;
-			for (Node node : childList) {
-				n += node.sequence.length;
-			}
-			for (Node node : endList) {
-				n += node.sequence.length;
-			}
-			byte[] sequence = new byte[n];
-			int i = 0;
-			System.arraycopy(startTag, 0, sequence, i, startTag.length);
-			i += startTag.length;
-			for (Node node : childList) {
-				System.arraycopy(node.sequence, 0, sequence, i, node.sequence.length);
-				i += node.sequence.length;
-			}
-			for (Node node : endList) {
-				System.arraycopy(node.sequence, 0, sequence, i, node.sequence.length);
-				i += node.sequence.length;
-			}
-			return sequence;
-		} else {
-			return startTag;
-		}
+		return elementList;
 	}
 
 }
