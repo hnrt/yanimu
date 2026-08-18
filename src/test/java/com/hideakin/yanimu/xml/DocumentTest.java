@@ -16,6 +16,7 @@ import com.hideakin.yanimu.xml.doctype.InternalParameterEntityDefinition;
 import com.hideakin.yanimu.xml.doctype.NotationDeclaration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
@@ -420,7 +421,7 @@ public class DocumentTest {
 			}
 			start = end;
 		}
-		assertEquals(expected, doc.sequence());
+		assertArrayEquals(expected, doc.sequence());
 		return start;
 	}
 
