@@ -3,16 +3,14 @@ package com.hideakin.yanimu.xml;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Element extends Node {
+public class Element extends NodeList {
 
-	protected final List<Node> _nodeList = new ArrayList<>();
 	protected StartTag _startTag;
 	protected Object _parent;
 	public final String name;
 
 	public Element(StartTag startTag, Element parent) {
-		super(ELEMENT);
-		_nodeList.add(startTag);
+		super(ELEMENT, startTag);
 		_startTag = startTag;
 		_parent = parent;
 		name = startTag.name;
@@ -23,23 +21,7 @@ public class Element extends Node {
 			_nodeList.addAll(nodeList);
 			_nodeList.add(endTag);
 		} else {
-			throw new RuntimeException("Element::set: Incorrectly called!");
-		}
-	}
-
-	@Override
-	public byte[] sequence() {
-		if (_sequence == null) {
-			_sequence = buildSequence(_nodeList);
-		}
-		return _sequence;
-	}
-
-	@Override
-	public void setSequence(byte[] sequence) {
-		_sequence = sequence;
-		if (_parent instanceof Node node) {
-			node.clearSequence();
+			throw new RuntimeException("Element::set: Incorrect use!");
 		}
 	}
 
@@ -64,17 +46,13 @@ public class Element extends Node {
 	}
 
 	public Document document() {
-		if (_parent instanceof Element element) {
-			return element.document();
-		} else if (_parent instanceof Document _document) {
-			return _document;
+		if (_parent instanceof Element parentElement) {
+			return parentElement.document();
+		} else if (_parent instanceof Document theDocument) {
+			return theDocument;
 		} else {
 			return null;
 		}
-	}
-
-	public List<Node> nodeList() {
-		return _nodeList;
 	}
 
 	public StartTag startTag() {
@@ -83,7 +61,7 @@ public class Element extends Node {
 
 	public EndTag endTag() {
 		if (_startTag.type == STAG) {
-			Node node = _nodeList.get(_nodeList.size() - 1);
+			Node node = lastNode();
 			if (node.type == ETAG) {
 				return (EndTag)node;
 			}
@@ -115,6 +93,14 @@ public class Element extends Node {
 		return _startTag.attributeKeys();
 	}
 
+	public int childCount() {
+		return _startTag.type == EETAG ? 0 : _nodeList.size() - 2;
+	}
+
+	public List<Node> children() {
+		return _startTag.type == EETAG ? List.of() : List.copyOf(_nodeList.subList(1, _nodeList.size() - 1));
+	}
+
 	public void addChild(Node node) {
 		if (_startTag.type == EETAG) {
 			_startTag = _startTag.clone(STAG);
@@ -123,11 +109,30 @@ public class Element extends Node {
 			_nodeList.add(node);
 			_nodeList.add(new EndTag(name));
 		} else {
-			int lastIndex = _nodeList.size() - 1;
-			_nodeList.add(lastIndex, node);
+			int index = _nodeList.size() - 1;
+			_nodeList.add(index, node);
 		}
 		clearSequence();
 	}
+
+	public void addChild(int index, Node node) {
+		if (_startTag.type == EETAG) {
+			addChild(node);
+		} else {
+			int count = childCount();
+			if (index < 0) {
+				index += count;
+			}
+			if (index < 0) {
+				index = 0;
+			}
+			index = index < count ? index + 1 : count + 1;
+			_nodeList.add(index, node);
+		}
+		clearSequence();
+	}
+
+	//TODO: removeChild
 
 	public String innerText() {
 		if (_startTag.type == STAG) {

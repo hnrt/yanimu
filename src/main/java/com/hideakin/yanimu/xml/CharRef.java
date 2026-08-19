@@ -22,14 +22,4 @@ public class CharRef extends Node {
 		this.codepoint = d;
 	}
 
-	@Override
-	public void setSequence(byte[] sequence) {
-		throw new RuntimeException("CharRef::setSequence: Unable to change!");
-	}
-
-	@Override
-	public void setSequence(String string) {
-		throw new RuntimeException("CharRef::setSequence: Unable to change!");
-	}
-
 }

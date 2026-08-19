@@ -2,7 +2,7 @@ package com.hideakin.yanimu.xml;
 
 import java.util.List;
 
-public class ProcessingInstruction extends Node {
+public class ProcessingInstruction extends NodeList {
 
 	public final String name;
 	public final String body;

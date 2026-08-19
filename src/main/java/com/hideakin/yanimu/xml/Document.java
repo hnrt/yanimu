@@ -8,10 +8,9 @@ import java.util.List;
 import com.hideakin.yanimu.xml.doctype.DocumentTypeDeclaration;
 import com.hideakin.yanimu.xml.internal.Processor;
 
-public class Document extends Node {
+public class Document extends NodeList {
 
 	protected Path _path;
-	protected List<Node> _nodeList;
 	protected XmlDeclaration _xmlDeclaration;
 	protected DocumentTypeDeclaration _dtd;
 	protected Element _root;
@@ -33,10 +32,6 @@ public class Document extends Node {
 
 	public void setPath(Path path) {
 		_path = path;
-	}
-
-	public List<Node> nodeList() {
-		return _nodeList;
 	}
 
 	public String version() {
@@ -68,15 +63,16 @@ public class Document extends Node {
 	}
 
 	public void load(byte[] content) throws Exception {
-		_nodeList = null;
+		_nodeList.clear();
 		_xmlDeclaration = null;
 		_dtd = null;
 		_root = null;
 		_warnings = null;
 		_information = null;
 		Processor processor = new Processor(content);
-		_nodeList = processor.parse();
-		if (_nodeList.get(0) instanceof XmlDeclaration xmlDeclaration) {
+		List<Node> nodeList = processor.parse();
+		_nodeList.addAll(nodeList);
+		if (firstNode() instanceof XmlDeclaration xmlDeclaration) {
 			_xmlDeclaration = xmlDeclaration;
 		}
 		for (Node node : _nodeList) {
@@ -98,14 +94,6 @@ public class Document extends Node {
 
 	public String[] information() {
 		return _information;
-	}
-
-	@Override
-	public byte[] sequence() {
-		if (_sequence == null) {
-			_sequence = buildSequence(_nodeList);
-		}
-		return _sequence;
 	}
 
 }

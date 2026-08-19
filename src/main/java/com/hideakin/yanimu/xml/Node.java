@@ -97,8 +97,19 @@ public class Node {
 		_sequence = sequence;
 	}
 
+	protected Node(int type, String string) {
+		this.type = type;
+		_sequence = string.getBytes(StandardCharsets.UTF_8);
+	}
+
 	protected Node(int type, List<Node> nodeList) {
 		this(type, buildSequence(nodeList));
+	}
+
+	@Override
+	public String toString() {
+		byte[] s = sequence();
+		return s != null ? new String(s, StandardCharsets.UTF_8) : "";
 	}
 
 	public byte[] sequence() {
@@ -106,21 +117,15 @@ public class Node {
 	}
 
 	public void clearSequence() {
-		_sequence = null;
+		throw new RuntimeException("Node::clearSequence: Not allowed!");
 	}
 
 	public void setSequence(byte[] sequence) {
-		_sequence = sequence;
+		throw new RuntimeException("EntityRef::setSequence: Not allowed!");
 	}
 
 	public void setSequence(String string) {
-		_sequence = string.getBytes(StandardCharsets.UTF_8);
-	}
-
-	@Override
-	public String toString() {
-		byte[] s = sequence();
-		return s != null ? new String(s, StandardCharsets.UTF_8) : "";
+		throw new RuntimeException("EntityRef::setSequence: Not allowed!");
 	}
 
 	protected static byte[] buildSequence(List<Node> nodeList) {
