@@ -101,6 +101,36 @@ public class Element extends NodeList {
 		return _startTag.type == EETAG ? List.of() : List.copyOf(_nodeList.subList(1, _nodeList.size() - 1));
 	}
 
+	public boolean empty() {
+		if (_startTag.type == EETAG) {
+			return true;
+		} else {
+			int count = childCount();
+			if (count > 1) {
+				return false;
+			} else if (count == 1) {
+				Node node = _nodeList.get(1);
+				if (node.type != CHAR_DATA) {
+					return false;
+				}
+				int length = _sequence.length;
+				for (int i = 0; i < length; i++) {
+					int c = _sequence[i];
+					if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
+						continue;
+					} else {
+						return false;
+					}
+				}
+			}
+			_startTag = _startTag.clone(EETAG);
+			_nodeList.clear();
+			_nodeList.add(_startTag);
+			clearSequence();
+			return true;
+		}
+	}
+
 	public void addChild(Node node) {
 		if (_startTag.type == EETAG) {
 			_startTag = _startTag.clone(STAG);
@@ -132,7 +162,32 @@ public class Element extends NodeList {
 		clearSequence();
 	}
 
-	//TODO: removeChild
+	public Node removeChild(int index) {
+		if (_startTag.type == STAG) {
+			int count = childCount();
+			if (index < 0) {
+				index += count;
+			}
+			if (0 <= index && index < count) {
+				clearSequence();
+				return _nodeList.remove(index + 1);
+			}
+		}
+		return null;
+	}
+
+	public Node removeChild(Node node) {
+		if (_startTag.type == STAG) {
+			int count = childCount();
+			for (int index = 0; index < count; index++) {
+				if (_nodeList.get(index + 1) == node) {
+					clearSequence();
+					return _nodeList.remove(index + 1);
+				}
+			}
+		}
+		return null;
+	}
 
 	public String innerText() {
 		if (_startTag.type == STAG) {

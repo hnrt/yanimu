@@ -10,6 +10,7 @@ import com.hideakin.yanimu.xml.ProcessingInstruction;
 import com.hideakin.yanimu.xml.QuotedString;
 import com.hideakin.yanimu.xml.StartTag;
 import com.hideakin.yanimu.xml.Node;
+import com.hideakin.yanimu.xml.NodeList;
 import com.hideakin.yanimu.xml.XmlDeclaration;
 import com.hideakin.yanimu.xml.doctype.AttributeDefault;
 import com.hideakin.yanimu.xml.doctype.AttributeDefinition;
@@ -1445,37 +1446,23 @@ public class Processor {
 	}
 
 	private int offset(Node target) {
-		return (new OffsetFinder()).run(target, _nn);
-	}
-
-	private static class OffsetFinder {
-
-		private int _offset;
-
-		public OffsetFinder() {	
-		}
-
-		public int run(Node target, List<Node> nodeList) {
-			_offset = 0;
-			for (Node node : nodeList) {
-				if (node == target) {
-					break;
-				} else if (node.type == ELEMENT) {
-					if (find(target, (Element)node)) {
-						break;
-					}
-				} else {
-					_offset += node.sequence().length;
+		int length = 0;
+		int size = _nn.size();
+		for (int i = 0; i < size; i++) {
+			Node node = _nn.get(i);
+			if (node == target) {
+				return length;
+			} else if (node instanceof NodeList nodeList) {
+				int length2 = nodeList.length(target);
+				if (length2 >= 0) {
+					return length + length2;
 				}
+				length += nodeList.length();
+			} else {
+				length += node.sequence().length;
 			}
-			return _offset;
 		}
-
-		private boolean find(Node target, Element element) {
-			//TODO
-			return false;
-		}
-
+		return -1;
 	}
 
 }
