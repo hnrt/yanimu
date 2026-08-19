@@ -2,8 +2,8 @@ package com.hideakin.yanimu.xml.doctype;
 
 public class ContentParticle {
 
-	public Object target; // String (Name), ContentChoice or ContentSequence
-	public Integer option; // occurrence: one or more (+), zero or more (*), or zero or one times (?)
+	public final Object target; // String (Name), ContentChoice or ContentSequence
+	public final Integer option; // occurrence: one or more (+), zero or more (*), or zero or one times (?)
 
 	public ContentParticle(Object target, int option) {
 		this.target = target;
@@ -17,32 +17,32 @@ public class ContentParticle {
 
 	@Override
 	public String toString() {
-		StringBuilder buf = new StringBuilder();
+		StringBuilder buffer = new StringBuilder();
 		if (target instanceof String name) {
-			buf.append(name);
+			buffer.append(name);
 		} else if (target instanceof ContentChoice choice) {
-			buf.append('(');
-			buf.append(choice.get(0).toString());
+			buffer.append('(');
+			buffer.append(choice.get(0).toString());
 			for (int i = 1; i < choice.size(); i++) {
-				buf.append('|');
-				buf.append(choice.get(i).toString());
+				buffer.append('|');
+				buffer.append(choice.get(i).toString());
 			}
-			buf.append(')');
+			buffer.append(')');
 		} else if (target instanceof ContentSequence seq) {
-			buf.append('(');
-			buf.append(seq.get(0).toString());
+			buffer.append('(');
+			buffer.append(seq.get(0).toString());
 			for (int i = 1; i < seq.size(); i++) {
-				buf.append(',');
-				buf.append(seq.get(i).toString());
+				buffer.append(',');
+				buffer.append(seq.get(i).toString());
 			}
-			buf.append(')');
+			buffer.append(')');
 		} else {
 			throw new RuntimeException("ContentParticle: Bad target");
 		}
 		if (option != null) {
-			buf.appendCodePoint(option);
+			buffer.appendCodePoint(option);
 		}
-		return buf.toString();
+		return buffer.toString();
 	}
 
 }

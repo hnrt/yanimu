@@ -13,15 +13,15 @@ public class EnumerationType extends ArrayList<String> {
 
 	@Override
 	public String toString() {
-		StringBuilder buf = new StringBuilder();
-		buf.append("(");
-		buf.append(get(0));
+		StringBuilder buffer = new StringBuilder();
+		buffer.append("(");
+		buffer.append(get(0));
 		for (int i = 1; i < size(); i++) {
-			buf.append("|");
-			buf.append(get(i));
+			buffer.append("|");
+			buffer.append(get(i));
 		}
-		buf.append(")");
-		return buf.toString();
+		buffer.append(")");
+		return buffer.toString();
 	}
 
 }

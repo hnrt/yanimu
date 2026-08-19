@@ -113,9 +113,10 @@ public class Element extends NodeList {
 				if (node.type != CHAR_DATA) {
 					return false;
 				}
-				int length = _sequence.length;
+				byte[] sequence = node.sequence();
+				int length = sequence.length;
 				for (int i = 0; i < length; i++) {
-					int c = _sequence[i];
+					int c = sequence[i];
 					if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
 						continue;
 					} else {
@@ -142,6 +143,9 @@ public class Element extends NodeList {
 			int index = _nodeList.size() - 1;
 			_nodeList.add(index, node);
 		}
+		if (node instanceof Element element) {
+			element.setParent(this);
+		}
 		clearSequence();
 	}
 
@@ -159,6 +163,9 @@ public class Element extends NodeList {
 			index = index < count ? index + 1 : count + 1;
 			_nodeList.add(index, node);
 		}
+		if (node instanceof Element element) {
+			element.setParent(this);
+		}
 		clearSequence();
 	}
 
@@ -170,7 +177,11 @@ public class Element extends NodeList {
 			}
 			if (0 <= index && index < count) {
 				clearSequence();
-				return _nodeList.remove(index + 1);
+				Node node = _nodeList.remove(index + 1);
+				if (node instanceof Element element) {
+					element.setParent(null);
+				}
+				return node;
 			}
 		}
 		return null;
@@ -182,7 +193,11 @@ public class Element extends NodeList {
 			for (int index = 0; index < count; index++) {
 				if (_nodeList.get(index + 1) == node) {
 					clearSequence();
-					return _nodeList.remove(index + 1);
+					node = _nodeList.remove(index + 1);
+					if (node instanceof Element element) {
+						element.setParent(null);
+					}
+					return node;
 				}
 			}
 		}
@@ -228,6 +243,54 @@ public class Element extends NodeList {
 			}
 		}
 		return elementList;
+	}
+
+	public void indent(int indentation, int level) {
+		if (empty()) {
+			return;
+		}
+		if (childCount() == 1) {
+			if (_nodeList.get(1).type == ELEMENT) {
+				_nodeList.add(1, Node.of(CHAR_DATA, indentationString(indentation * (level + 1)).getBytes()));
+				_nodeList.add(3, Node.of(CHAR_DATA, indentationString(indentation * (level + 0)).getBytes()));
+				clearSequence();
+			}
+			return;
+		}
+		byte[] indentationSequence = indentationString(indentation * (level + 1)).getBytes();
+		Node prev = _nodeList.get(0);
+		Node node;
+		int i = 1;
+		while((node = _nodeList.get(i)).type != ETAG) {
+			if (node instanceof Element element) {
+				if (prev.type == CHAR_DATA && prev._sequence[0] == '\r' && prev._sequence[1] == '\n') {
+					_nodeList.set(i - 1, Node.of(CHAR_DATA, indentationSequence));
+					element.indent(indentation, level + 1);
+				} else {
+					_nodeList.add(i, Node.of(CHAR_DATA, indentationSequence));
+					element.indent(indentation, level + 1);
+					i++;
+				}
+			}
+			prev = node;
+			i++;
+		}
+		indentationSequence = indentationString(indentation * (level + 0)).getBytes();
+		if (prev.type == CHAR_DATA && prev._sequence[0] == '\r' && prev._sequence[1] == '\n') {
+			_nodeList.set(i - 1, Node.of(CHAR_DATA, indentationSequence));
+		} else {
+			_nodeList.add(i, Node.of(CHAR_DATA, indentationSequence));
+		}
+		clearSequence();
+	}
+
+	private static String indentationString(int width) {
+		StringBuilder buffer = new StringBuilder();
+		buffer.append("\r\n");
+		for (int n = width; n > 0; n--) {
+			buffer.append(' ');
+		}
+		return buffer.toString();
 	}
 
 }

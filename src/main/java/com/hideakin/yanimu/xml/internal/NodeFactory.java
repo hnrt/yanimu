@@ -14,15 +14,7 @@ import java.nio.charset.StandardCharsets;
 
 public class NodeFactory {
 
-	private static class NodeX extends Node {
-
-		public NodeX(int type, byte[] sequence) {
-			super(type, sequence);
-		}
-
-	}
-		
-	private StringBuilder _buffer = new StringBuilder();
+	private final StringBuilder _buffer = new StringBuilder();
 
 	public NodeFactory() {
 	}
@@ -46,7 +38,7 @@ public class NodeFactory {
 		case PEREFERENCE:
 			return new ParameterEntityReference(sequence);
 		default:
-			return new NodeX(type, sequence);
+			return Node.of(type, sequence);
 		}
 	}
 

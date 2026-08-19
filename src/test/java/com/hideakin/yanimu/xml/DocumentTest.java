@@ -39,6 +39,8 @@ public class DocumentTest {
 			doc.load(new ByteArrayInputStream(source.getBytes()));
 			assertEquals("1.0", doc.version());
 			assertEquals("Hello, world!", doc.root().innerText());
+			boolean result = doc.root().empty();
+			assertEquals(false, result);
 			byte[] content = source.getBytes();
 			int end = checkDocument("test01", doc, content);
 			System.out.printf("test01: content.length=%d actual=%d\n", content.length, end);
@@ -253,6 +255,24 @@ public class DocumentTest {
 			assertEquals("<waldo>", doc.root().getElements("options").get(0).attribute("xyzzy"));
 			int end = checkDocument("test08", doc, content);
 			System.out.printf("test08: content.length=%d actual=%d\n", content.length, end);
+			assertEquals(244, doc.length(elements.get(0)));
+			assertEquals(258, doc.length(elements.get(0).endTag()));
+			assertEquals(271, doc.length(elements.get(1)));
+			assertEquals(286, doc.length(elements.get(1).endTag()));
+			assertEquals(299, doc.length(elements.get(2)));
+			assertEquals(315, doc.length(elements.get(2).endTag()));
+			assertEquals(1, doc.toLineNumber(0));
+			assertEquals(3, doc.toLineNumber(50));
+			assertEquals(6, doc.toLineNumber(100));
+			assertEquals(10, doc.toLineNumber(doc.length(elements.get(0))));
+			assertEquals(11, doc.toLineNumber(doc.length(elements.get(1))));
+			assertEquals(12, doc.toLineNumber(doc.length(elements.get(2))));
+			assertEquals(1, doc.toColumnNumber(0));
+			assertEquals(5, doc.toColumnNumber(50));
+			assertEquals(1, doc.toColumnNumber(100));
+			assertEquals(5, doc.toColumnNumber(doc.length(elements.get(0))));
+			assertEquals(5, doc.toColumnNumber(doc.length(elements.get(1))));
+			assertEquals(5, doc.toColumnNumber(doc.length(elements.get(2))));
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -407,6 +427,136 @@ public class DocumentTest {
 		}
 	}
 
+	@Test
+	void test11() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<greeting></greeting>";
+		String expectation = "<?xml version=\"1.0\"?>\r\n"
+				+ "<greeting/>";
+		Document doc = new Document();
+		try {
+			byte[] content1 = source.getBytes();
+			byte[] content2 = expectation.getBytes();
+			doc.load(content1);
+			int end1 = checkDocument("test11BEFORE", doc, content1);
+			System.out.printf("test11: content.length=%d actual=%d\n", content1.length, end1);
+			assertEquals(Node.STAG, doc.root().startTag().type);
+			boolean result = doc.root().empty();
+			assertEquals(true, result);
+			assertEquals(Node.EETAG, doc.root().startTag().type);
+			int end2 = checkDocument("test11AFTER", doc, content2);
+			System.out.printf("test11: content.length=%d actual=%d\n", content2.length, end2);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void test12() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<greeting>\r\n  \r\n  </greeting>\r\n";
+		String expectation = "<?xml version=\"1.0\"?>\r\n"
+				+ "<greeting/>\r\n";
+		Document doc = new Document();
+		try {
+			byte[] content1 = source.getBytes();
+			byte[] content2 = expectation.getBytes();
+			doc.load(content1);
+			int end1 = checkDocument("test12BEFORE", doc, content1);
+			System.out.printf("test12: content.length=%d actual=%d\n", content1.length, end1);
+			assertEquals(Node.STAG, doc.root().startTag().type);
+			boolean result = doc.root().empty();
+			assertEquals(true, result);
+			assertEquals(Node.EETAG, doc.root().startTag().type);
+			boolean result2 = doc.root().empty();
+			assertEquals(true, result2);
+			boolean result3 = doc.root().empty();
+			assertEquals(true, result3);
+			int end2 = checkDocument("test12AFTER", doc, content2);
+			System.out.printf("test12: content.length=%d actual=%d\n", content2.length, end2);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void test13() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<greeting></greeting>";
+		String expectation = "<?xml version=\"1.0\"?>\r\n"
+				+ "<greeting><hello/></greeting>";
+		Document doc = new Document();
+		try {
+			byte[] content1 = source.getBytes();
+			byte[] content2 = expectation.getBytes();
+			doc.load(content1);
+			int end1 = checkDocument("test13BEFORE", doc, content1);
+			System.out.printf("test13: content.length=%d actual=%d\n", content1.length, end1);
+			Document sup = new Document();
+			sup.load("<X><hello/></X>".getBytes());
+			doc.root().addChild(sup.root().removeChild(0));
+			int end2 = checkDocument("test13AFTER", doc, content2);
+			System.out.printf("test13: content.length=%d actual=%d\n", content2.length, end2);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void test14() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<greeting/>";
+		String expectation = "<?xml version=\"1.0\"?>\r\n"
+				+ "<greeting><hello>WOW!</hello></greeting>";
+		Document doc = new Document();
+		try {
+			byte[] content1 = source.getBytes();
+			byte[] content2 = expectation.getBytes();
+			doc.load(content1);
+			int end1 = checkDocument("test14BEFORE", doc, content1);
+			System.out.printf("test14: content.length=%d actual=%d\n", content1.length, end1);
+			Document sup = new Document();
+			sup.load("<X><hello>WOW!</hello></X>".getBytes());
+			doc.root().addChild(sup.root().removeChild(0));
+			int end2 = checkDocument("test14AFTER", doc, content2);
+			System.out.printf("test14: content.length=%d actual=%d\n", content2.length, end2);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void test15() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<greeting><hello/><hello>WOW!</hello><hi><ya>Oops!</ya></hi></greeting>";
+		String expectation = "<?xml version=\"1.0\"?>\r\n"
+				+ "<greeting>\r\n"
+				+ "  <hello/>\r\n"
+				+ "  <hello>WOW!</hello>\r\n"
+				+ "  <hi>\r\n"
+				+ "    <ya>Oops!</ya>\r\n"
+				+ "  </hi>\r\n"
+				+ "</greeting>";
+		Document doc = new Document();
+		try {
+			byte[] content1 = source.getBytes();
+			byte[] content2 = expectation.getBytes();
+			doc.load(content1);
+			int end1 = checkDocument("test15BEFORE", doc, content1);
+			System.out.printf("test15: content.length=%d actual=%d\n", content1.length, end1);
+			doc.indent();
+			int end2 = checkDocument("test15AFTER", doc, content2);
+			System.out.printf("test15: content.length=%d actual=%d\n", content2.length, end2);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
 	private int checkDocument(String header, Document doc, byte[] expected) {
 		List<Node> nodeList = doc.nodeList();
 		int start = 0;
@@ -440,9 +590,9 @@ public class DocumentTest {
 	}
 
 	private int printDocumentTypeDeclaration(String header, DocumentTypeDeclaration dtd, int start) {
-		Node[] nodeList = dtd.layout;
-		for (int i = 0; i < nodeList.length; i++) {
-			Node node = nodeList[i];
+		List<Node> nodeList = dtd.nodeList();
+		for (int i = 0; i < nodeList.size(); i++) {
+			Node node = nodeList.get(i);
 			int end = start + node.sequence().length;
 			System.out.printf("%s[%d] %d %d %s\n", header, i, start, end, sprint(node));
 			start = end;

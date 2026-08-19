@@ -6,8 +6,8 @@ public class AttributeDefault {
 	public static final int DEFAULT_IMPLIED = 2;
 	public static final int DEFAULT_FIXED = 3;
 
-	public Integer type;
-	public String value;
+	public final Integer type;
+	public final String value;
 
 	public AttributeDefault(int type) {
 		if (type != DEFAULT_REQUIRED && type != DEFAULT_IMPLIED) {

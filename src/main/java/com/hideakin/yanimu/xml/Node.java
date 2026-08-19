@@ -84,6 +84,10 @@ public class Node {
 	public static final int MALFORMED_ENTITYREF = 3006800;
 	public static final int MALFORMED_PEREFERENCE = 3006900;
 
+	public static Node of(int type, byte[] sequence) {
+		return new Node(type, sequence);
+	}
+
 	public final int type;
 	protected byte[] _sequence;
 
@@ -142,6 +146,62 @@ public class Node {
 			offset += length;
 		}
 		return destination;
+	}
+
+	public int length() {
+		return sequence().length;
+	}
+
+	public int length(Node target) {
+		return this == target ? 0 : -1;
+	}
+
+	public int lineCount() {
+		int count = 0;
+		for (byte b : sequence()) {
+			if (b == 10) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	public int lineCount(int offset) {
+		int count = 0;
+		for (byte b : sequence()) {
+			if (offset-- <= 0) {
+				return count;
+			}
+			if (b == 10) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	public int columnCount(int count) {
+		for (byte b : sequence()) {
+			if (b == 10) {
+				count = 0;
+			} else {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	public int columnCount(int offset, int count) {
+		for (byte b : sequence()) {
+			if (offset-- <= 0) {
+				return count;
+			}
+			if (b == 10) {
+				count = 0;
+			} else {
+				count++;
+			}
+		}
+		return count;
 	}
 
 }

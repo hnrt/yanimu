@@ -50,38 +50,82 @@ public class NodeList extends Node {
 		return _nodeList.get(_nodeList.size() - 1);
 	}
 
+	@Override
 	public int length() {
 		int length = 0;
 		int size = _nodeList.size();
 		for (int index = 0; index < size; index++) {
-			Node node = _nodeList.get(index);
-			if (node instanceof NodeList nodeList2) {
-				length += nodeList2.length();
-			} else {
-				length += node.sequence().length;
-			}
+			length += _nodeList.get(index).length();
 		}
 		return length;
 	}
 
+	@Override
 	public int length(Node target) {
+		if (this == target) {
+			return 0;
+		}
 		int length = 0;
 		int size = _nodeList.size();
 		for (int index = 0; index < size; index++) {
 			Node node = _nodeList.get(index);
-			if (node == target) {
-				return length;
-			} else if (node instanceof NodeList nodeList2) {
-				int length2 = nodeList2.length(target);
-				if (length2 >= 0) {
-					return length + length2;
-				}
-				length += nodeList2.length();
-			} else {
-				length += node.sequence().length;
+			int length2 = node.length(target);
+			if (length2 >= 0) {
+				return length + length2;
 			}
+			length += node.length();
 		}
 		return -1;
+	}
+
+	@Override
+	public int lineCount() {
+		int count = 0;
+		int size = _nodeList.size();
+		for (int index = 0; index < size; index++) {
+			count += _nodeList.get(index).lineCount();
+		}
+		return count;
+	}
+
+	@Override
+	public int lineCount(int offset) {
+		int count = 0;
+		int size = _nodeList.size();
+		for (int index = 0; index < size; index++) {
+			Node node = _nodeList.get(index);
+			int length = node.length();
+			if (offset < length) {
+				return count + node.lineCount(offset);
+			}
+			count += node.lineCount();
+			offset -= length;
+		}
+		return count;
+	}
+
+	@Override
+	public int columnCount(int count) {
+		int size = _nodeList.size();
+		for (int index = 0; index < size; index++) {
+			count = _nodeList.get(index).columnCount(count);
+		}
+		return count;
+	}
+
+	@Override
+	public int columnCount(int offset, int count) {
+		int size = _nodeList.size();
+		for (int index = 0; index < size; index++) {
+			Node node = _nodeList.get(index);
+			int length = node.length();
+			if (offset < length) {
+				return node.columnCount(offset, count);
+			}
+			count = node.columnCount(count);
+			offset -= length;
+		}
+		return count;
 	}
 
 	public int findNode(Node target) {
