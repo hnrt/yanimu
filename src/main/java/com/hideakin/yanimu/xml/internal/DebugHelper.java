@@ -106,7 +106,7 @@ public class DebugHelper {
 		lc.put(Integer.valueOf(LexerContext.NOTATION), "NOTATION");
 		lc.put(Integer.valueOf(LexerContext.CONDITIONAL), "CONDITIONAL");
 		lc.put(Integer.valueOf(LexerContext.IGNORE), "IGNORE");
-		LEXER_CONTEXTS = Map.copyOf(nt);
+		LEXER_CONTEXTS = Map.copyOf(lc);
 	}
 
 	public static void print(Node node) {
