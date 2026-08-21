@@ -19,7 +19,6 @@ public class UTF16LEReader extends AnyReader {
 		if (Character.MIN_CODE_POINT <= _c && _c <= Character.MAX_CODE_POINT) {
 			storeChar(_c);
 		}
-		_h = _i;
 		int w1 = readWord();
 		if (w1 < Character.MIN_HIGH_SURROGATE) {
 			_c = w1;

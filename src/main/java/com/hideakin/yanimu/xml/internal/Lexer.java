@@ -4,78 +4,103 @@ import com.hideakin.yanimu.xml.Node;
 
 import static com.hideakin.yanimu.xml.Node.*;
 
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+
 public class Lexer {
 
-	public static final int MODE_XML = 1;
-	public static final int MODE_PI = 2;
-	public static final int MODE_STAG = 3;
-	public static final int MODE_ETAG = 4;
-	public static final int MODE_DOCTYPE = 500;
-	public static final int MODE_DOCTYPE_ELEMENT = 501;
-	public static final int MODE_DOCTYPE_ATTLIST = 502;
-	public static final int MODE_DOCTYPE_ENTITY = 503;
-	public static final int MODE_DOCTYPE_NOTATION = 504;
-	public static final int MODE_DOCTYPE_PI = 510;
-	public static final int MODE_EXTERNAL = 600;
-	public static final int MODE_EXTERNAL_ELEMENT = 601;
-	public static final int MODE_EXTERNAL_ATTLIST = 602;
-	public static final int MODE_EXTERNAL_ENTITY = 603;
-	public static final int MODE_EXTERNAL_NOTATION = 604;
-	public static final int MODE_EXTERNAL_IGNORE = 605;
-	public static final int MODE_EXTERNAL_PI = 610;
-	public static final int MODE_EXTERNAL_XML = 620;
-
-	public static final int EOF = -1;
+	public static final int EOF = Node.EOF;
 	public static final int PREMATURE_EOF = Node.PREMATURE_EOF;
 	public static final int ILLEGAL_ENCODING = Node.ILLEGAL_ENCODING;
 
-	private static final int HT = 9;
-	private static final int LF = 10;
-	private static final int CR = 13;
-	private static final int SP = 32;
+	public static final int HT = 9;
+	public static final int LF = 10;
+	public static final int CR = 13;
+	public static final int SP = 32;
+
+	public static final Map<String, Integer> RESERVED_WORDS;
 
 	private static final ReaderFactory _readerFactory = new ReaderFactory();
 
+	static {
+		Map<String, Integer> rw = new HashMap<>();
+		rw.put("SYSTEM", Integer.valueOf(SYSTEM));
+		rw.put("PUBLIC", Integer.valueOf(PUBLIC));
+		rw.put("<!ELEMENT", Integer.valueOf(ELEMENT_DECL_START));
+		rw.put("<!ATTLIST", Integer.valueOf(ATTLIST_DECL_START));
+		rw.put("<!ENTITY", Integer.valueOf(ENTITY_DECL_START));
+		rw.put("<!NOTATION", Integer.valueOf(NOTATION_DECL_START));
+		rw.put("#PCDATA", Integer.valueOf(PCDATA));
+		rw.put("#REQUIRED", Integer.valueOf(REQUIRED));
+		rw.put("#IMPLIED", Integer.valueOf(IMPLIED));
+		rw.put("#FIXED", Integer.valueOf(FIXED));
+		rw.put("ANY", Integer.valueOf(ANY));
+		rw.put("CDATA", Integer.valueOf(TYPE_CDATA));
+		rw.put("ENTITY", Integer.valueOf(TYPE_ENTITY));
+		rw.put("ENTITIES", Integer.valueOf(TYPE_ENTITIES));
+		rw.put("EMPTY", Integer.valueOf(EMPTY));
+		rw.put("ID", Integer.valueOf(TYPE_ID));
+		rw.put("IDREF", Integer.valueOf(TYPE_IDREF));
+		rw.put("IDREFS", Integer.valueOf(TYPE_IDREFS));
+		rw.put("IGNORE", Integer.valueOf(IGNORE));
+		rw.put("INCLUDE", Integer.valueOf(INCLUDE));
+		rw.put("NMTOKEN", Integer.valueOf(TYPE_NMTOKEN));
+		rw.put("NMTOKENS", Integer.valueOf(TYPE_NMTOKENS));
+		rw.put("NOTATION", Integer.valueOf(TYPE_NOTATION));
+		rw.put("NDATA", Integer.valueOf(NDATA));
+		RESERVED_WORDS = Map.copyOf(rw);
+	}
+
+	private final LexerContext _context;
 	private final NodeFactory _nodeFactory;
-	private final Reader _reader;
+	private Reader _reader;
 	private int _c; // current UNICODE codepoint
-	private int _d; // depth of the element structure
-	private int _m; // read mode
 
 	public Lexer(byte[] content) {
-		this(content, 0, 0);
+		this(content, LexerContext.BASE);
 	}
 
-	public Lexer(byte[] content, int mode) {
-		this(content, mode, 0);
-	}
-
-	public Lexer(byte[] content, int mode, int offset) {
+	public Lexer(byte[] content, int context) {
+		_context = LexerContext.of(context);
 		_nodeFactory = new NodeFactory();
 		_reader = _readerFactory.create(content, _nodeFactory);
-		_d = 0;
-		_m = mode;
+		readChar();
+	}
+
+	public Lexer(byte[] content, Lexer parent) {
+		_context = parent._context;
+		_nodeFactory = parent._nodeFactory;
+		_reader = _readerFactory.create(content, _nodeFactory);
 		readChar();
 	}
 
 	public Lexer(String content) {
-		this(content.getBytes(), 0, 0);
+		this(content.getBytes(StandardCharsets.UTF_8), LexerContext.BASE);
 	}
 
-	public Lexer(String content, int mode) {
-		this(content.getBytes(), mode, 0);
+	public Lexer(String content, int context) {
+		this(content.getBytes(StandardCharsets.UTF_8), context);
 	}
 
-	public Lexer(String content, int mode, int offset) {
-		this(content.getBytes(), mode, offset);
+	public Lexer(String content, Lexer parent) {
+		this(content.getBytes(StandardCharsets.UTF_8), parent);
 	}
 
-	public int mode() {
-		return _m;
+	public int getContext() {
+		return _context.get();
 	}
 
-	public void setMode(int mode) {
-		_m = mode;
+	public void setContext(int context) {
+		_context.set(context);
+	}
+
+	public int pushContext(int context) {
+		return _context.push(context);
+	}
+
+	public int popContext() {
+		return _context.pop();
 	}
 
 	public Node read() {
@@ -86,11 +111,8 @@ public class Lexer {
 		if (_c == EOF) {
 			return nodeOf(EOF);
 		}
-		switch (_m) {
-		case MODE_STAG:
-		case MODE_ETAG:
-		case MODE_XML:
-		case MODE_EXTERNAL_XML:
+		switch (_context.get()) {
+		case LexerContext.BASE:
 			switch (_c) {
 			case HT:
 			case LF:
@@ -98,25 +120,70 @@ public class Lexer {
 			case SP:
 				readChar();
 				return parseWhiteSpace();
-			case '>':
+			case '<':
+				if (next('!', '-', '-')) {
+					readChar();
+					return parseComment();
+				} else if (next('?')) {
+					readChar();
+					pushContext(LexerContext.PI);
+					return nodeOf(PI_START);
+				} else if (next('!', 'D', 'O', 'C', 'T', 'Y', 'P', 'E')) {
+					readChar();
+					pushContext(LexerContext.DOCTYPE);
+					return nodeOf(DOCTYPE_DECL_START);
+				} else {
+					readChar();
+					pushContext(LexerContext.STAG);
+					return nodeOf(TAG_START);
+				}
+			default:
+				break;
+			}
+			break;
+		case LexerContext.PI:
+			switch (_c) {
+			case HT:
+			case LF:
+			case CR:
+			case SP:
 				readChar();
-				_d += _m == MODE_STAG ? +1 : -1;
-				_m = 0;
-				return nodeOf(TAG_END);
-			case '/':
+				return parseWhiteSpace();
+			case '?':
 				if (next('>')) {
 					readChar();
-					_m = 0;
-					return nodeOf(EETAG_END);
+					popContext();
+					return nodeOf(PI_END);
 				}
-				break;
-			case '?':
-				if ((_m == MODE_XML || _m == MODE_EXTERNAL_XML) && next('>')) {
+				//FALLTHROUGH
+			default:
+				if (preferred == PI_TARGET && isNameStartChar(_c)) {
 					readChar();
-					_m = _m == MODE_EXTERNAL_XML ? MODE_EXTERNAL : 0;
-					return nodeOf(XML_END);
+					while (isNameChar(_c)) {
+						readChar();
+					}
+					return nodeOf("(?i)xml", NAME, PI_TARGET);
 				}
-				break;
+				readChar();
+				return parsePI();
+			}
+		case LexerContext.XML:
+			switch (_c) {
+			case HT:
+			case LF:
+			case CR:
+			case SP:
+				readChar();
+				return parseWhiteSpace();
+			case '?':
+				if (next('>')) {
+					readChar();
+					popContext();
+					return nodeOf(XML_END);
+				} else {
+					readChar();
+					return nodeOf(ILLEGAL_SEQUENCE);
+				}
 			case '=':
 				readChar();
 				return nodeOf(EQ);
@@ -133,9 +200,7 @@ public class Lexer {
 				break;
 			}
 			break;
-		case MODE_PI:
-		case MODE_DOCTYPE_PI:
-		case MODE_EXTERNAL_PI:
+		case LexerContext.STAG:
 			switch (_c) {
 			case HT:
 			case LF:
@@ -143,346 +208,618 @@ public class Lexer {
 			case SP:
 				readChar();
 				return parseWhiteSpace();
-			case '?':
+			case '>':
+				readChar();
+				setContext(LexerContext.CONTENT);
+				return nodeOf(TAG_END);
+			case '/':
 				if (next('>')) {
 					readChar();
-					_m = _m == MODE_EXTERNAL_PI ? MODE_EXTERNAL : _m == MODE_DOCTYPE_PI ? MODE_DOCTYPE : 0;
-					return nodeOf(PI_END);
+					popContext();
+					return nodeOf(EETAG_END);
+				} else {
+					readChar();
+					return nodeOf(ILLEGAL_SEQUENCE);
+				}
+			case '=':
+				readChar();
+				return nodeOf(EQ);
+			case '\"':
+			case '\'':
+				int q = _c;
+				readChar();
+				return parseAttValue(q);
+			default:
+				if (isNameStartChar(_c)) {
+					readChar();
+					return parseName();
+				}
+				break;
+			}
+			break;
+		case LexerContext.CONTENT:
+			switch (_c) {
+			case '<':
+				if (next('!', '-', '-')) {
+					readChar();
+					return parseComment();
+				} else if (next('?')) {
+					readChar();
+					pushContext(LexerContext.PI);
+					return nodeOf(PI_START);
+				} else if (next('!', '[', 'C', 'D', 'A', 'T', 'A', '[')) {
+					readChar();
+					return parseCDSect();
+				} else if (next('/')) {
+					readChar();
+					setContext(LexerContext.ETAG);
+					return nodeOf(ETAG_START);
+				} else {
+					readChar();
+					pushContext(LexerContext.STAG);
+					return nodeOf(TAG_START);
+				}
+			case '&':
+				readChar();
+				return parseReference();
+			case ']':
+				if (next(']', '>')) {
+					readChar();
+					return nodeOf(ILLEGAL_SEQUENCE);
 				}
 				//FALLTHROUGH
 			default:
-				if (preferred == NAME) {
-					if (isNameStartChar(_c)) {
-						readChar();
-						return parseName();
-					}
-				}
 				readChar();
-				return parsePI();
+				return parseCharData();
 			}
-		default:
-			if (_d > 0) {
-				switch (_c) {
-				case '<':
-					if (next('!', '-', '-')) {
+		case LexerContext.ETAG:
+			switch (_c) {
+			case HT:
+			case LF:
+			case CR:
+			case SP:
+				readChar();
+				return parseWhiteSpace();
+			case '>':
+				readChar();
+				popContext();
+				return nodeOf(TAG_END);
+			default:
+				if (isNameStartChar(_c)) {
+					readChar();
+					return parseName();
+				}
+				break;
+			}
+			break;
+		case LexerContext.DOCTYPE:
+			switch (_c) {
+			case HT:
+			case LF:
+			case CR:
+			case SP:
+				readChar();
+				return parseWhiteSpace();
+			case '<':
+				if (next('!')) {
+					if (next('-', '-')) {
 						readChar();
 						return parseComment();
-					} else if (next('?')) {
-						readChar();
-						_m = MODE_PI;
-						return nodeOf(PI_START);
-					} else if (next('!', '[', 'C', 'D', 'A', 'T', 'A', '[')) {
-						readChar();
-						return parseCDSect();
-					} else if (next('/')) {
-						readChar();
-						_m = MODE_ETAG;
-						return nodeOf(ETAG_START);
 					} else {
 						readChar();
-						_m = MODE_STAG;
-						return nodeOf(TAG_START);
-					}
-				case '&':
-					readChar();
-					return parseReference();
-				case ']':
-					if (next(']', '>')) {
-						break;
-					}
-					//FALLTHROUGH
-				default:
-					readChar();
-					return parseCharData();
-				}
-			} else {
-				switch (_m) {
-				case 0:
-					switch (_c) {
-					case HT:
-					case LF:
-					case CR:
-					case SP:
-						readChar();
-						return parseWhiteSpace();
-					case '<':
-						if (next('!', '-', '-')) {
+						if (isAlphabeticUppercase(_c)) {
 							readChar();
-							return parseComment();
-						} else if (next('?')) {
-							readChar();
-							_m = MODE_PI;
-							return nodeOf(PI_START);
-						} else if (next('!', 'D', 'O', 'C', 'T', 'Y', 'P', 'E')) {
-							readChar();
-							_m = MODE_DOCTYPE;
-							return nodeOf(DOCTYPE_DECL_START);
-						} else {
-							readChar();
-							_m = MODE_STAG;
-							return nodeOf(TAG_START);
-						}
-					default:
-						break;
-					}
-					break;
-				case MODE_DOCTYPE:
-				case MODE_DOCTYPE_ELEMENT:
-				case MODE_DOCTYPE_ATTLIST:
-				case MODE_DOCTYPE_ENTITY:
-				case MODE_DOCTYPE_NOTATION:
-				case MODE_EXTERNAL:
-				case MODE_EXTERNAL_ELEMENT:
-				case MODE_EXTERNAL_ATTLIST:
-				case MODE_EXTERNAL_ENTITY:
-				case MODE_EXTERNAL_NOTATION:
-					switch (_c) {
-					case HT:
-					case LF:
-					case CR:
-					case SP:
-						readChar();
-						return parseWhiteSpace();
-					case '<':
-						if (next('!')) {
-							if (next('-', '-')) {
+							while (isAlphabeticUppercase(_c)) {
 								readChar();
-								return parseComment();
-							} else if (next('E', 'L', 'E', 'M', 'E', 'N', 'T')) {
-								readChar();
-								_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_ELEMENT : MODE_DOCTYPE_ELEMENT;
+							}
+							int type = lookup();
+							switch(type) {
+							case ELEMENT_DECL_START:
+								pushContext(LexerContext.ELEMENT);
 								return nodeOf(ELEMENT_DECL_START);
-							} else if (next('A', 'T', 'T', 'L', 'I', 'S', 'T')) {
-								readChar();
-								_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_ATTLIST : MODE_DOCTYPE_ATTLIST;
+							case ATTLIST_DECL_START:
+								pushContext(LexerContext.ATTLIST);
 								return nodeOf(ATTLIST_DECL_START);
-							} else if (next('E', 'N', 'T', 'I', 'T', 'Y')) {
-								readChar();
-								_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_ENTITY : MODE_DOCTYPE_ENTITY;
+							case ENTITY_DECL_START:
+								pushContext(LexerContext.ENTITY);
 								return nodeOf(ENTITY_DECL_START);
-							} else if (next('N', 'O', 'T', 'A', 'T', 'I', 'O', 'N')) {
-								readChar();
-								_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_NOTATION : MODE_DOCTYPE_NOTATION;
+							case NOTATION_DECL_START:
+								pushContext(LexerContext.NOTATION);
 								return nodeOf(NOTATION_DECL_START);
-							} else if (_m == MODE_EXTERNAL && next('[')) {
-								readChar();
-								return nodeOf(SECTION_START);
-							}
-						} else if (next('?')) {
-							_m = _m == MODE_EXTERNAL ? MODE_EXTERNAL_PI : MODE_DOCTYPE_PI;
-							return nodeOf(PI_START);
-						}
-						break;
-					case '>':
-						readChar();
-						_m = _m > MODE_EXTERNAL ? MODE_EXTERNAL : _m > MODE_DOCTYPE ? MODE_DOCTYPE : 0;
-						return nodeOf(TAG_END);
-					case ']':
-						if (_m == MODE_EXTERNAL && next(']', '>')) {
-							readChar();
-							return nodeOf(SECTION_END);
-						}
-						//FALLTHOUGH
-					case '[':
-					case '(':
-					case '|':
-					case ',':
-					case '?':
-					case '*':
-					case '+':
-						int c = _c;
-						readChar();
-						return nodeOf(c);
-					case ')':
-						if (preferred == PCDATA_END && next('*')) {
-							readChar();
-							return nodeOf(PCDATA_END);
-						} else {
-							readChar();
-							return nodeOf(')');
-						}
-					case '#':
-						if (next('P', 'C', 'D', 'A', 'T', 'A')) {
-							readChar();
-							return nodeOf(PCDATA);
-						} else if (next('R', 'E', 'Q', 'U', 'I', 'R', 'E', 'D')) {
-							readChar();
-							return nodeOf(REQUIRED);
-						} else if (next('I', 'M', 'P', 'L', 'I', 'E', 'D')) {
-							readChar();
-							return nodeOf(IMPLIED);
-						} else if (next('F', 'I', 'X', 'E', 'D')) {
-							readChar();
-							return nodeOf(FIXED);
-						}
-						break;
-					case '%':
-						readChar();
-						if (isNameStartChar(_c)) {
-							readChar();
-							return parsePEReference();
-						} else {
-							return nodeOf('%');
-						}
-					case 'A':
-						if (_m == MODE_DOCTYPE_ELEMENT || _m == MODE_EXTERNAL_ELEMENT) {
-							if (next('N', 'Y')) {
-								readChar();
-								return nodeOf(ANY);
+							default:
+								break;
 							}
 						}
+						return nodeOf(ILLEGAL_SEQUENCE);
+					}
+				} else if (next('?')) {
+					readChar();
+					pushContext(LexerContext.PI);
+					return nodeOf(PI_START);
+				}
+				break;
+			case '>':
+				readChar();
+				popContext();
+				return nodeOf(TAG_END);
+			case '[':
+			case ']':
+				int c = _c;
+				readChar();
+				return nodeOf(c);
+			case '%':
+				readChar();
+				if (isNameStartChar(_c)) {
+					readChar();
+					return parsePEReference();
+				} else {
+					readChar();
+					return nodeOf(ILLEGAL_SEQUENCE);
+				}
+			case '\"':
+			case '\'':
+				if (preferred == SYSTEM_LITERAL) {
+					int q = _c;
+					readChar();
+					return parseSystemLiteral(q);
+				} else if (preferred == PUBID_LITERAL) {
+					int q = _c;
+					readChar();
+					return parsePubidLiteral(q);
+				}
+				break;
+			default:
+				if (preferred == NAME && isNameStartChar(_c)) {
+					readChar();
+					return parseName();
+				} else if (isAlphabeticUppercase(_c)) {
+					readChar();
+					while (isAlphabeticUppercase(_c)) {
 						readChar();
-						return parseName();
-					case 'C':
-						if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
-							if (next('D', 'A', 'T', 'A')) {
-								readChar();
-								return nodeOf(TYPE_CDATA);
-							}
-						}
-						readChar();
-						return parseName();
-					case 'E':
-						if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
-							if (next('N', 'T', 'I', 'T', 'I', 'E', 'S')) {
-								readChar();
-								return nodeOf(TYPE_ENTITIES);
-							} else if (next('N', 'T', 'I', 'T', 'Y')) {
-								readChar();
-								return nodeOf(TYPE_ENTITY);
-							}
-						} else if (_m == MODE_DOCTYPE_ELEMENT || _m == MODE_EXTERNAL_ELEMENT) {
-							if (next('M', 'P', 'T', 'Y')) {
-								readChar();
-								return nodeOf(EMPTY);
-							}
-						}
-						readChar();
-						return parseName();
-					case 'I':
-						if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
-							if (next('D', 'R', 'E', 'F', 'S')) {
-								readChar();
-								return nodeOf(TYPE_IDREFS);
-							} else if (next('D', 'R', 'E', 'F')) {
-								readChar();
-								return nodeOf(TYPE_IDREF);
-							} else if (next('D')) {
-								readChar();
-								return nodeOf(TYPE_ID);
-							}
-						} else if (_m == MODE_EXTERNAL) {
-							if (next('G', 'N', 'O', 'R', 'E')) {
-								_m = MODE_EXTERNAL_IGNORE;
-								readChar();
-								return nodeOf(IGNORE);
-							} else if (next('N', 'C', 'L', 'U', 'D', 'E')) {
-								readChar();
-								return nodeOf(INCLUDE);
-							} 					
-						}
-						readChar();
-						return parseName();
-					case 'N':
-						if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
-							if (next('M', 'T', 'O', 'K', 'E', 'N', 'S')) {
-								readChar();
-								return nodeOf(TYPE_NMTOKENS);
-							} else if (next('M', 'T', 'O', 'K', 'E', 'N')) {
-								readChar();
-								return nodeOf(TYPE_NMTOKEN);
-							} else if (next('O', 'T', 'A', 'T', 'I', 'O', 'N')) {
-								readChar();
-								return nodeOf(TYPE_NOTATION);
-							}
-						} else if (_m == MODE_DOCTYPE_ENTITY || _m == MODE_EXTERNAL_ENTITY) {
-							if (next('D', 'A', 'T', 'A')) {
-								readChar();
-								return nodeOf(NDATA);
-							}
-						}
-						readChar();
-						return parseName();
-					case 'P':
-						if (_m == MODE_DOCTYPE
-							|| _m == MODE_DOCTYPE_ENTITY
-							|| _m == MODE_DOCTYPE_NOTATION
-							|| _m == MODE_EXTERNAL_ENTITY
-							|| _m == MODE_EXTERNAL_NOTATION) {
-							if (next('U', 'B', 'L', 'I', 'C')) {
-								readChar();
-								return nodeOf(PUBLIC);
-							}
-						}
-						readChar();
-						return parseName();
-					case 'S':
-						if (_m == MODE_DOCTYPE
-							|| _m == MODE_DOCTYPE_ENTITY
-							|| _m == MODE_DOCTYPE_NOTATION
-							|| _m == MODE_EXTERNAL_ENTITY
-							|| _m == MODE_EXTERNAL_NOTATION) {
-							if (next('Y', 'S', 'T', 'E', 'M')) {
-								readChar();
-								return nodeOf(SYSTEM);
-							}
-						}
-						readChar();
-						return parseName();
-					case '\"':
-					case '\'':
-						if (preferred == SYSTEM_LITERAL) {
-							int q = _c;
-							readChar();
-							return parseSystemLiteral(q);
-						} else if (preferred == PUBID_LITERAL) {
-							int q = _c;
-							readChar();
-							return parsePubidLiteral(q);
-						} else if (_m == MODE_DOCTYPE_ATTLIST || _m == MODE_EXTERNAL_ATTLIST) {
-							int q = _c;
-							readChar();
-							return parseAttValue(q);
-						} else if (_m == MODE_DOCTYPE_ENTITY || _m == MODE_EXTERNAL_ENTITY) {
-							int q = _c;
-							readChar();
-							return parseEntityValue(q);
-						}
-						break;
+					}
+					int type = lookup();
+					switch (type) {
+					case SYSTEM:
+					case PUBLIC:
+						return nodeOf(type);
 					default:
-						if (preferred == NMTOKEN && isNameChar(_c)) {
-							readChar();
-							return parseNmtoken();
-						} else if (isNameStartChar(_c)) {
-							readChar();
-							return parseName();
-						}
-						break;
+						return nodeOf(ILLEGAL_SEQUENCE);
 					}
-					break;
-				case MODE_EXTERNAL_IGNORE:
-					if (preferred == '[') {
-						switch (_c) {
-						case HT:
-						case LF:
-						case CR:
-						case SP:
+				}
+				break;
+			}
+			break;
+		case LexerContext.EXTERNAL:
+			switch (_c) {
+			case HT:
+			case LF:
+			case CR:
+			case SP:
+				readChar();
+				return parseWhiteSpace();
+			case '<':
+				if (next('!')) {
+					if (next('-', '-')) {
+						readChar();
+						return parseComment();
+					} else if (next('[')) {
+						readChar();
+						pushContext(LexerContext.CONDITIONAL);
+						return nodeOf(SECTION_START);
+					} else {
+						readChar();
+						if (isAlphabeticUppercase(_c)) {
 							readChar();
-							return parseWhiteSpace();
-						case '[':
+							while (isAlphabeticUppercase(_c)) {
+								readChar();
+							}
+							int type = lookup();
+							switch(type) {
+							case ELEMENT_DECL_START:
+								pushContext(LexerContext.ELEMENT);
+								return nodeOf(ELEMENT_DECL_START);
+							case ATTLIST_DECL_START:
+								pushContext(LexerContext.ATTLIST);
+								return nodeOf(ATTLIST_DECL_START);
+							case ENTITY_DECL_START:
+								pushContext(LexerContext.ENTITY);
+								return nodeOf(ENTITY_DECL_START);
+							case NOTATION_DECL_START:
+								pushContext(LexerContext.NOTATION);
+								return nodeOf(NOTATION_DECL_START);
+							default:
+								break;
+							}
+						}
+						return nodeOf(ILLEGAL_SEQUENCE);
+					}
+				} else if (next('?')) {
+					readChar();
+					pushContext(LexerContext.PI);
+					return nodeOf(PI_START);
+				}
+				break;
+			case '%':
+				readChar();
+				if (isNameStartChar(_c)) {
+					readChar();
+					return parsePEReference();
+				} else {
+					readChar();
+					return nodeOf(ILLEGAL_SEQUENCE);
+				}
+			default:
+				break;
+			}
+			break;
+		case LexerContext.CONDITIONAL:
+			switch (_c) {
+			case HT:
+			case LF:
+			case CR:
+			case SP:
+				readChar();
+				return parseWhiteSpace();
+			case '<':
+				if (next('!')) {
+					if (next('-', '-')) {
+						readChar();
+						return parseComment();
+					} else {
+						readChar();
+						if (isAlphabeticUppercase(_c)) {
 							readChar();
-							return nodeOf('[');
-						default:
-							readChar();
-							return nodeOf(ILLEGAL_CHARACTER);
-								
+							while (isAlphabeticUppercase(_c)) {
+								readChar();
+							}
+							int type = lookup();
+							switch(type) {
+							case ELEMENT_DECL_START:
+								pushContext(LexerContext.ELEMENT);
+								return nodeOf(ELEMENT_DECL_START);
+							case ATTLIST_DECL_START:
+								pushContext(LexerContext.ATTLIST);
+								return nodeOf(ATTLIST_DECL_START);
+							case ENTITY_DECL_START:
+								pushContext(LexerContext.ENTITY);
+								return nodeOf(ENTITY_DECL_START);
+							case NOTATION_DECL_START:
+								pushContext(LexerContext.NOTATION);
+								return nodeOf(NOTATION_DECL_START);
+							default:
+								break;
+							}
 						}
 					}
-					return parseIgnoreSectionContents();
-				default:
-					throw new RuntimeException("Lexer::read: BUG!");
+					return nodeOf(ILLEGAL_SEQUENCE);
+				} else if (next('?')) {
+					readChar();
+					pushContext(LexerContext.PI);
+					return nodeOf(PI_START);
+				} else {
+					readChar();
+					return nodeOf(ILLEGAL_SEQUENCE);
+				}
+			case '[':
+				readChar();
+				return nodeOf('[');
+			case ']':
+				if (next(']', '>')) {
+					readChar();
+					popContext();
+					return nodeOf(SECTION_END);
+				} else {
+					readChar();
+					return nodeOf(ILLEGAL_SEQUENCE);
+				}
+			default:
+				if (isAlphabeticUppercase(_c)) {
+					readChar();
+					while (isAlphabeticUppercase(_c)) {
+						readChar();
+					}
+					int type = lookup();
+					switch (type) {
+					case IGNORE:
+						pushContext(LexerContext.IGNORE);
+						return nodeOf(type);
+					case INCLUDE:
+						return nodeOf(type);
+					default:
+						return nodeOf(ILLEGAL_SEQUENCE);
+					}
+				}
+				break;
+			}
+			break;
+		case LexerContext.ELEMENT:
+			switch (_c) {
+			case HT:
+			case LF:
+			case CR:
+			case SP:
+				readChar();
+				return parseWhiteSpace();
+			case '>':
+				readChar();
+				popContext();
+				return nodeOf(TAG_END);
+			case '(':
+			case '|':
+			case ',':
+			case '?':
+			case '*':
+			case '+':
+				int c = _c;
+				readChar();
+				return nodeOf(c);
+			case ')':
+				if (preferred == PCDATA_END && next('*')) {
+					readChar();
+					return nodeOf(PCDATA_END);
+				} else {
+					readChar();
+					return nodeOf(')');
+				}
+			case '#':
+				readChar();
+				if (isAlphabeticUppercase(_c)) {
+					readChar();
+					while (isAlphabeticUppercase(_c)) {
+						readChar();
+					}
+					int type = lookup();
+					switch (type) {
+					case PCDATA:
+						return nodeOf(type);
+					default:
+						return nodeOf(ILLEGAL_SEQUENCE);
+					}
+				} else {
+					readChar();
+					return nodeOf(ILLEGAL_SEQUENCE);
+				}
+			case '%':
+				readChar();
+				if (isNameStartChar(_c)) {
+					readChar();
+					return parsePEReference();
+				} else {
+					readChar();
+					return nodeOf(ILLEGAL_SEQUENCE);
+				}
+			default:
+				if (preferred == NAME && isNameStartChar(_c)) {
+					readChar();
+					return parseName();
+				} else if (isAlphabeticUppercase(_c)) {
+					readChar();
+					while (isAlphabeticUppercase(_c)) {
+						readChar();
+					}
+					int type = lookup();
+					switch (type) {
+					case EMPTY:
+					case ANY:
+						return nodeOf(type);
+					default:
+						return nodeOf(ILLEGAL_SEQUENCE);
+					}
+				}
+				break;
+			}
+			break;
+		case LexerContext.ATTLIST:
+			switch (_c) {
+			case HT:
+			case LF:
+			case CR:
+			case SP:
+				readChar();
+				return parseWhiteSpace();
+			case '>':
+				readChar();
+				popContext();
+				return nodeOf(TAG_END);
+			case '(':
+			case ')':
+			case '|':
+				int c = _c;
+				readChar();
+				return nodeOf(c);
+			case '#':
+				readChar();
+				if (isAlphabeticUppercase(_c)) {
+					readChar();
+					while (isAlphabeticUppercase(_c)) {
+						readChar();
+					}
+					int type = lookup();
+					switch (type) {
+					case REQUIRED:
+					case IMPLIED:
+					case FIXED:
+						return nodeOf(type);
+					default:
+						return nodeOf(ILLEGAL_SEQUENCE);
+					}
+				}
+				break;
+			case '%':
+				readChar();
+				if (isNameStartChar(_c)) {
+					readChar();
+					return parsePEReference();
+				} else {
+					readChar();
+					return nodeOf(ILLEGAL_SEQUENCE);
+				}
+			case '\"':
+			case '\'':
+				int q = _c;
+				readChar();
+				return parseAttValue(q);
+			default:
+				if (preferred == NAME && isNameStartChar(_c)) {
+					readChar();
+					return parseName();
+				} else if (preferred == NMTOKEN && isNameChar(_c)) {
+					readChar();
+					return parseNmtoken();
+				} else if (isAlphabeticUppercase(_c)) {
+					readChar();
+					while (isAlphabeticUppercase(_c)) {
+						readChar();
+					}
+					int type = lookup();
+					switch (type) {
+					case TYPE_CDATA:
+					case TYPE_ID:
+					case TYPE_IDREF:
+					case TYPE_IDREFS:
+					case TYPE_ENTITY:
+					case TYPE_ENTITIES:
+					case TYPE_NMTOKEN:
+					case TYPE_NMTOKENS:
+					case TYPE_NOTATION:
+						return nodeOf(type);
+					default:
+						return nodeOf(ILLEGAL_SEQUENCE);
+					}
+				}
+				break;
+			}
+			break;
+		case LexerContext.ENTITY:
+			switch (_c) {
+			case HT:
+			case LF:
+			case CR:
+			case SP:
+				readChar();
+				return parseWhiteSpace();
+			case '>':
+				readChar();
+				popContext();
+				return nodeOf(TAG_END);
+			case '%':
+				readChar();
+				if (isNameStartChar(_c)) {
+					readChar();
+					return parsePEReference();
+				} else {
+					return nodeOf('%');
+				}
+			case '\"':
+			case '\'':
+				if (preferred == SYSTEM_LITERAL) {
+					int q = _c;
+					readChar();
+					return parseSystemLiteral(q);
+				} else if (preferred == PUBID_LITERAL) {
+					int q = _c;
+					readChar();
+					return parsePubidLiteral(q);
+				} else {
+					int q = _c;
+					readChar();
+					return parseEntityValue(q);
+				}
+			default:
+				if (preferred == NAME && isNameStartChar(_c)) {
+					readChar();
+					return parseName();
+				} else if (isAlphabeticUppercase(_c)) {
+					readChar();
+					while (isAlphabeticUppercase(_c)) {
+						readChar();
+					}
+					int type = lookup();
+					switch (type) {
+					case SYSTEM:
+					case PUBLIC:
+					case NDATA:
+						return nodeOf(type);
+					default:
+						return nodeOf(ILLEGAL_SEQUENCE);
+					}
+				}
+				break;
+			}
+			break;
+		case LexerContext.NOTATION:
+			switch (_c) {
+			case HT:
+			case LF:
+			case CR:
+			case SP:
+				readChar();
+				return parseWhiteSpace();
+			case '>':
+				readChar();
+				popContext();
+				return nodeOf(TAG_END);
+			case '%':
+				readChar();
+				if (isNameStartChar(_c)) {
+					readChar();
+					return parsePEReference();
+				} else {
+					readChar();
+					return nodeOf(ILLEGAL_SEQUENCE);
+				}
+			case '\"':
+			case '\'':
+				if (preferred == SYSTEM_LITERAL) {
+					int q = _c;
+					readChar();
+					return parseSystemLiteral(q);
+				} else if (preferred == PUBID_LITERAL) {
+					int q = _c;
+					readChar();
+					return parsePubidLiteral(q);
+				}
+				break;
+			default:
+				if (preferred == NAME && isNameStartChar(_c)) {
+					readChar();
+					return parseName();
+				} else if (isAlphabeticUppercase(_c)) {
+					readChar();
+					while (isAlphabeticUppercase(_c)) {
+						readChar();
+					}
+					int type = lookup();
+					switch (type) {
+					case SYSTEM:
+					case PUBLIC:
+						return nodeOf(type);
+					default:
+						return nodeOf(ILLEGAL_SEQUENCE);
+					}
 				}
 			}
+			break;
+		case LexerContext.IGNORE:
+			if (preferred == '[') {
+				switch (_c) {
+				case HT:
+				case LF:
+				case CR:
+				case SP:
+					readChar();
+					return parseWhiteSpace();
+				case '[':
+					readChar();
+					return nodeOf('[');
+				default:
+					readChar();
+					return nodeOf(ILLEGAL_CHARACTER);
+				}
+			}
+			return parseIgnoreSectionContents();
+		default:
+			throw new RuntimeException("Lexer::read: BUG!");
 		}
 		readChar();
 		return nodeOf(ILLEGAL_CHARACTER);
@@ -497,9 +834,10 @@ public class Lexer {
 
 	private Node parseComment() {
 		while (true) {
-			if (_c == EOF) {
+			switch (_c) {
+			case EOF:
 				return nodeOf(PREMATURE_EOF);
-			} else if (_c == '-') {
+			case '-':
 				readChar();
 				if (_c == '-') {
 					readChar();
@@ -511,20 +849,27 @@ public class Lexer {
 						return nodeOf(ILLEGAL_SEQUENCE);
 					}
 				}
-			} else {
+				break;
+			default:
 				readChar();
+				break;
 			}
 		}
 	}
 
 	private Node parsePI() {
 		while (true) {
-			if (_c == EOF) {
+			switch (_c) {
+			case EOF:
 				return nodeOf(PREMATURE_EOF);
-			} else if (_c == '?' && peek('>')) {
-				return nodeOf(PI_BODY);
-			} else {
+			case '?':
+				if (peek('>')) {
+					return nodeOf(PI_BODY);
+				}
+				//FALLTHROUGH
+			default:
 				readChar();
+				break;
 			}
 		}
 	}
@@ -553,56 +898,12 @@ public class Lexer {
 				return nodeOf(ILLEGAL_CHARACTER);
 			case '&':
 				readChar();
-				if (_c == '#') {
-					// CharRef
-					readChar();
-					if (_c == 'x') {
-						readChar();
-						if (isHexadecimal(_c)) {
-							readChar();
-							while (isHexadecimal(_c)) {
-								readChar();
-							}
-						} else {
-							readChar();
-							return nodeOf(MALFORMED_CHARREF);
-						}
-					} else if (isDigit(_c)) {
-						readChar();
-						while (isDigit(_c)) {
-							readChar();
-						}
-					} else {
-						readChar();
-						return nodeOf(MALFORMED_CHARREF);
-					}
-					if (_c == ';') {
-						readChar();
-					} else if (_c == EOF) {
-						return nodeOf(PREMATURE_EOF);
-					} else {
-						readChar();
-						return nodeOf(MALFORMED_CHARREF);
-					}
-				} else if (isNameStartChar(_c)) {
-					// EntityRef
-					readChar();
-					while (isNameChar(_c)) {
-						readChar();
-					}
-					if (_c == ';') {
-						readChar();
-					} else if (_c == EOF) {
-						return nodeOf(PREMATURE_EOF);
-					} else {
-						readChar();
-						return nodeOf(MALFORMED_ENTITYREF);
-					}
+				int type = doParseReference();
+				if (type == CHAR_REF || type == ENTITY_REF) {
+					break;
 				} else {
-					readChar();
-					return nodeOf(MALFORMED_REFERENCE);
+					return nodeOf(type);
 				}
-				break;
 			default:
 				readChar();
 				break;
@@ -625,7 +926,6 @@ public class Lexer {
 	}
 
 	private Node parsePubidLiteral(int q) {
-		readChar();
 		while (_c != q) {
 			if (_c == EOF) {
 				return nodeOf(PREMATURE_EOF);
@@ -647,76 +947,25 @@ public class Lexer {
 			case '%':
 				readChar();
 				if (isNameStartChar(_c)) {
-					// PEReference
 					readChar();
-					while (isNameChar(_c)) {
-						readChar();
-					}
-					if (_c == ';') {
-						readChar();
-					} else if (_c == EOF) {
-						return nodeOf(PREMATURE_EOF);
+					int type = doParsePEReference();
+					if (type == PEREFERENCE) {
+						break;
 					} else {
-						readChar();
-						return nodeOf(MALFORMED_PEREFERENCE);
+						return nodeOf(type);
 					}
 				} else {
 					readChar();
 					return nodeOf(MALFORMED_PEREFERENCE);
 				}
-				break;
 			case '&':
 				readChar();
-				if (_c == '#') {
-					// CharRef
-					readChar();
-					if (_c == 'x') {
-						readChar();
-						if (isHexadecimal(_c)) {
-							readChar();
-							while (isHexadecimal(_c)) {
-								readChar();
-							}
-						} else {
-							readChar();
-							return nodeOf(MALFORMED_CHARREF);
-						}
-					} else if (isDigit(_c)) {
-						readChar();
-						while (isDigit(_c)) {
-							readChar();
-						}
-					} else {
-						readChar();
-						return nodeOf(MALFORMED_CHARREF);
-					}
-					if (_c == ';') {
-						readChar();
-					} else if (_c == EOF) {
-						return nodeOf(PREMATURE_EOF);
-					} else {
-						readChar();
-						return nodeOf(MALFORMED_CHARREF);
-					}
-				} else if (isNameStartChar(_c)) {
-					// EntityRef
-					readChar();
-					while (isNameChar(_c)) {
-						readChar();
-					}
-					if (_c == ';') {
-						readChar();
-					} else if (_c == EOF) {
-						return nodeOf(PREMATURE_EOF);
-					} else {
-						readChar();
-						return nodeOf(MALFORMED_ENTITYREF);
-					}
+				int type = doParseReference();
+				if (type == CHAR_REF || type == ENTITY_REF) {
+					break;
 				} else {
-					readChar();
-					return nodeOf(MALFORMED_REFERENCE);
+					return nodeOf(type);
 				}
-				break;
 			default:
 				readChar();
 				break;
@@ -727,22 +976,31 @@ public class Lexer {
 	}
 
 	private Node parsePEReference() {
-		readChar();
+		int type = doParsePEReference();
+		return nodeOf(type);
+	}
+
+	private int doParsePEReference() {
 		while (isNameChar(_c)) {
 			readChar();
 		}
 		if (_c == ';') {
 			readChar();
-			return nodeOf(PEREFERENCE);
+			return PEREFERENCE;
 		} else if (_c == EOF) {
-			return nodeOf(PREMATURE_EOF);
+			return PREMATURE_EOF;
 		} else {
 			readChar();
-			return nodeOf(MALFORMED_PEREFERENCE);
+			return MALFORMED_PEREFERENCE;
 		}
 	}
 
 	private Node parseReference() {
+		int type = doParseReference();
+		return nodeOf(type);
+	}
+
+	private int doParseReference() {
 		if (_c == '#') {
 			// CharRef
 			readChar();
@@ -755,29 +1013,33 @@ public class Lexer {
 					}
 					if (_c == ';') {
 						readChar();
-						return nodeOf(CHAR_REF);
+						return CHAR_REF;
+					} else if (_c == EOF) {
+						return PREMATURE_EOF;
 					} else {
 						readChar();
-						return nodeOf(MALFORMED_CHARREF);
+						return MALFORMED_CHARREF;
 					}
 				} else {
-					return nodeOf(MALFORMED_CHARREF);
+					return MALFORMED_CHARREF;
 				}
-			} else if (Character.isDigit(_c)) {
+			} else if (isDigit(_c)) {
 				readChar();
-				while (Character.isDigit(_c)) {
+				while (isDigit(_c)) {
 					readChar();
 				}
 				if (_c == ';') {
 					readChar();
-					return nodeOf(CHAR_REF);
+					return CHAR_REF;
+				} else if (_c == EOF) {
+					return PREMATURE_EOF;
 				} else {
 					readChar();
-					return nodeOf(MALFORMED_CHARREF);
+					return MALFORMED_CHARREF;
 				}
 			} else {
 				readChar();
-				return nodeOf(MALFORMED_CHARREF);
+				return MALFORMED_CHARREF;
 			}
 		} else if (isNameStartChar(_c)) {
 			// EntityRef
@@ -787,13 +1049,16 @@ public class Lexer {
 			}
 			if (_c == ';') {
 				readChar();
-				return nodeOf(ENTITY_REF);
+				return ENTITY_REF;
+			} else if (_c == EOF) {
+				return PREMATURE_EOF;
 			} else {
 				readChar();
-				return nodeOf(MALFORMED_ENTITYREF);
+				return MALFORMED_ENTITYREF;
 			}
 		} else {
-			return nodeOf(MALFORMED_REFERENCE);
+			readChar();
+			return MALFORMED_REFERENCE;
 		}
 	}
 
@@ -811,37 +1076,62 @@ public class Lexer {
 	}
 
 	private Node parseCharData() {
-		while (_c != EOF && _c != '<' && _c != '&' && (_c != ']' || !peek(']', '>'))) {
-			readChar();
+		while (true) {
+			switch (_c) {
+			case EOF:
+			case '<':
+			case '&':
+				return nodeOf(CHAR_DATA);
+			case ']':
+				if (peek(']', '>')) {
+					return nodeOf(CHAR_DATA);
+				}
+				//FALLTHROUGH
+			default:
+				readChar();
+				break;
+			}
 		}
-		return nodeOf(CHAR_DATA);
 	}
 
 	private Node parseIgnoreSectionContents() {
 		int depth = 1;
 		while (true) {
-			if (_c == EOF) {
+			switch (_c) {
+			case EOF:
 				return nodeOf(PREMATURE_EOF);
-			} else if (_c == ']' && peek(']', '>')) {
-				if (--depth == 0) {
-					break;
+			case ']':
+				if (peek(']', '>')) {
+					if (--depth == 0) {
+						popContext();
+						return nodeOf(IGNORE_SECTION_CONTENTS);
+					}
+					readChar();
+					readChar();
+					readChar();
+				} else {
+					readChar();
+				}
+				break;
+			case '<':
+				if (next('!', '[')) {
+					depth++;
 				}
 				readChar();
-				readChar();
-			} else if (_c == '<' && next('!', '[')) {
-				depth++;
-			} else if (!isChar(_c)) {
-				return nodeOf(ILLEGAL_CHARACTER);
+				break;
+			default:
+				if (isChar(_c)) {
+					readChar();
+					break;
+				} else {
+					return nodeOf(ILLEGAL_CHARACTER);
+				}
 			}
-			readChar();
 		}
-		_m = MODE_EXTERNAL;
-		return nodeOf(IGNORE_SECTION_CONTENTS);
 	}
 
 	private int readChar() {
 		_c = _reader.readChar();
-		_reader.from();
 		return _c;
 	}
 
@@ -853,8 +1143,16 @@ public class Lexer {
 		return _reader.peek(cc);
 	}
 
-	private Node nodeOf(int code) {
-		return _nodeFactory.nodeOf(code);
+	private int lookup() {
+		return _nodeFactory.lookup(RESERVED_WORDS, -1);
+	}
+
+	private Node nodeOf(int type) {
+		return _nodeFactory.nodeOf(type);
+	}
+
+	private Node nodeOf(String regex, int typeIfTrue, int typeOtherwise) {
+		return _nodeFactory.nodeOf(_nodeFactory.matches(regex) ? typeIfTrue : typeOtherwise);
 	}
 
 	public static boolean isWhiteSpace(int c) {
@@ -937,6 +1235,10 @@ public class Lexer {
 	}
 
 	public static boolean isAlphabetic(int c) {
+		return isAlphabeticUppercase(c) || isAlphabeticLowercase(c);
+	}
+
+	public static boolean isAlphabeticUppercase(int c) {
 		switch (c) {
 		case 'A':
 		case 'B':
@@ -964,6 +1266,14 @@ public class Lexer {
 		case 'X':
 		case 'Y':
 		case 'Z':
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	public static boolean isAlphabeticLowercase(int c) {
+		switch (c) {
 		case 'a':
 		case 'b':
 		case 'c':

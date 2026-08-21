@@ -14,6 +14,7 @@ import com.hideakin.yanimu.xml.doctype.ExternalParameterEntityDefinition;
 import com.hideakin.yanimu.xml.doctype.InternalEntityDefinition;
 import com.hideakin.yanimu.xml.doctype.InternalParameterEntityDefinition;
 import com.hideakin.yanimu.xml.doctype.NotationDeclaration;
+import com.hideakin.yanimu.xml.internal.DebugHelper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -360,6 +361,7 @@ public class DocumentTest {
 				+ "    <!-- ENTITY 展開確認用 -->\r\n"
 				+ "    <footer>&copyright;</footer>\r\n"
 				+ "</library>\r\n";
+		DebugHelper.enabled = true;
 		Document doc = new Document();
 		try {
 			byte[] content = source.getBytes(StandardCharsets.UTF_8);
@@ -378,6 +380,8 @@ public class DocumentTest {
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
+		} finally {
+			DebugHelper.enabled = false;
 		}
 	}
 

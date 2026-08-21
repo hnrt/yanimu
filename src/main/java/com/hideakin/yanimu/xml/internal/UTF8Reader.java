@@ -18,7 +18,6 @@ public class UTF8Reader extends AnyReader {
 		if (Character.MIN_CODE_POINT <= _c && _c <= Character.MAX_CODE_POINT) {
 			storeChar(_c);
 		}
-		_h = _i;
 		int b1 = readByte();
 		if (b1 < 0x80) {
 			_c = b1;

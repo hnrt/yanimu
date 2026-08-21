@@ -11,10 +11,12 @@ import com.hideakin.yanimu.xml.QuotedString;
 import static com.hideakin.yanimu.xml.Node.*;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 public class NodeFactory {
 
 	private final StringBuilder _buffer = new StringBuilder();
+	private String _snapshot = null;
 
 	public NodeFactory() {
 	}
@@ -44,11 +46,16 @@ public class NodeFactory {
 
 	public void push(int c) {
 		_buffer.appendCodePoint(c);
+		_snapshot = null;
 	}
 
 	private byte[] pop() {
-		byte[] sequence = _buffer.toString().getBytes(StandardCharsets.UTF_8);
+		if (_snapshot == null) {
+			_snapshot = _buffer.toString();
+		}
+		byte[] sequence = _snapshot.getBytes(StandardCharsets.UTF_8);
 		_buffer.setLength(0);
+		_snapshot = null;
 		return sequence;
 	}
 
@@ -58,6 +65,21 @@ public class NodeFactory {
 
 	public void setLength(int length) {
 		_buffer.setLength(length);
+	}
+
+	public boolean matches(String regex) {
+		if (_snapshot == null) {
+			_snapshot = _buffer.toString();
+		}
+		return _snapshot.matches(regex);
+	}
+
+	public int lookup(Map<String, Integer> map, int defaultValue) {
+		if (_snapshot == null) {
+			_snapshot = _buffer.toString();
+		}
+		Integer value = map.get(_snapshot);
+		return value != null ? value.intValue() : defaultValue;
 	}
 
 }

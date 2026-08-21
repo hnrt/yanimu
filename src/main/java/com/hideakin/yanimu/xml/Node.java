@@ -25,6 +25,7 @@ public class Node {
 	public static final int PI_START = 2001601;
 	public static final int PI_BODY = 2001602;
 	public static final int PI_END = 2001603;
+	public static final int PI_TARGET = 2001700;
 	public static final int CD_SECT = 2001800;
 	public static final int XML_DECL = 2002300;
 	public static final int XML_END = 2002302;

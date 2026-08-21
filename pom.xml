@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.hideakin</groupId>
   <artifactId>yanimu</artifactId>
-  <version>0.9.3</version>
+  <version>0.9.4</version>
   <name>yanimu</name>
   <description>yet another XML parser sample</description>
   <properties>
