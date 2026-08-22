@@ -7,6 +7,12 @@ public class EntityRef extends Node {
 	public final String name;
 	public final String translated;
 
+	public EntityRef(String name, String translated) {
+		super(ENTITY_REF, String.format("&%s;", name));
+		this.name = name;
+		this.translated = translated;
+	}
+
 	public EntityRef(byte[] sequence) {
 		super(ENTITY_REF, sequence);
 		name = new String(sequence, 1, sequence.length - 2, StandardCharsets.UTF_8);

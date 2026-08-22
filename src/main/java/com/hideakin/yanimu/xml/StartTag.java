@@ -10,6 +10,14 @@ public class StartTag extends Tag {
 
 	protected final List<Attribute> _attributeList;
 
+	public StartTag(String name) {
+		this(STAG, new ArrayList<Node>(
+				List.of(new Node(TAG_START, START_SEQUENCE),
+						new Node(NAME, name),
+						new Node(TAG_END, END_SEQUENCE))),
+				new ArrayList<>());
+	}
+
 	public StartTag(List<Node> nodeList, List<Attribute> attributeList) {
 		this(STAG, nodeList, attributeList);
 	}

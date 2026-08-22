@@ -9,6 +9,24 @@ public class Element extends NodeList {
 	protected Object _parent;
 	public final String name;
 
+	public Element(String name) {
+		super(ELEMENT);
+		_startTag = new EmptyElementTag(name);
+		_parent = null;
+		this.name = name;
+		_nodeList.add(_startTag);
+	}
+
+	public Element(String name, String innerText) {
+		super(ELEMENT);
+		_startTag = new StartTag(name);
+		_parent = null;
+		this.name = name;
+		_nodeList.add(_startTag);
+		_nodeList.add(new EndTag(name));
+		setInnerText(innerText);
+	}
+
 	public Element(StartTag startTag, Element parent) {
 		super(ELEMENT, startTag);
 		_startTag = startTag;
@@ -43,6 +61,9 @@ public class Element extends NodeList {
 
 	public void setParent(Object parent) {
 		_parent = parent;
+		if (_parent instanceof Node node) {
+			node.clearSequence();
+		}
 	}
 
 	public Document document() {
@@ -101,6 +122,19 @@ public class Element extends NodeList {
 		return _startTag.type == EETAG ? List.of() : List.copyOf(_nodeList.subList(1, _nodeList.size() - 1));
 	}
 
+	public Node child(int index) {
+		if (_startTag.type == STAG) {
+			int count = childCount();
+			if (index < 0) {
+				index += count;
+			}
+			if (0 <= index && index < count) {
+				return _nodeList.get(index + 1);
+			}
+		}
+		return null;
+	}
+
 	public boolean empty() {
 		if (_startTag.type == EETAG) {
 			return true;
@@ -137,11 +171,30 @@ public class Element extends NodeList {
 			_startTag = _startTag.clone(STAG);
 			_nodeList.clear();
 			_nodeList.add(_startTag);
-			_nodeList.add(node);
+			if (node.type == ELEMENT) {
+				Document document = this.document();
+				byte[] eol = document != null ? document.endOfLineSequence() : Document.LF_SEQUENCE;
+				int indentation = document != null ? document.indentation() : Document.INDENTATION_DEFAULT;
+				int level = this.level();
+				_nodeList.add(Node.endOfLineAndIndentation(eol, indentation, level + 1));
+				_nodeList.add(node);
+				_nodeList.add(Node.endOfLineAndIndentation(eol, indentation, level));
+			} else {
+				_nodeList.add(node);
+			}
 			_nodeList.add(new EndTag(name));
 		} else {
 			int index = _nodeList.size() - 1;
-			_nodeList.add(index, node);
+			if (node.type == ELEMENT && _nodeList.get(index - 1).isEndOfLineAndIndentation()) {
+				Document document = this.document();
+				byte[] eol = document != null ? document.endOfLineSequence() : Document.LF_SEQUENCE;
+				int indentation = document != null ? document.indentation() : Document.INDENTATION_DEFAULT;
+				int level = this.level();
+				_nodeList.add(index - 1, Node.endOfLineAndIndentation(eol, indentation, level + 1));
+				_nodeList.add(index, node);
+			} else {
+				_nodeList.add(index, node);
+			}
 		}
 		if (node instanceof Element element) {
 			element.setParent(this);
@@ -151,7 +204,11 @@ public class Element extends NodeList {
 
 	public void addChild(int index, Node node) {
 		if (_startTag.type == EETAG) {
-			addChild(node);
+			_startTag = _startTag.clone(STAG);
+			_nodeList.clear();
+			_nodeList.add(_startTag);
+			_nodeList.add(node);
+			_nodeList.add(new EndTag(name));
 		} else {
 			int count = childCount();
 			if (index < 0) {
@@ -167,6 +224,17 @@ public class Element extends NodeList {
 			element.setParent(this);
 		}
 		clearSequence();
+	}
+
+	public void removeAllChildren() {
+		if (_startTag.type == STAG) {
+			for (int count = childCount(); count > 0; count--) {
+				Node node = _nodeList.remove(1);
+				if (node instanceof Element element) {
+					element.setParent(null);
+				}
+			}
+		}
 	}
 
 	public Node removeChild(int index) {
@@ -230,6 +298,70 @@ public class Element extends NodeList {
 		return null;
 	}
 
+	public void setInnerText(String value) {
+		List<Node> nodeList = new ArrayList<>();
+		int h = 0;
+		int i = 0;
+		int n = value.length();
+		while (i < n) {
+			char c = value.charAt(i);
+			switch (c) {
+			case '<':
+				if (h < i) {
+					nodeList.add(new Node(CHAR_DATA, value.substring(h, i)));
+				}
+				nodeList.add(new EntityRef("lt", "<"));
+				h = ++i;
+				break;
+			case '&':
+				if (h < i) {
+					nodeList.add(new Node(CHAR_DATA, value.substring(h, i)));
+				}
+				nodeList.add(new EntityRef("amp", "&"));
+				h = ++i;
+				break;
+			case ']':
+				if (i + 2 < n && value.charAt(i + 1) == ']' && value.charAt(i + 2) == '>') {
+					if (h < i) {
+						nodeList.add(new Node(CHAR_DATA, value.substring(h, i)));
+					}
+					nodeList.add(new CharRef('['));
+					nodeList.add(new CharRef('['));
+					nodeList.add(new EntityRef("gt", ">"));
+					i += 3;
+					h = i;
+				} else {
+					++i;
+				}
+				break;
+			default:
+				++i;
+				break;
+			}
+		}
+		if (h == 0) {
+			nodeList.add(new Node(CHAR_DATA, value));
+		} else if (h < n) {
+			nodeList.add(new Node(CHAR_DATA, value.substring(h, n)));
+		}
+		removeAllChildren();
+		int index = 1;
+		for (Node node : nodeList) {
+			_nodeList.add(index, node);
+			index++;
+		}
+	}
+
+	public int level() {
+		int n = 0;
+		Object parent = _parent;
+		while (parent instanceof Element element) {
+			n++;
+			parent = element.parent();
+		}
+		return n;
+	}
+
 	public List<Element> getElements(String name) {
 		List<Element> elementList = new ArrayList<>();
 		if (_startTag.type == STAG) {
@@ -245,52 +377,35 @@ public class Element extends NodeList {
 		return elementList;
 	}
 
-	public void indent(int indentation, int level) {
+	public void indent(byte[] eol, int indentation, int level) {
 		if (empty()) {
 			return;
 		}
-		if (childCount() == 1) {
-			if (_nodeList.get(1).type == ELEMENT) {
-				_nodeList.add(1, Node.of(CHAR_DATA, indentationString(indentation * (level + 1)).getBytes()));
-				_nodeList.add(3, Node.of(CHAR_DATA, indentationString(indentation * (level + 0)).getBytes()));
-				clearSequence();
-			}
-			return;
-		}
-		byte[] indentationSequence = indentationString(indentation * (level + 1)).getBytes();
 		Node prev = _nodeList.get(0);
-		Node node;
-		int i = 1;
-		while((node = _nodeList.get(i)).type != ETAG) {
-			if (node instanceof Element element) {
-				if (prev.type == CHAR_DATA && prev._sequence[0] == '\r' && prev._sequence[1] == '\n') {
-					_nodeList.set(i - 1, Node.of(CHAR_DATA, indentationSequence));
-					element.indent(indentation, level + 1);
-				} else {
-					_nodeList.add(i, Node.of(CHAR_DATA, indentationSequence));
-					element.indent(indentation, level + 1);
-					i++;
+		if (prev.type == STAG) {
+			Node node;
+			int i = 1;
+			while((node = _nodeList.get(i)).type != ETAG) {
+				if (node instanceof Element element) {
+					if (prev.isEndOfLineAndIndentation()) {
+						_nodeList.set(i - 1, Node.endOfLineAndIndentation(eol, indentation, level + 1));
+						element.indent(eol, indentation, level + 1);
+					} else {
+						_nodeList.add(i, Node.endOfLineAndIndentation(eol, indentation, level + 1));
+						element.indent(eol, indentation, level + 1);
+						i++;
+					}
 				}
+				prev = node;
+				i++;
 			}
-			prev = node;
-			i++;
-		}
-		indentationSequence = indentationString(indentation * (level + 0)).getBytes();
-		if (prev.type == CHAR_DATA && prev._sequence[0] == '\r' && prev._sequence[1] == '\n') {
-			_nodeList.set(i - 1, Node.of(CHAR_DATA, indentationSequence));
-		} else {
-			_nodeList.add(i, Node.of(CHAR_DATA, indentationSequence));
+			if (prev.isEndOfLineAndIndentation()) {
+				_nodeList.set(i - 1, Node.endOfLineAndIndentation(eol, indentation, level));
+			} else if (prev.type == ELEMENT) {
+				_nodeList.add(i, Node.endOfLineAndIndentation(eol, indentation, level));
+			}
 		}
 		clearSequence();
-	}
-
-	private static String indentationString(int width) {
-		StringBuilder buffer = new StringBuilder();
-		buffer.append("\r\n");
-		for (int n = width; n > 0; n--) {
-			buffer.append(' ');
-		}
-		return buffer.toString();
 	}
 
 }

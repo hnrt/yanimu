@@ -514,7 +514,7 @@ public class DocumentTest {
 		String source = "<?xml version=\"1.0\"?>\r\n"
 				+ "<greeting/>";
 		String expectation = "<?xml version=\"1.0\"?>\r\n"
-				+ "<greeting><hello>WOW!</hello></greeting>";
+				+ "<greeting>\r\n  <hello>WOW!</hello>\r\n</greeting>";
 		Document doc = new Document();
 		try {
 			byte[] content1 = source.getBytes();

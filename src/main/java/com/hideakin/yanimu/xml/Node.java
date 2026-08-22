@@ -1,6 +1,7 @@
 package com.hideakin.yanimu.xml;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 
 public class Node {
@@ -86,6 +87,21 @@ public class Node {
 	public static final int MALFORMED_PEREFERENCE = 3006900;
 
 	public static Node of(int type, byte[] sequence) {
+		return new Node(type, sequence);
+	}
+
+	public static Node endOfLineAndIndentation(byte[] eol, int indentation, int level) {
+		return endOfLineAndIndentation(CHAR_DATA, eol, indentation, level);
+	}
+
+	public static Node endOfLineAndIndentation(int type, byte[] eol, int indentation, int level) {
+		int n1 = eol.length;
+		int n2 = indentation * level;
+		int n = n1 + n2;
+		byte[] sequence = Arrays.copyOf(eol, n);
+		for (int i = n1; i < n; i++) {
+			sequence[i] = 32;
+		}
 		return new Node(type, sequence);
 	}
 
@@ -203,6 +219,30 @@ public class Node {
 			}
 		}
 		return count;
+	}
+
+	public boolean isEndOfLineAndIndentation() {
+		if (type == CHAR_DATA || type == S) {
+			if (_sequence != null) {
+				int i;
+				if (_sequence.length > 0 && _sequence[0] == 10) {
+					i = 1;
+				} else if (_sequence.length > 1 && _sequence[0] == 13 && _sequence[1] == 10) {
+					i = 2;
+				} else {
+					return false;
+				}
+				while (i < _sequence.length) {
+					if (_sequence[i] == 32) {
+						i++;
+					} else {
+						return false;
+					}
+				}
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

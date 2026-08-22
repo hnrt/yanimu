@@ -12,6 +12,11 @@ public class Document extends NodeList {
 
 	public static final int INDENTATION_DEFAULT = 2;
 
+	public static final String LF = "\n";
+	public static final String CRLF = "\r\n";
+	public static final byte[] LF_SEQUENCE = { 10 };
+	public static final byte[] CRLF_SEQUENCE = { 13, 10 };
+
 	protected Path _path;
 	protected XmlDeclaration _xmlDeclaration;
 	protected DocumentTypeDeclaration _dtd;
@@ -115,7 +120,35 @@ public class Document extends NodeList {
 		_indentation = spaces;
 	}
 
+	public byte[] endOfLineSequence() {
+		byte[] s = endOfLineSequence(_nodeList);
+		return s != null ? s : LF_SEQUENCE;
+	}
+
+	private static byte[] endOfLineSequence(List<Node> nodeList) {
+		for (Node node : nodeList) {
+			if (node.type == S || node.type == CHAR_DATA) {
+				byte[] s = node.sequence();
+				int n = s.length;
+				for (int i = 0; i < n; i++) {
+					if (s[i] == 10) {
+						return LF_SEQUENCE;
+					} else if (s[i] == 13 && i + 1 < n && s[i + 1] == 10) {
+						return CRLF_SEQUENCE;
+					}
+				}
+			} else if (node.type == ELEMENT) {
+				byte[] s = endOfLineSequence(((NodeList)node)._nodeList);
+				if (s != null) {
+					return s;
+				}
+			}
+		}
+		return null;
+	}
+
 	public void indent() {
+		byte[] eol = endOfLineSequence();
 		Node prev = null;
 		int size = _nodeList.size();
 		for (int i = 0; i < size; i++) {
@@ -123,15 +156,15 @@ public class Document extends NodeList {
 			if (node instanceof Element element) {
 				if (prev != null) {
 					if (prev.type == S) {
-						_nodeList.set(i - 1, Node.of(S, "\r\n".getBytes()));
-						element.indent(_indentation, 0);
+						_nodeList.set(i - 1, Node.of(S, eol));
+						element.indent(eol, _indentation, 0);
 					} else {
-						_nodeList.add(i, Node.of(S, "\r\n".getBytes()));
-						element.indent(_indentation, 0);
+						_nodeList.add(i, Node.of(S, eol));
+						element.indent(eol, _indentation, 0);
 						i++;
 					}
 				} else {
-					element.indent(_indentation, 0);
+					element.indent(eol, _indentation, 0);
 				}
 			}
 			prev = node;

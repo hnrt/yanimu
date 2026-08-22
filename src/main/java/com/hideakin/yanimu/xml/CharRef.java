@@ -4,6 +4,11 @@ public class CharRef extends Node {
 
 	public final int codepoint;
 
+	public CharRef(int codepoint) {
+		super(CHAR_REF, String.format("&#%d;", codepoint));
+		this.codepoint = codepoint;
+	}
+
 	public CharRef(byte[] sequence) {
 		super(CHAR_REF, sequence);
 		int i = 2;
