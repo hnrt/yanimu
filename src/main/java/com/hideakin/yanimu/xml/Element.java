@@ -364,13 +364,26 @@ public class Element extends NodeList {
 
 	public List<Element> getElements(String name) {
 		List<Element> elementList = new ArrayList<>();
-		if (_startTag.type == STAG) {
+		if (name != null && name.length() > 0) {
+			int start = name.charAt(0) == '/' ? 1 : 0;
+			int end = name.indexOf('/', start);
+			String name1 = end > -1 ? name.substring(start, end) : start > 0 ? name.substring(start) : name;
 			for (Node node : _nodeList) {
 				if (node instanceof Element element) {
-					if (element.name.equals(name)) {
+					if (element.name.equals(name1)) {
 						elementList.add(element);
 					}
-					elementList.addAll(element.getElements(name));
+					if (start == 0) {
+						elementList.addAll(element.getElements(name1));
+					}
+				}
+			}
+			if (end > -1 && elementList.size() > 0) {
+				String name2 = name.substring(end);
+				List<Element> elementList2 = elementList;
+				elementList = new ArrayList<>();
+				for (Element element : elementList2) {
+					elementList.addAll(element.getElements(name2));
 				}
 			}
 		}
