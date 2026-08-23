@@ -171,4 +171,8 @@ public class Document extends NodeList {
 		}
 	}
 
+	public List<Element> getElements(String name) {
+		return _root.getElements(name);
+	}
+
 }

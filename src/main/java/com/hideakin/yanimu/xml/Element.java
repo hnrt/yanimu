@@ -362,15 +362,37 @@ public class Element extends NodeList {
 		return n;
 	}
 
+	public int childElementCount() {
+		int count = 0;
+		for (Node node : _nodeList) {
+			if (node.type == ELEMENT) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * This method locates Element instances that match the criteria specified by <i>name</i>.
+	 * @param name the tag name pattern used to locate Element instances.
+	 *             The pattern may include multiple tag names separated by slashes
+	 *             to specify an Element hierarchy.
+	 *             If <i>name</i> begins with a slash, the search is performed starting
+	 *             from the direct children. Otherwise, the search begins from any
+	 *             descendant elements.
+	 *             An asterisk acts as a wildcard that matches any tag name.
+	 * @return List of Element instances
+	 */
 	public List<Element> getElements(String name) {
 		List<Element> elementList = new ArrayList<>();
 		if (name != null && name.length() > 0) {
 			int start = name.charAt(0) == '/' ? 1 : 0;
 			int end = name.indexOf('/', start);
 			String name1 = end > -1 ? name.substring(start, end) : start > 0 ? name.substring(start) : name;
+			boolean anyMatch = name1.equals("*");
 			for (Node node : _nodeList) {
 				if (node instanceof Element element) {
-					if (element.name.equals(name1)) {
+					if (anyMatch || element.name.equals(name1)) {
 						elementList.add(element);
 					}
 					if (start == 0) {
