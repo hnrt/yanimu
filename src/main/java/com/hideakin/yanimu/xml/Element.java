@@ -362,14 +362,13 @@ public class Element extends NodeList {
 		return n;
 	}
 
-	public int childElementCount() {
-		int count = 0;
+	public boolean hasElement() {
 		for (Node node : _nodeList) {
 			if (node.type == ELEMENT) {
-				count++;
+				return true;
 			}
 		}
-		return count;
+		return false;
 	}
 
 	/**
@@ -384,28 +383,36 @@ public class Element extends NodeList {
 	 * @return List of Element instances
 	 */
 	public List<Element> getElements(String name) {
-		List<Element> elementList = new ArrayList<>();
 		if (name != null && name.length() > 0) {
-			int start = name.charAt(0) == '/' ? 1 : 0;
-			int end = name.indexOf('/', start);
-			String name1 = end > -1 ? name.substring(start, end) : start > 0 ? name.substring(start) : name;
-			boolean anyMatch = name1.equals("*");
-			for (Node node : _nodeList) {
-				if (node instanceof Element element) {
-					if (anyMatch || element.name.equals(name1)) {
-						elementList.add(element);
-					}
-					if (start == 0) {
-						elementList.addAll(element.getElements(name1));
-					}
+			String[] names = name.split("/");
+			boolean isRelative = names[0].length() > 0;
+			return getElements(names, isRelative ? 0 : 1, isRelative);
+		} else {
+			return new ArrayList<>();
+		}
+	}
+
+	public List<Element> getElements(String[] names, int index, boolean isRelative) {
+		List<Element> elementList = new ArrayList<>();
+		boolean anyMatch = names[index].equals("*");
+		for (Node node : _nodeList) {
+			if (node instanceof Element element) {
+				if (anyMatch || element.name.equals(names[index])) {
+					elementList.add(element);
 				}
 			}
-			if (end > -1 && elementList.size() > 0) {
-				String name2 = name.substring(end);
-				List<Element> elementList2 = elementList;
-				elementList = new ArrayList<>();
-				for (Element element : elementList2) {
-					elementList.addAll(element.getElements(name2));
+		}
+		if (index + 1 < names.length && elementList.size() > 0) {
+			List<Element> elementList2 = new ArrayList<>();
+			for (Element element : elementList) {
+				elementList2.addAll(element.getElements(names, index + 1, false));
+			}
+			elementList = elementList2;
+		}
+		if (isRelative) {
+			for (Node node : _nodeList) {
+				if (node instanceof Element element) {
+					elementList.addAll(element.getElements(names, index, true));
 				}
 			}
 		}

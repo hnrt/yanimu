@@ -3,6 +3,7 @@ package com.hideakin.yanimu.xml;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.hideakin.yanimu.xml.doctype.DocumentTypeDeclaration;
@@ -171,8 +172,36 @@ public class Document extends NodeList {
 		}
 	}
 
+	/**
+	 * This method locates Element instances that match the criteria specified by <i>name</i>.
+	 * @param name the tag name pattern used to locate Element instances.
+	 *             The pattern may include multiple tag names separated by slashes
+	 *             to specify an Element hierarchy.
+	 *             If <i>name</i> begins with a slash, the search is performed starting
+	 *             from the root element. Otherwise, the search begins from
+	 *             any descendant elements.
+	 *             An asterisk acts as a wildcard that matches any tag name.
+	 * @return List of Element instances
+	 */
 	public List<Element> getElements(String name) {
-		return _root.getElements(name);
+		List<Element> elementList = new ArrayList<>();
+		if (name != null && name.length() > 0) {
+			String[] names = name.split("/");
+			boolean isRelative = names[0].length() > 0;
+			int index = isRelative ? 0 : 1;
+			boolean anyMatch = names[index].equals("*");
+			if (anyMatch || _root.name.equals(names[index])) {
+				if (index + 1 < names.length) {
+					elementList.addAll(_root.getElements(names, index + 1, false));
+				} else {
+					elementList.add(_root);
+				}
+			}
+			if (isRelative) {
+				elementList.addAll(_root.getElements(names, index, true));
+			}
+		}
+		return elementList;
 	}
 
 }

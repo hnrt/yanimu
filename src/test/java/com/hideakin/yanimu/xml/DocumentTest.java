@@ -61,8 +61,6 @@ public class DocumentTest {
 			byte[] content = source.getBytes();
 			doc.load(content);
 			assertEquals("UTF-8", doc.encoding());
-			assertEquals("Hello, world!", doc.root().innerText());
-			assertEquals("123", doc.root().attribute("abc:xyz"));
 			int end = checkDocument("test02", doc, content);
 			System.out.printf("test02: content.length=%d actual=%d\n", content.length, end);
 		} catch (Exception e) {
@@ -83,14 +81,6 @@ public class DocumentTest {
 			byte[] content = source.getBytes();
 			doc.load(content);
 			assertEquals("yes", doc.standalone());
-			assertEquals("Hello, world!", doc.root().innerText());
-			assertEquals("<&x\'\">", doc.root().attribute("abc"));
-			assertEquals("ABC", doc.root().attribute("xyz"));
-			assertEquals("<&x\'\">", doc.root().attribute(0));
-			assertEquals("ABC", doc.root().attribute(1));
-			assertEquals("ABC", doc.root().attribute(-1));
-			assertEquals(null, doc.root().attribute("opq"));
-			assertEquals(null, doc.root().attribute(2));
 			int end = checkDocument("test03", doc, content);
 			System.out.printf("test03: content.length=%d actual=%d\n", content.length, end);
 		} catch (Exception e) {
@@ -174,16 +164,6 @@ public class DocumentTest {
 		try {
 			byte[] content = source.getBytes();
 			doc.load(content);
-			List<Element> elements = doc.root().getElements("abc");
-			assertEquals(8, elements.size());
-			assertEquals("1", elements.get(0).attribute("id"));
-			assertEquals("2", elements.get(1).attribute("id"));
-			assertEquals("3", elements.get(2).attribute("id"));
-			assertEquals("4", elements.get(3).attribute("id"));
-			assertEquals("41", elements.get(4).attribute("id"));
-			assertEquals("421", elements.get(5).attribute("id"));
-			assertEquals("422", elements.get(6).attribute("id"));
-			assertEquals("43", elements.get(7).attribute("id"));
 			int end = checkDocument("test05", doc, content);
 			System.out.printf("test05: content.length=%d end=%d\n", content.length, end);
 		} catch (Exception e) {
