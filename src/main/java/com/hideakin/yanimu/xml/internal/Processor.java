@@ -1059,34 +1059,38 @@ public class Processor {
 
 	private void parseContent(Element parent) throws Exception {
 		push();
-		if (_n.type == CHAR_DATA) {
-			read();
-		}
 		while (true) {
-			if (_n.type == STAG_START) {
+			if (_n.type == CHAR_DATA) {
+				read();
+			}
+			switch (_n.type) {
+			case STAG_START:
 				parseElement(parent);
-			} else if (_n.type == ENTITY_REF) {
+				break;
+			case ENTITY_REF:
 				EntityRef er = (EntityRef)_n;
 				String value = _em.getEntity(er.name);
 				_n = new EntityRef(er, value != null ? value : er.toString());
 				read();
-			} else if (_n.type == CHAR_REF) {
-				read();
-			} else if (_n.type == CD_SECT) {
-				read();
-			} else if (_n.type == PI_START) {
-				parseProcessingInstruction();
-			} else if (_n.type == COMMENT) {
-				read();
-			} else {
 				break;
-			}
-			if (_n.type == CHAR_DATA) {
+			case CHAR_REF:
 				read();
+				break;
+			case CD_SECT:
+				read();
+				break;
+			case PI_START:
+				parseProcessingInstruction();
+				break;
+			case COMMENT:
+				read();
+				break;
+			default:
+				Content content = new Content(pop());
+				store(content);
+				return;
 			}
 		}
-		Content content = new Content(pop());
-		store(content);
 	}
 
 	private void parseEndTag(String name) throws Exception {
