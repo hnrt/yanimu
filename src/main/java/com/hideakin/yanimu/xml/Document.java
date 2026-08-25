@@ -81,7 +81,7 @@ public class Document extends NodeList {
 		Processor processor = new Processor(content);
 		List<Node> nodeList = processor.parse();
 		_nodeList.addAll(nodeList);
-		if (firstNode() instanceof XmlDeclaration xmlDeclaration) {
+		if (first() instanceof XmlDeclaration xmlDeclaration) {
 			_xmlDeclaration = xmlDeclaration;
 		}
 		for (Node node : _nodeList) {
@@ -121,57 +121,6 @@ public class Document extends NodeList {
 		_indentation = spaces;
 	}
 
-	public byte[] endOfLineSequence() {
-		byte[] s = endOfLineSequence(_nodeList);
-		return s != null ? s : LF_SEQUENCE;
-	}
-
-	private static byte[] endOfLineSequence(List<Node> nodeList) {
-		for (Node node : nodeList) {
-			if (node.type == S || node.type == CHAR_DATA) {
-				byte[] s = node.sequence();
-				int n = s.length;
-				for (int i = 0; i < n; i++) {
-					if (s[i] == 10) {
-						return LF_SEQUENCE;
-					} else if (s[i] == 13 && i + 1 < n && s[i + 1] == 10) {
-						return CRLF_SEQUENCE;
-					}
-				}
-			} else if (node.type == ELEMENT) {
-				byte[] s = endOfLineSequence(((NodeList)node)._nodeList);
-				if (s != null) {
-					return s;
-				}
-			}
-		}
-		return null;
-	}
-
-	public void indent() {
-		byte[] eol = endOfLineSequence();
-		Node prev = null;
-		int size = _nodeList.size();
-		for (int i = 0; i < size; i++) {
-			Node node = _nodeList.get(i);
-			if (node instanceof Element element) {
-				if (prev != null) {
-					if (prev.type == S) {
-						_nodeList.set(i - 1, Node.of(S, eol));
-						element.indent(eol, _indentation, 0);
-					} else {
-						_nodeList.add(i, Node.of(S, eol));
-						element.indent(eol, _indentation, 0);
-						i++;
-					}
-				} else {
-					element.indent(eol, _indentation, 0);
-				}
-			}
-			prev = node;
-		}
-	}
-
 	/**
 	 * This method locates Element instances that match the criteria specified by <i>name</i>.
 	 * @param name the tag name pattern used to locate Element instances.
@@ -202,6 +151,51 @@ public class Document extends NodeList {
 			}
 		}
 		return elementList;
+	}
+
+	public byte[] endOfLineSequence() {
+		byte[] s = endOfLineSequence(_nodeList);
+		return s != null ? s : LF_SEQUENCE;
+	}
+
+	private static byte[] endOfLineSequence(List<Node> nodeList) {
+		for (Node node : nodeList) {
+			if (node.type == S || node.type == CHAR_DATA) {
+				byte[] s = node.sequence();
+				int n = s.length;
+				for (int i = 0; i < n; i++) {
+					if (s[i] == 10) {
+						return LF_SEQUENCE;
+					} else if (s[i] == 13 && i + 1 < n && s[i + 1] == 10) {
+						return CRLF_SEQUENCE;
+					}
+				}
+			} else if (node.type == ELEMENT) {
+				byte[] s = endOfLineSequence(((NodeList)node)._nodeList);
+				if (s != null) {
+					return s;
+				}
+			}
+		}
+		return null;
+	}
+
+	public void indent() {
+		byte[] eol = endOfLineSequence();
+		int n = _nodeList.size();
+		for (int i = 0; i < n; i++) {
+			Node node = _nodeList.get(i);
+			if (node instanceof Element element) {
+				if (i > 0 && _nodeList.get(i - 1).type == S) {
+					_nodeList.set(i - 1, Node.of(S, eol));
+				} else {
+					_nodeList.add(i, Node.of(S, eol));
+					i++;
+					n++;
+				}
+				element.indent(eol, _indentation, 0);
+			}
+		}
 	}
 
 }

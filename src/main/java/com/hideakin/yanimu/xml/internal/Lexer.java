@@ -135,7 +135,7 @@ public class Lexer {
 				} else {
 					readChar();
 					pushContext(LexerContext.STAG);
-					return nodeOf(TAG_START);
+					return nodeOf(STAG_START);
 				}
 			default:
 				break;
@@ -211,7 +211,7 @@ public class Lexer {
 			case '>':
 				readChar();
 				setContext(LexerContext.CONTENT);
-				return nodeOf(TAG_END);
+				return nodeOf(STAG_END);
 			case '/':
 				if (next('>')) {
 					readChar();
@@ -257,7 +257,7 @@ public class Lexer {
 				} else {
 					readChar();
 					pushContext(LexerContext.STAG);
-					return nodeOf(TAG_START);
+					return nodeOf(STAG_START);
 				}
 			case '&':
 				readChar();
@@ -283,7 +283,7 @@ public class Lexer {
 			case '>':
 				readChar();
 				popContext();
-				return nodeOf(TAG_END);
+				return nodeOf(ETAG_END);
 			default:
 				if (isNameStartChar(_c)) {
 					readChar();

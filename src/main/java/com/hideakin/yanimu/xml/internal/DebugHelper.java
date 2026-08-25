@@ -40,10 +40,13 @@ public class DebugHelper {
 		nt.put(Integer.valueOf(Node.DOCTYPE_DECL_START), "DOCTYPE_DECL_START");
 		nt.put(Integer.valueOf(Node.ELEMENT), "ELEMENT");
 		nt.put(Integer.valueOf(Node.STAG), "STAG");
-		nt.put(Integer.valueOf(Node.TAG_START), "TAG_START");
+		nt.put(Integer.valueOf(Node.STAG_START), "STAG_START");
+		nt.put(Integer.valueOf(Node.STAG_START), "STAG_END");
 		nt.put(Integer.valueOf(Node.ATTRIBUTE), "ATTRIBUTE");
 		nt.put(Integer.valueOf(Node.ETAG), "ETAG");
 		nt.put(Integer.valueOf(Node.ETAG_START), "ETAG_START");
+		nt.put(Integer.valueOf(Node.ETAG_END), "ETAG_END");
+		nt.put(Integer.valueOf(Node.CONTENT), "CONTENT");
 		nt.put(Integer.valueOf(Node.EETAG), "EETAG");
 		nt.put(Integer.valueOf(Node.EETAG_END), "EETAG_END");
 		nt.put(Integer.valueOf(Node.ELEMENT_DECL), "ELEMENT_DECL");

@@ -38,16 +38,24 @@ public class NodeList extends Node {
 		return List.copyOf(_nodeList);
 	}
 
-	public int nodeCount() {
+	public int count() {
 		return _nodeList.size();
 	}
 
-	public Node firstNode() {
+	public Node first() {
 		return _nodeList.get(0);
 	}
 
-	public Node lastNode() {
+	public Node last() {
 		return _nodeList.get(_nodeList.size() - 1);
+	}
+
+	public Node get(int index) {
+		int size = _nodeList.size();
+		if (index < 0) {
+			index += size;
+		}
+		return 0 <= index && index < size ? _nodeList.get(index) : null;
 	}
 
 	@Override
@@ -128,18 +136,18 @@ public class NodeList extends Node {
 		return count;
 	}
 
-	public int findNode(Node target) {
-		return doFindNode(target, 0, _nodeList.size());
+	public int find(Node target) {
+		return doFind(target, 0, _nodeList.size());
 	}
 
-	public int findNode(Node target, int start) {
+	public int find(Node target, int start) {
 		if (start < 0) {
 			start = 0;
 		}
-		return doFindNode(target, start, _nodeList.size());
+		return doFind(target, start, _nodeList.size());
 	}
 
-	public int findNode(Node target, int start, int end) {
+	public int find(Node target, int start, int end) {
 		if (start < 0) {
 			start = 0;
 		}
@@ -147,10 +155,10 @@ public class NodeList extends Node {
 		if (end > size) {
 			end = size;
 		}
-		return doFindNode(target, start, end);
+		return doFind(target, start, end);
 	}
 
-	private int doFindNode(Node target, int start, int end) {
+	private int doFind(Node target, int start, int end) {
 		for (int index = start; index < end; index++) {
 			Node node = _nodeList.get(index);
 			if (node == target) {
@@ -160,44 +168,54 @@ public class NodeList extends Node {
 		return -1;
 	}
 
-	public void addNode(Node node) {
+	public void add(Node node) {
 		_nodeList.add(node);
+		clearSequence();
 	}
 
-	public void addNode(int index, Node node) {
+	public void add(int index, Node node) {
 		int size = _nodeList.size();
 		if (index < 0) {
 			index += size;
 		}
 		if (index < 0) {
 			index = 0;
+		} else if (index > size) {
+			index = size;
 		}
-		index = index < size ? index : size;
 		_nodeList.add(index, node);
+		clearSequence();
 	}
 
-	public Node removeNode(int index) {
+	public void removeAll() {
+		_nodeList.clear();
+		clearSequence();
+	}
+
+	public Node remove(int index) {
 		int size = _nodeList.size();
 		if (index < 0) {
 			index += size;
 		}
 		if (0 <= index && index < size) {
+			clearSequence();
 			return _nodeList.remove(index);
 		}
 		return null;
 	}
 
-	public Node removeNode(Node node) {
+	public Node remove(Node node) {
 		int size = _nodeList.size();
 		for (int index = 0; index < size; index++) {
 			if (_nodeList.get(index) == node) {
+				clearSequence();
 				return _nodeList.remove(index);
 			}
 		}
 		return null;
 	}
 
-	public Node removeNode(Node node, int start, int end) {
+	public Node remove(Node node, int start, int end) {
 		if (start < 0) {
 			start = 0;
 		}
@@ -210,6 +228,7 @@ public class NodeList extends Node {
 		}
 		for (int index = start; index < end; index++) {
 			if (_nodeList.get(index) == node) {
+				clearSequence();
 				return _nodeList.remove(index);
 			}
 		}

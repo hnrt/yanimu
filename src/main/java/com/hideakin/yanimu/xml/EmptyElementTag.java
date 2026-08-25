@@ -10,7 +10,7 @@ public class EmptyElementTag extends StartTag {
 
 	public EmptyElementTag(String name) {
 		super(EETAG, new ArrayList<>(
-				List.of(new Node(TAG_START, START_SEQUENCE),
+				List.of(new Node(STAG_START, START_SEQUENCE),
 						new Node(NAME, name),
 						new Node(EETAG_END, END_SEQUENCE))),
 				new ArrayList<>());

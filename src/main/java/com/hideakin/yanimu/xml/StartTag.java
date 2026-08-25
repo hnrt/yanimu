@@ -12,9 +12,9 @@ public class StartTag extends Tag {
 
 	public StartTag(String name) {
 		this(STAG, new ArrayList<Node>(
-				List.of(new Node(TAG_START, START_SEQUENCE),
+				List.of(new Node(STAG_START, START_SEQUENCE),
 						new Node(NAME, name),
-						new Node(TAG_END, END_SEQUENCE))),
+						new Node(STAG_END, END_SEQUENCE))),
 				new ArrayList<>());
 	}
 
@@ -73,12 +73,12 @@ public class StartTag extends Tag {
 		if (type == STAG) {
 			int index = nodeList.size() - 1;
 			Node node = nodeList.get(index);
-			if (node.type == TAG_END) {
+			if (node.type == STAG_END) {
 				//OK
 			} else if (node.type == EETAG_END) {
-				nodeList.set(index, new Node(TAG_END, END_SEQUENCE));
+				nodeList.set(index, new Node(STAG_END, END_SEQUENCE));
 			} else {
-				nodeList.add(index, new Node(TAG_END, END_SEQUENCE));
+				nodeList.add(index, new Node(STAG_END, END_SEQUENCE));
 			}
 			return new StartTag(nodeList, attributeList);
 		} else if (type == EETAG) {
@@ -86,7 +86,7 @@ public class StartTag extends Tag {
 			Node node = nodeList.get(index);
 			if (node.type == EETAG_END) {
 				//OK
-			} else if (node.type == TAG_END) {
+			} else if (node.type == STAG_END) {
 				nodeList.set(index, new Node(EETAG_END, EmptyElementTag.END_SEQUENCE));
 			} else {
 				nodeList.add(index, new Node(EETAG_END, EmptyElementTag.END_SEQUENCE));

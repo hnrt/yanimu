@@ -1,6 +1,7 @@
 package com.hideakin.yanimu.xml.internal;
 
 import com.hideakin.yanimu.xml.Attribute;
+import com.hideakin.yanimu.xml.Content;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.EmptyElementTag;
 import com.hideakin.yanimu.xml.EndTag;
@@ -132,7 +133,7 @@ public class Processor {
 					throw new ParseException("PI end is expected.", offset(_n));
 				}
 				ProcessingInstruction pi = new ProcessingInstruction(pop(), target, body); 
-				_nn.add(pi);
+				store(pi);
 				break;
 			default:
 				throw new ParseException("Either xml or PI target is expected.", offset(_n));
@@ -259,7 +260,7 @@ public class Processor {
 			throw new ParseException("?> is expected.", offset(_n));
 		}
 		XmlDeclaration t = new XmlDeclaration(pop(), version, encoding, standalone); 
-		_nn.add(t);
+		store(t);
 	}
 
 	private boolean parseMisc() throws Exception {
@@ -353,7 +354,7 @@ public class Processor {
 			throw new ParseException("> is expected.", offset(_n));
 		}
 		DocumentTypeDeclaration dtd = new DocumentTypeDeclaration(pop(), name, extid, _markupDeclarations);
-		_nn.add(dtd);
+		store(dtd);
 	}
 
 	private ElementTypeDeclaration parseElementDecl() throws Exception {
@@ -386,7 +387,7 @@ public class Processor {
 			throw new ParseException("End of element declaration is expected.", offset(_n));
 		}
 		ElementTypeDeclaration etd = new ElementTypeDeclaration(pop(), name, cs);
-		_nn.add(etd);
+		store(etd);
 		return etd;
 	}
 
@@ -633,7 +634,7 @@ public class Processor {
 			throw new ParseException("End of attlist declaration is expected.", offset(_n));
 		}
 		AttributeListDeclaration ald = new AttributeListDeclaration(pop(), name, defList);
-		_nn.add(ald);
+		store(ald);
 		return ald;
 	}
 
@@ -882,7 +883,7 @@ public class Processor {
 			throw new ParseException("End of entity declaration is expected.", offset(_n));
 		}
 		EntityDeclaration ed = new EntityDeclaration(pop(), definition);
-		_nn.add(ed);
+		store(ed);
 		return ed;
 	}
 
@@ -921,7 +922,7 @@ public class Processor {
 			throw new ParseException("End of notation declaration is expected.", offset(_n));
 		}
 		NotationDeclaration nd = new NotationDeclaration(pop(), name, extid);
-		_nn.add(nd);
+		store(nd);
 		return nd;
 	}
 
@@ -986,20 +987,19 @@ public class Processor {
 	private void parseElement(Element parent) throws Exception {
 		push();
 		StartTag tag = parseStartTag();
-		Element element = new Element(tag, parent);
+		Element element = new Element(tag.name, parent);
 		if (tag.type == STAG) {
-			List<Node> childList = parseContent(element);
-			EndTag endTag = parseEndTag(tag.name);
-			element.set(childList, endTag);
+			parseContent(element);
+			parseEndTag(tag.name);
 		}
-		pop();
-		_nn.add(element);
+		element.set(pop());
+		store(element);
 	}
 
 	private StartTag parseStartTag() throws Exception {
 		StartTag tag;
 		List<Attribute> attributeList = new ArrayList<>();
-		if (_n.type == TAG_START) {
+		if (_n.type == STAG_START) {
 			push();
 			read();
 		} else {
@@ -1033,7 +1033,7 @@ public class Processor {
 					read();
 					Attribute attribute = new Attribute(pop(), key, value);
 					attributeList.add(attribute);
-					_nn.add(attribute);
+					store(attribute);
 				} else {
 					throw new ParseException("Attribute value is expected.", offset(_n));
 				}
@@ -1044,26 +1044,26 @@ public class Processor {
 				}
 			}
 		}
-		if (_n.type == TAG_END) {
+		if (_n.type == STAG_END) {
 			read();
 			tag = new StartTag(pop(), attributeList);
+			return store(tag);
 		} else if (_n.type == EETAG_END) {
 			read();
 			tag = new EmptyElementTag(pop(), attributeList);
+			return store(tag);
 		} else {
 			throw new ParseException("Tag end is expected.", offset(_n));
 		}
-		_nn.add(tag);
-		return tag;
 	}
 
-	private List<Node> parseContent(Element parent) throws Exception {
+	private void parseContent(Element parent) throws Exception {
 		push();
 		if (_n.type == CHAR_DATA) {
 			read();
 		}
 		while (true) {
-			if (_n.type == TAG_START) {
+			if (_n.type == STAG_START) {
 				parseElement(parent);
 			} else if (_n.type == ENTITY_REF) {
 				EntityRef er = (EntityRef)_n;
@@ -1085,10 +1085,11 @@ public class Processor {
 				read();
 			}
 		}
-		return pop();
+		Content content = new Content(pop());
+		store(content);
 	}
 
-	private EndTag parseEndTag(String name) throws Exception {
+	private void parseEndTag(String name) throws Exception {
 		if (_n.type == ETAG_START) {
 			push();
 			read();
@@ -1106,14 +1107,13 @@ public class Processor {
 		if (_n.type == S) {
 			read();
 		}
-		if (_n.type == TAG_END) {
+		if (_n.type == ETAG_END) {
 			read();
 		} else {
 			throw new ParseException("ETag end is expected.", offset(_n));
 		}
 		EndTag tag = new EndTag(pop());
-		_nn.add(tag);
-		return tag;
+		store(tag);
 	}
 
 	private void processExternalDocument(String name, ExternalIdentifiers extid) {
@@ -1263,7 +1263,7 @@ public class Processor {
 			throw new ParseException("?> is expected.", offset(_n));
 		}
 		XmlDeclaration t = new XmlDeclaration(pop(), version, encoding, null);
-		_nn.add(t);
+		store(t);
 	}
 
 	private boolean parseExternalSubsetDeclaration() throws Exception {
@@ -1387,8 +1387,7 @@ public class Processor {
 			throw new ParseException("PI end is expected.", offset(_n));
 		}
 		ProcessingInstruction pi = new ProcessingInstruction(pop(), name, body); 
-		_nn.add(pi);
-		return pi;
+		return store(pi);
 	}
 
 	private List<Node> push() {
@@ -1403,13 +1402,18 @@ public class Processor {
 		return last;
 	}
 
+	private <T extends Node> T store(T node) {
+		_nn.add(node);
+		return node;
+	}
+
 	private Node read() {
 		return read(0);
 	}
 
 	private Node read(int preferred) {
 		if (_lexerStack.isEmpty()) {
-			_nn.add(_n);
+			store(_n);
 		}
 		boolean sp = _n.type == S;
 		DebugHelper.printLexerContext(_lexer.getContext());
@@ -1423,7 +1427,7 @@ public class Processor {
 				_n = _lexer.read(preferred);
 				if (sp && _n.type == S) {
 					if (_lexerStack.isEmpty()) {
-						_nn.add(_n);
+						store(_n);
 					}
 					_n = _lexer.read(preferred);
 				}
@@ -1431,7 +1435,7 @@ public class Processor {
 				String value = _em.getParameterEntity(((ParameterEntityReference)_n).name);
 				if (value != null) {
 					if (_lexerStack.isEmpty()) {
-						_nn.add(_n);
+						store(_n);
 					}
 					_lexerStack.push(_lexer);
 					_lexer = new Lexer(value, _lexer);
