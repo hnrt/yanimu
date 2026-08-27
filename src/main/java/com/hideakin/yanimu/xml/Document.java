@@ -19,7 +19,7 @@ public class Document extends NodeList {
 	public static final byte[] CRLF_SEQUENCE = { 13, 10 };
 
 	protected Path _path;
-	protected XmlDeclaration _xmlDeclaration;
+	protected XmlDeclaration _xml;
 	protected DocumentTypeDeclaration _dtd;
 	protected Element _root;
 	protected String[] _warnings;
@@ -43,24 +43,84 @@ public class Document extends NodeList {
 		_path = path;
 	}
 
-	public String version() {
-		return _xmlDeclaration != null ? _xmlDeclaration.version : null;
+	public XmlDeclaration xml() {
+		return _xml;
 	}
 
-	public String encoding() {
-		return _xmlDeclaration != null ? _xmlDeclaration.encoding : null;
-	}
-
-	public String standalone() {
-		return _xmlDeclaration != null ? _xmlDeclaration.standalone : null;
+	public void setXml(XmlDeclaration xml) {
+		if (get(0).type == XML_DECL) {
+			if (xml != null) {
+				set(0, xml);
+			} else {
+				remove(0);
+				if (get(0).type == S) {
+					remove(0);
+				}
+			}
+		}
+		_xml = xml;
 	}
 
 	public DocumentTypeDeclaration dtd() {
 		return _dtd;
 	}
 
+	public void setDtd(DocumentTypeDeclaration dtd) {
+		for (int i = 0; ; i++) {
+			switch (get(i).type) {
+			case DOCTYPE_DECL:
+				if (dtd != null) {
+					set(i, dtd);
+				} else {
+					remove(i);
+					if (get(i).type == S) {
+						remove(i);
+					}
+				}
+				_dtd = dtd;
+				return;
+			case ELEMENT:
+			case NULL:
+				if (dtd != null) {
+					add(i, dtd);
+					add(i + 1, Node.of(S, endOfLineSequence()));
+				}
+				_dtd = dtd;
+				return;
+			default:
+				break;
+			}
+		}
+	}
+
 	public Element root() {
 		return _root;
+	}
+
+	public void setRoot(Element root) {
+		for (int i = 0; ; i++) {
+			switch (get(i).type) {
+			case ELEMENT:
+				if (root != null) {
+					set(i, root);
+				} else {
+					remove(i);
+					if (get(i).type == S) {
+						remove(i);
+					}
+				}
+				_root = root;
+				return;
+			case NULL:
+				if (root != null) {
+					add(i, root);
+				}
+				_root = root;
+				return;
+			default:
+				break;
+			}
+		}
 	}
 
 	public void load() throws Exception {
@@ -73,7 +133,7 @@ public class Document extends NodeList {
 
 	public void load(byte[] content) throws Exception {
 		_nodeList.clear();
-		_xmlDeclaration = null;
+		_xml = null;
 		_dtd = null;
 		_root = null;
 		_warnings = null;
@@ -81,8 +141,8 @@ public class Document extends NodeList {
 		Processor processor = new Processor(content);
 		List<Node> nodeList = processor.parse();
 		_nodeList.addAll(nodeList);
-		if (first() instanceof XmlDeclaration xmlDeclaration) {
-			_xmlDeclaration = xmlDeclaration;
+		if (first() instanceof XmlDeclaration xml) {
+			_xml = xml;
 		}
 		for (Node node : _nodeList) {
 			if (node instanceof Element element) {
@@ -134,7 +194,7 @@ public class Document extends NodeList {
 	 */
 	public List<Element> getElements(String name) {
 		List<Element> elementList = new ArrayList<>();
-		if (name != null && name.length() > 0) {
+		if (name != null && name.length() > 0 && _root != null) {
 			String[] names = name.split("/");
 			boolean isRelative = names[0].length() > 0;
 			int index = isRelative ? 0 : 1;
@@ -182,18 +242,20 @@ public class Document extends NodeList {
 
 	public void indent() {
 		byte[] eol = endOfLineSequence();
-		int n = _nodeList.size();
-		for (int i = 0; i < n; i++) {
-			Node node = _nodeList.get(i);
-			if (node instanceof Element element) {
-				if (i > 0 && _nodeList.get(i - 1).type == S) {
-					_nodeList.set(i - 1, Node.of(S, eol));
+		Node node;
+		for (int i = 0; (node = get(i)).type != NULL; i++) {
+			switch (node.type) {
+			case ELEMENT:
+				if (i > 0 && get(i - 1).type == S) {
+					set(i - 1, Node.of(S, eol));
 				} else {
-					_nodeList.add(i, Node.of(S, eol));
+					add(i, Node.of(S, eol));
 					i++;
-					n++;
 				}
-				element.indent(eol, _indentation, 0);
+				((Element)node).indent(eol, _indentation, 0);
+				break;
+			default:
+				break;
 			}
 		}
 	}

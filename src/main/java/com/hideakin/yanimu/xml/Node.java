@@ -7,6 +7,7 @@ import java.util.List;
 public class Node {
 
 	public static final int EOF = -1;
+	public static final int NULL = 0;
 	public static final int EQ = 61;
 	public static final int TAG_END = 62;
 
@@ -88,6 +89,8 @@ public class Node {
 	public static final int MALFORMED_CHARREF = 3006600;
 	public static final int MALFORMED_ENTITYREF = 3006800;
 	public static final int MALFORMED_PEREFERENCE = 3006900;
+
+	public static final Node NullNode = new Node(NULL, new byte[0]);
 
 	public static Node of(int type, byte[] sequence) {
 		return new Node(type, sequence);

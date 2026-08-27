@@ -43,11 +43,13 @@ public class NodeList extends Node {
 	}
 
 	public Node first() {
-		return _nodeList.get(0);
+		int size = _nodeList.size();
+		return size > 0 ? _nodeList.get(0) : NullNode;
 	}
 
 	public Node last() {
-		return _nodeList.get(_nodeList.size() - 1);
+		int size = _nodeList.size();
+		return size > 0 ? _nodeList.get(size - 1) : NullNode;
 	}
 
 	public Node get(int index) {
@@ -55,7 +57,19 @@ public class NodeList extends Node {
 		if (index < 0) {
 			index += size;
 		}
-		return 0 <= index && index < size ? _nodeList.get(index) : null;
+		return 0 <= index && index < size ? _nodeList.get(index) : NullNode;
+	}
+
+	public void set(int index, Node node) {
+		int size = _nodeList.size();
+		if (index < 0) {
+			index += size;
+		}
+		if (0 <= index && index < size) {
+			_nodeList.set(index, node);
+		} else {
+			throw new RuntimeException("NodeList::set: Index out of range.");
+		}
 	}
 
 	@Override
@@ -201,7 +215,7 @@ public class NodeList extends Node {
 			clearSequence();
 			return _nodeList.remove(index);
 		}
-		return null;
+		return NullNode;
 	}
 
 	public Node remove(Node node) {
@@ -212,7 +226,7 @@ public class NodeList extends Node {
 				return _nodeList.remove(index);
 			}
 		}
-		return null;
+		return NullNode;
 	}
 
 	public Node remove(Node node, int start, int end) {
@@ -220,7 +234,7 @@ public class NodeList extends Node {
 			start = 0;
 		}
 		if (end < start) {
-			return null;
+			return NullNode;
 		}
 		int size = _nodeList.size();
 		if (end > size) {
@@ -232,7 +246,7 @@ public class NodeList extends Node {
 				return _nodeList.remove(index);
 			}
 		}
-		return null;
+		return NullNode;
 	}
 
 }

@@ -148,7 +148,7 @@ public class Element extends NodeList {
 			Content content = (Content)_nodeList.get(1);
 			return content.get(index);
 		}
-		return null;
+		return NullNode;
 	}
 
 	public boolean empty() {
@@ -246,7 +246,7 @@ public class Element extends NodeList {
 		Content content = this.content();
 		if (content != null) {
 			Node node = content.remove(index);
-			if (node != null) {
+			if (node.type != NULL) {
 				clearSequence();
 				return node;
 			}
@@ -258,7 +258,7 @@ public class Element extends NodeList {
 		Content content = this.content();
 		if (content != null) {
 			node = content.remove(node);
-			if (node != null) {
+			if (node.type != NULL) {
 				clearSequence();
 				return node;
 			}

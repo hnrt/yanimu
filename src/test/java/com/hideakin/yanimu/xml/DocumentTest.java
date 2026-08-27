@@ -27,7 +27,7 @@ public class DocumentTest {
 		Document doc = new Document();
 		try {
 			doc.load(new ByteArrayInputStream(source.getBytes()));
-			assertEquals("1.0", doc.version());
+			assertEquals("1.0", doc.xml().version);
 			assertEquals("Hello, world!", doc.root().innerText());
 			boolean result = doc.root().empty();
 			assertEquals(false, result);
@@ -49,7 +49,7 @@ public class DocumentTest {
 		try {
 			byte[] content = source.getBytes();
 			doc.load(content);
-			assertEquals("UTF-8", doc.encoding());
+			assertEquals("UTF-8", doc.xml().encoding);
 			int end = checkDocument("test102", doc, content);
 			System.out.printf("test102: content.length=%d actual=%d\n", content.length, end);
 		} catch (Exception e) {
@@ -69,7 +69,7 @@ public class DocumentTest {
 		try {
 			byte[] content = source.getBytes();
 			doc.load(content);
-			assertEquals("yes", doc.standalone());
+			assertEquals("yes", doc.xml().standalone);
 			int end = checkDocument("test103", doc, content);
 			System.out.printf("test103: content.length=%d actual=%d\n", content.length, end);
 		} catch (Exception e) {
@@ -91,7 +91,7 @@ public class DocumentTest {
 		try {
 			byte[] content = source.getBytes();
 			doc.load(content);
-			assertEquals("no", doc.standalone());
+			assertEquals("no", doc.xml().standalone);
 			assertEquals("Hello, world!", doc.root().innerText());
 			int end = checkDocument("test104", doc, content);
 			System.out.printf("test104: content.length=%d end=%d\n", content.length, end);
