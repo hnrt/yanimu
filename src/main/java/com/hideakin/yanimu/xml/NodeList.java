@@ -52,19 +52,17 @@ public class NodeList extends Node {
 		return size > 0 ? _nodeList.get(size - 1) : NullNode;
 	}
 
+	public int lastIndex() {
+		return _nodeList.size() - 1;
+	}
+
 	public Node get(int index) {
 		int size = _nodeList.size();
-		if (index < 0) {
-			index += size;
-		}
 		return 0 <= index && index < size ? _nodeList.get(index) : NullNode;
 	}
 
 	public void set(int index, Node node) {
 		int size = _nodeList.size();
-		if (index < 0) {
-			index += size;
-		}
 		if (0 <= index && index < size) {
 			_nodeList.set(index, node);
 		} else {
@@ -190,9 +188,6 @@ public class NodeList extends Node {
 	public void add(int index, Node node) {
 		int size = _nodeList.size();
 		if (index < 0) {
-			index += size;
-		}
-		if (index < 0) {
 			index = 0;
 		} else if (index > size) {
 			index = size;
@@ -208,14 +203,12 @@ public class NodeList extends Node {
 
 	public Node remove(int index) {
 		int size = _nodeList.size();
-		if (index < 0) {
-			index += size;
-		}
 		if (0 <= index && index < size) {
 			clearSequence();
 			return _nodeList.remove(index);
+		} else {
+			return NullNode;
 		}
-		return NullNode;
 	}
 
 	public Node remove(Node node) {

@@ -5,15 +5,27 @@ import java.util.List;
 
 public class Content extends NodeList {
 
-	public Content() {
+	public static Content of() {
+		return new Content();
+	}
+
+	public static Content of(Node node) {
+		return new Content(node);
+	}
+
+	public static Content of(List<Node> nodeList) {
+		return new Content(nodeList);
+	}
+
+	private Content() {
 		super(CONTENT);
 	}
 
-	public Content(Node node) {
+	private Content(Node node) {
 		super(CONTENT, node);
 	}
 
-	public Content(List<Node> nodeList) {
+	private Content(List<Node> nodeList) {
 		super(CONTENT, nodeList);
 	}
 
@@ -92,26 +104,26 @@ public class Content extends NodeList {
 			switch (c) {
 			case '<':
 				if (h < i) {
-					_nodeList.add(new Node(CHAR_DATA, value.substring(h, i)));
+					add(Node.of(CHAR_DATA, value.substring(h, i)));
 				}
-				_nodeList.add(new EntityRef("lt", "<"));
+				add(EntityRef.of("lt", "<"));
 				h = ++i;
 				break;
 			case '&':
 				if (h < i) {
-					_nodeList.add(new Node(CHAR_DATA, value.substring(h, i)));
+					add(Node.of(CHAR_DATA, value.substring(h, i)));
 				}
-				_nodeList.add(new EntityRef("amp", "&"));
+				add(EntityRef.of("amp", "&"));
 				h = ++i;
 				break;
 			case ']':
 				if (i + 2 < n && value.charAt(i + 1) == ']' && value.charAt(i + 2) == '>') {
 					if (h < i) {
-						_nodeList.add(new Node(CHAR_DATA, value.substring(h, i)));
+						add(Node.of(CHAR_DATA, value.substring(h, i)));
 					}
-					_nodeList.add(new CharRef(']'));
-					_nodeList.add(new CharRef(']'));
-					_nodeList.add(new EntityRef("gt", ">"));
+					add(CharRef.of(']'));
+					add(CharRef.of(']'));
+					add(EntityRef.of("gt", ">"));
 					i += 3;
 					h = i;
 				} else {
@@ -124,9 +136,9 @@ public class Content extends NodeList {
 			}
 		}
 		if (h == 0) {
-			_nodeList.add(new Node(CHAR_DATA, value));
+			add(Node.of(CHAR_DATA, value));
 		} else if (h < n) {
-			_nodeList.add(new Node(CHAR_DATA, value.substring(h, n)));
+			add(Node.of(CHAR_DATA, value.substring(h, n)));
 		}
 	}
 
@@ -162,24 +174,24 @@ public class Content extends NodeList {
 	}
 
 	public void indent(byte[] eol, int indentation, int level) {
-		int n = _nodeList.size();
-		for (int i = 0; i < n; i++) {
-			Node node = _nodeList.get(i);
-			if (node instanceof Element element) {
-				if (i == 0 || _nodeList.get(i - 1).type == ELEMENT) {
-					_nodeList.add(i, Node.endOfLineAndIndentation(eol, indentation, level));
+		for (int i = 0; ; i++) {
+			Node node = get(i);
+			if (node.type == NULL) {
+				break;
+			} else if (node instanceof Element element) {
+				if (i == 0 || get(i - 1).type == ELEMENT) {
+					add(i, Node.endOfLineAndIndentation(eol, indentation, level));
 					i++;
-					n++;
-				} else if (_nodeList.get(i - 1).isEndOfLineAndIndentation()) {
-					_nodeList.set(i - 1, Node.endOfLineAndIndentation(eol, indentation, level));
+				} else if (get(i - 1).isEndOfLineAndIndentation()) {
+					set(i - 1, Node.endOfLineAndIndentation(eol, indentation, level));
 				}
 				element.indent(eol, indentation, level);
-			}			
+			}
 		}
-		if (n == 0 || _nodeList.get(n - 1).type == ELEMENT) {
-			_nodeList.add(n, Node.endOfLineAndIndentation(eol, indentation, level - 1));
-		} else if (_nodeList.get(n - 1).isEndOfLineAndIndentation()) {
-			_nodeList.set(n - 1, Node.endOfLineAndIndentation(eol, indentation, level - 1));
+		if (count() == 0 || last().type == ELEMENT) {
+			add(Node.endOfLineAndIndentation(eol, indentation, level - 1));
+		} else if (last().isEndOfLineAndIndentation()) {
+			set(lastIndex(), Node.endOfLineAndIndentation(eol, indentation, level - 1));
 		}
 		clearSequence();
 	}

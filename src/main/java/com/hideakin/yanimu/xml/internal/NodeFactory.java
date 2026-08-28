@@ -28,17 +28,17 @@ public class NodeFactory {
 		case ATT_VALUE:
 		case SYSTEM_LITERAL:
 		case PUBID_LITERAL:
-			return new QuotedString(type, sequence);
+			return QuotedString.of(type, sequence);
 		case COMMENT:
-			return new Comment(sequence);
+			return Comment.of(sequence);
 		case CD_SECT:
-			return new CDATASection(sequence);
+			return CDATASection.of(sequence);
 		case CHAR_REF:
-			return new CharRef(sequence);
+			return CharRef.of(sequence);
 		case ENTITY_REF:
-			return new EntityRef(sequence);
+			return EntityRef.of(sequence);
 		case PEREFERENCE:
-			return new ParameterEntityReference(sequence);
+			return ParameterEntityReference.of(sequence);
 		default:
 			return Node.of(type, sequence);
 		}

@@ -5,18 +5,23 @@ import java.util.List;
 
 public class EmptyElementTag extends StartTag {
 
-	public static final byte[] START_SEQUENCE = {'<'};
-	public static final byte[] END_SEQUENCE = {'/', '>'};
+	public static EmptyElementTag of(String name) {
+		return new EmptyElementTag(name);
+	}
 
-	public EmptyElementTag(String name) {
+	public static EmptyElementTag of(List<Node> nodeList, List<Attribute> attributeList) {
+		return new EmptyElementTag(nodeList, attributeList);
+	}
+
+	private EmptyElementTag(String name) {
 		super(EETAG, new ArrayList<>(
-				List.of(new Node(STAG_START, START_SEQUENCE),
-						new Node(NAME, name),
-						new Node(EETAG_END, END_SEQUENCE))),
+				List.of(Node.of(STAG_START, START_SEQUENCE),
+						Node.of(NAME, name),
+						Node.of(EETAG_END, EETAG_END_SEQUENCE))),
 				new ArrayList<>());
 	}
 
-	public EmptyElementTag(List<Node> nodeList, List<Attribute> attributeList) {
+	private EmptyElementTag(List<Node> nodeList, List<Attribute> attributeList) {
 		super(EETAG, nodeList, attributeList);
 	}
 

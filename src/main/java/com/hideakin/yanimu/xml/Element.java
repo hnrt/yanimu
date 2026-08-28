@@ -9,18 +9,19 @@ public class Element extends NodeList {
 	protected Object _parent;
 
 	public Element(String name) {
-		super(ELEMENT, new EmptyElementTag(name));
+		super(ELEMENT, EmptyElementTag.of(name));
 		this.name = name;
 		_parent = null;
 	}
 
 	public Element(String name, String innerText) {
-		super(ELEMENT, List.of(new StartTag(name), new Content(), new EndTag(name)));
+		super(ELEMENT, List.of(StartTag.of(name), Content.of(), EndTag.of(name)));
 		this.name = name;
 		_parent = null;
 		content().setInnerText(innerText);
 	}
 
+	// Note that set must be called later to fill _nodeList with the real nodes.
 	public Element(String name, Element parent) {
 		super(ELEMENT);
 		this.name = name;
@@ -100,7 +101,7 @@ public class Element extends NodeList {
 	}
 
 	public StartTag startTag() {
-		return (StartTag)_nodeList.get(0);
+		return (StartTag)first();
 	}
 
 	public Content content() {
@@ -174,7 +175,7 @@ public class Element extends NodeList {
 					}
 				}
 			}
-			StartTag eetag = startTag().clone(EETAG);
+			EmptyElementTag eetag = startTag().toEmptyElementTag();
 			_nodeList.clear();
 			_nodeList.add(eetag);
 			clearSequence();
@@ -184,11 +185,11 @@ public class Element extends NodeList {
 
 	public void addChild(Node node) {
 		if (isEmptyElement()) {
-			StartTag stag = startTag().clone(STAG);
+			StartTag stag = startTag().toStartTag();
 			_nodeList.clear();
 			_nodeList.add(stag);
-			_nodeList.add(new Content());
-			_nodeList.add(new EndTag(stag.name));
+			_nodeList.add(Content.of());
+			_nodeList.add(EndTag.of(stag.name));
 		}
 		Content content = this.content();
 		if (node instanceof Element element) {
@@ -201,9 +202,9 @@ public class Element extends NodeList {
 				content.add(Node.endOfLineAndIndentation(eol, indentation, level + 1));
 				content.add(node);
 				content.add(Node.endOfLineAndIndentation(eol, indentation, level));
-			} else if (content.get(-1).isEndOfLineAndIndentation()) {
-				content.add(-1, Node.endOfLineAndIndentation(eol, indentation, level + 1));
-				content.add(-1, node);
+			} else if (content.last().isEndOfLineAndIndentation()) {
+				content.add(content.lastIndex(), Node.endOfLineAndIndentation(eol, indentation, level + 1));
+				content.add(content.lastIndex(), node);
 			} else {
 				content.add(node);
 			}
@@ -215,11 +216,11 @@ public class Element extends NodeList {
 
 	public void addChild(int index, Node node) {
 		if (isEmptyElement()) {
-			StartTag stag = startTag().clone(STAG);
+			StartTag stag = startTag().toStartTag();
 			_nodeList.clear();
 			_nodeList.add(stag);
-			_nodeList.add(new Content());
-			_nodeList.add(new EndTag(name));
+			_nodeList.add(Content.of());
+			_nodeList.add(EndTag.of(name));
 		}
 		if (node instanceof Element element) {
 			element.setParent(this);
@@ -232,7 +233,7 @@ public class Element extends NodeList {
 		Content content = this.content();
 		if (content != null) {
 			Node node;
-			for (int i = 0; (node = content.get(i)) != null; i++) {
+			for (int i = 0; (node = content.get(i)).type != NULL; i++) {
 				if (node instanceof Element element) {
 					element.setParent(null);
 				}
@@ -251,7 +252,7 @@ public class Element extends NodeList {
 				return node;
 			}
 		}
-		return null;
+		return NullNode;
 	}
 
 	public Node removeChild(Node node) {
@@ -263,7 +264,7 @@ public class Element extends NodeList {
 				return node;
 			}
 		}
-		return null;
+		return NullNode;
 	}
 
 	public String innerText() {
@@ -272,11 +273,11 @@ public class Element extends NodeList {
 
 	public void setInnerText(String value) {
 		if (isEmptyElement()) {
-			StartTag stag = startTag().clone(STAG);
+			StartTag stag = startTag().toStartTag();
 			_nodeList.clear();
 			_nodeList.add(stag);
-			_nodeList.add(new Content());
-			_nodeList.add(new EndTag(name));
+			_nodeList.add(Content.of());
+			_nodeList.add(EndTag.of(name));
 		}
 		content().setInnerText(value);
 	}

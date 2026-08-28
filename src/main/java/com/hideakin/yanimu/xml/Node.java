@@ -30,6 +30,7 @@ public class Node {
 	public static final int PI_TARGET = 2001700;
 	public static final int CD_SECT = 2001800;
 	public static final int XML_DECL = 2002300;
+	public static final int XML_START = 2002301;
 	public static final int XML_END = 2002302;
 	public static final int DOCTYPE_DECL = 2002800;
 	public static final int DOCTYPE_DECL_START = 2002801;
@@ -96,6 +97,14 @@ public class Node {
 		return new Node(type, sequence);
 	}
 
+	public static Node of(int type, String sequence) {
+		return new Node(type, sequence);
+	}
+
+	public static Node of(int type, char...characters) {
+		return new Node(type, new String(characters));
+	}
+
 	public static Node endOfLineAndIndentation(byte[] eol, int indentation, int level) {
 		return endOfLineAndIndentation(CHAR_DATA, eol, indentation, level);
 	}
@@ -124,9 +133,9 @@ public class Node {
 		_sequence = sequence;
 	}
 
-	protected Node(int type, String string) {
+	protected Node(int type, String sequence) {
 		this.type = type;
-		_sequence = string.getBytes(StandardCharsets.UTF_8);
+		_sequence = sequence.getBytes(StandardCharsets.UTF_8);
 	}
 
 	protected Node(int type, List<Node> nodeList) {

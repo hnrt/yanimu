@@ -1046,11 +1046,11 @@ public class Processor {
 		}
 		if (_n.type == STAG_END) {
 			read();
-			tag = new StartTag(pop(), attributeList);
+			tag = StartTag.of(pop(), attributeList);
 			return store(tag);
 		} else if (_n.type == EETAG_END) {
 			read();
-			tag = new EmptyElementTag(pop(), attributeList);
+			tag = EmptyElementTag.of(pop(), attributeList);
 			return store(tag);
 		} else {
 			throw new ParseException("Tag end is expected.", offset(_n));
@@ -1070,7 +1070,7 @@ public class Processor {
 			case ENTITY_REF:
 				EntityRef er = (EntityRef)_n;
 				String value = _em.getEntity(er.name);
-				_n = new EntityRef(er, value != null ? value : er.toString());
+				_n = er.with(value != null ? value : er.toString());
 				read();
 				break;
 			case CHAR_REF:
@@ -1086,7 +1086,7 @@ public class Processor {
 				read();
 				break;
 			default:
-				Content content = new Content(pop());
+				Content content = Content.of(pop());
 				store(content);
 				return;
 			}
@@ -1116,7 +1116,7 @@ public class Processor {
 		} else {
 			throw new ParseException("ETag end is expected.", offset(_n));
 		}
-		EndTag tag = new EndTag(pop());
+		EndTag tag = EndTag.of(pop());
 		store(tag);
 	}
 
