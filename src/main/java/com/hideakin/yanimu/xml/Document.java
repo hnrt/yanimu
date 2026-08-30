@@ -55,6 +55,9 @@ public class Document extends NodeList {
 					remove(0);
 				}
 			}
+		} else if (xml != null) {
+			add(0, xml);
+			add(1, Node.of(Node.S, endOfLineSequence()));
 		}
 		_xml = xml;
 	}
@@ -125,8 +128,16 @@ public class Document extends NodeList {
 		load(Files.readAllBytes(_path));
 	}
 
+	public void load(ParseResult result) throws Exception {
+		load(Files.readAllBytes(_path), result);
+	}
+
 	public void load(InputStream in) throws Exception {
 		load(in.readAllBytes());
+	}
+
+	public void load(InputStream in, ParseResult result) throws Exception {
+		load(in.readAllBytes(), result);
 	}
 
 	public void load(byte[] content) throws Exception {
