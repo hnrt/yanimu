@@ -34,7 +34,7 @@ public class EntityRef extends Node {
 	private EntityRef(byte[] sequence) {
 		super(ENTITY_REF, sequence);
 		name = new String(sequence, START_LENGTH, sequence.length - START_END_LENGTH, StandardCharsets.UTF_8);
-		translated = this.name;
+		translated = new String(sequence, StandardCharsets.UTF_8);
 	}
 
 	private EntityRef(byte[] sequence, String translated) {

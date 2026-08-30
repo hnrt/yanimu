@@ -332,19 +332,20 @@ public class DocumentTest {
 				+ "</library>\r\n";
 		DebugHelper.enabled = true;
 		Document doc = new Document();
+		ParseResult result = new ParseResult();
 		try {
 			byte[] content = source.getBytes(StandardCharsets.UTF_8);
-			doc.load(content);
+			doc.load(content, result);
 			int end = checkDocument("test109", doc, content);
 			System.out.printf("test109: content.length=%d actual=%d\n", content.length, end);
 			List<Element> authors = doc.root().getElements("author");
 			assertEquals("Unknown Author", authors.get(0).innerText());
 			assertEquals("Hanako", authors.get(1).innerText());
-			for (String message : doc.warnings()) {
-				System.out.printf("test109: WARN: %s\n", message);
+			for (ParseResult.Message warning : result.warnings()) {
+				System.out.printf("test109: WARN: %s\n", warning.message);
 			}
-			for (String message : doc.information()) {
-				System.out.printf("test109: INFO: %s\n", message);
+			for (ParseResult.Message information : result.information()) {
+				System.out.printf("test109: INFO: %s\n", information.message);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -372,6 +373,7 @@ public class DocumentTest {
 				+ "<!ELEMENT book (title, body, supplements?)>\r\n"
 				+ "]]>";
 		Document doc = new Document();
+		ParseResult result = new ParseResult();
 		try {
 			byte[] content2 = source2.getBytes();
 			Files.write(path2, content2, StandardOpenOption.CREATE);
@@ -380,11 +382,11 @@ public class DocumentTest {
 			doc.load(content1);
 			int end = checkDocument("test10", doc, content1);
 			System.out.printf("test110: content.length=%d actual=%d\n", content1.length, end);
-			for (String message : doc.warnings()) {
-				System.out.printf("test110: WARN: %s\n", message);
+			for (ParseResult.Message warning : result.warnings()) {
+				System.out.printf("test110: WARN: %s\n", warning.message);
 			}
-			for (String message : doc.information()) {
-				System.out.printf("test110: INFO: %s\n", message);
+			for (ParseResult.Message information : result.information()) {
+				System.out.printf("test110: INFO: %s\n", information.message);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

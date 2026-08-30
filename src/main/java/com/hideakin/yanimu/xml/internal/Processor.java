@@ -5,8 +5,10 @@ import com.hideakin.yanimu.xml.Content;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.EmptyElementTag;
 import com.hideakin.yanimu.xml.EndTag;
+import com.hideakin.yanimu.xml.EntityMap;
 import com.hideakin.yanimu.xml.EntityRef;
 import com.hideakin.yanimu.xml.ParseException;
+import com.hideakin.yanimu.xml.ParseResult;
 import com.hideakin.yanimu.xml.ProcessingInstruction;
 import com.hideakin.yanimu.xml.QuotedString;
 import com.hideakin.yanimu.xml.StartTag;
@@ -57,30 +59,29 @@ public class Processor {
 	private final Deque<List<Node>> _nnn = new ArrayDeque<>();
 	private List<Node> _nn;
 	private Node _n;
-	private final EntityManager _em;
-	private final TextMessageManager _tm;
-	private final List<Object> _markupDeclarations;
+	private final EntityMap _entityMap;
+	private final ParseResultWriter _result;
+	private final List<Object> _markupDeclarationList;
 
 	public Processor(byte[] content) {
 		_content = content;
-		_tm = new TextMessageManager();
-		_em = new EntityManager(_tm);
-		_markupDeclarations = new ArrayList<>();
+		_result = ParseResultWriter.of(new ParseResult());
+		_entityMap = new EntityMap();
+		_markupDeclarationList = new ArrayList<>();
 	}
 
-	private Processor(byte[] content, EntityManager em, TextMessageManager tm, List<Object> md) {
+	public Processor(byte[] content, ParseResult result) {
 		_content = content;
-		_tm = tm;
-		_em = em;
-		_markupDeclarations = md;
+		_result = ParseResultWriter.of(result);
+		_entityMap = new EntityMap();
+		_markupDeclarationList = new ArrayList<>();
 	}
 
-	public String[] warnings() {
-		return _tm.warnings();
-	}
-
-	public String[] information() {
-		return _tm.information();
+	private Processor(byte[] content, EntityMap entityMap, ParseResultWriter result, List<Object> markupDeclarationList) {
+		_content = content;
+		_result = result;
+		_entityMap = entityMap;
+		_markupDeclarationList = markupDeclarationList;
 	}
 
 	public List<Node> parse() throws Exception {
@@ -97,7 +98,7 @@ public class Processor {
 		if (_n.type == EOF) {
 			return _nn;
 		} else {
-			throw new ParseException("Extra data exist.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "Extra data exist."));
 		}
 	}
 
@@ -113,7 +114,7 @@ public class Processor {
 					read();
 					parseXmlDeclaration();
 				} else {
-					throw new ParseException("Either xml or PI target is expected.", offset(_n));
+					throw new ParseException(_result.error(offset(_n), "Either xml or PI target is expected."));
 				}
 				break;
 			case PI_TARGET:
@@ -130,13 +131,13 @@ public class Processor {
 				if (_n.type == PI_END) {
 					read();
 				} else {
-					throw new ParseException("PI end is expected.", offset(_n));
+					throw new ParseException(_result.error(offset(_n), "PI end is expected."));
 				}
 				ProcessingInstruction pi = new ProcessingInstruction(pop(), target, body); 
 				store(pi);
 				break;
 			default:
-				throw new ParseException("Either xml or PI target is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "Either xml or PI target is expected."));
 			}
 		}
 		while (parseMisc()) {
@@ -158,17 +159,17 @@ public class Processor {
 		if (_n.type == S) {
 			read();
 		} else {
-			throw new ParseException("White space is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "White space is expected."));
 		}
 		if (_n.type == NAME) {
 			name = _n.toString();
 		} else {
-			throw new ParseException("version is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "version is expected."));
 		}
 		if (name.equals("version")) {
 			read();
 		} else {
-			throw new ParseException("version is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "version is expected."));
 		}
 		if (_n.type == S) {
 			read();
@@ -176,7 +177,7 @@ public class Processor {
 		if (_n.type == EQ) {
 			read();
 		} else {
-			throw new ParseException("Equal sign is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "Equal sign is expected."));
 		}
 		if (_n.type == S) {
 			read();
@@ -184,11 +185,11 @@ public class Processor {
 		if (_n.type == ATT_VALUE) {
 			version = ((QuotedString)_n).innerText();
 			if (!version.matches("1\\.[0-9]+")) {
-				throw new ParseException("Malformed version number.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "Malformed version number."));
 			}
 			read();
 		} else {
-			throw new ParseException("version number is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "version number is expected."));
 		}
 		name = null;
 		if (_n.type == S) {
@@ -203,7 +204,7 @@ public class Processor {
 					if (_n.type == EQ) {
 						read();
 					} else {
-						throw new ParseException("Equal sign is expected.", offset(_n));
+						throw new ParseException(_result.error(offset(_n), "Equal sign is expected."));
 					}
 					if (_n.type == S) {
 						read();
@@ -212,7 +213,7 @@ public class Processor {
 						encoding = ((QuotedString)_n).innerText();
 						read();
 					} else {
-						throw new ParseException("encoding name is expected.", offset(_n));
+						throw new ParseException(_result.error(offset(_n), "encoding name is expected."));
 					}
 					name = null;
 					if (_n.type == S) {
@@ -227,7 +228,7 @@ public class Processor {
 				if (name.equals("standalone")) {
 					read();
 				} else {
-					throw new ParseException("standalone is expected.", offset(_n));
+					throw new ParseException(_result.error(offset(_n), "standalone is expected."));
 				}
 				if (_n.type == S) {
 					read();
@@ -235,7 +236,7 @@ public class Processor {
 				if (_n.type == EQ) {
 					read();
 				} else {
-					throw new ParseException("Equal sign is expected.", offset(_n));
+					throw new ParseException(_result.error(offset(_n), "Equal sign is expected."));
 				}
 				if (_n.type == S) {
 					read();
@@ -243,11 +244,11 @@ public class Processor {
 				if (_n.type == ATT_VALUE) {
 					standalone = ((QuotedString)_n).innerText();
 					if (!standalone.equals("yes") && !standalone.equals("no")) {
-						throw new ParseException("Malformed standalone value.", offset(_n));
+						throw new ParseException(_result.error(offset(_n), "Malformed standalone value."));
 					}
 					read();
 				} else {
-					throw new ParseException("standalone value is expected.", offset(_n));
+					throw new ParseException(_result.error(offset(_n), "standalone value is expected."));
 				}
 				if (_n.type == S) {
 					read();
@@ -257,7 +258,7 @@ public class Processor {
 		if (_n.type == XML_END) {
 			read();
 		} else {
-			throw new ParseException("?> is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "?> is expected."));
 		}
 		XmlDeclaration t = new XmlDeclaration(pop(), version, encoding, standalone); 
 		store(t);
@@ -288,13 +289,13 @@ public class Processor {
 		if (_n.type == S) {
 			read(NAME);
 		} else {
-			throw new ParseException("White space is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "White space is expected."));
 		}
 		if (_n.type == NAME) {
 			name = _n.toString();
 			read();
 		} else {
-			throw new ParseException("Name is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "Name is expected."));
 		}
 		if (_n.type == S) {
 			read();
@@ -314,33 +315,33 @@ public class Processor {
 				switch (_n.type) {
 				case ELEMENT_DECL_START:
 					ElementTypeDeclaration etd = parseElementDecl();
-					_markupDeclarations.add(etd);
+					_markupDeclarationList.add(etd);
 					break;
 				case ATTLIST_DECL_START:
 					AttributeListDeclaration ald = parseAttlistDecl();
-					_markupDeclarations.add(ald);
+					_markupDeclarationList.add(ald);
 					break;
 				case ENTITY_DECL_START:
 					EntityDeclaration ed = parseEntityDecl();
-					_markupDeclarations.add(ed);
+					_markupDeclarationList.add(ed);
 					break;
 				case NOTATION_DECL_START:
 					NotationDeclaration nd = parseNotationDecl();
-					_markupDeclarations.add(nd);
+					_markupDeclarationList.add(nd);
 					break;
 				case PI_START:
 					ProcessingInstruction pi = parseProcessingInstruction();
-					_markupDeclarations.add(pi);
+					_markupDeclarationList.add(pi);
 					break;
 				case COMMENT:
-					_markupDeclarations.add(_n);
+					_markupDeclarationList.add(_n);
 					read();
 					break;
 				case S:
 					read();
 					break;
 				default:
-					throw new ParseException("Internal subset is expected.", offset(_n));
+					throw new ParseException(_result.error(offset(_n), "Internal subset is expected."));
 				}
 			}
 			read();
@@ -351,9 +352,9 @@ public class Processor {
 		if (_n.type == TAG_END) {
 			read();
 		} else {
-			throw new ParseException("> is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "> is expected."));
 		}
-		DocumentTypeDeclaration dtd = new DocumentTypeDeclaration(pop(), name, extid, _markupDeclarations);
+		DocumentTypeDeclaration dtd = new DocumentTypeDeclaration(pop(), name, extid, _markupDeclarationList);
 		store(dtd);
 	}
 
@@ -364,18 +365,18 @@ public class Processor {
 		if (_n.type == S) {
 			read(NAME);
 		} else {
-			throw new ParseException("White space is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "White space is expected."));
 		}
 		if (_n.type == NAME) {
 			name = _n.toString();
 			read();
 		} else {
-			throw new ParseException("Name is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "Name is expected."));
 		}
 		if (_n.type == S) {
 			read();
 		} else {
-			throw new ParseException("White space is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "White space is expected."));
 		}
 		ContentSpec cs = parseContentSpec();
 		if (_n.type == S) {
@@ -384,7 +385,7 @@ public class Processor {
 		if (_n.type == TAG_END) {
 			read();
 		} else {
-			throw new ParseException("End of element declaration is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "End of element declaration is expected."));
 		}
 		ElementTypeDeclaration etd = new ElementTypeDeclaration(pop(), name, cs);
 		store(etd);
@@ -401,7 +402,7 @@ public class Processor {
 		} else if (_n.type == '(') {
 			return parseMixedOrChildren();
 		} else {
-			throw new ParseException("EMPTY, ANY or ( is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "EMPTY, ANY or ( is expected."));
 		}
 	}
 
@@ -410,7 +411,7 @@ public class Processor {
 		if (_n.type == '(') {
 			read(NAME);
 		} else {
-			throw new ParseException("( is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "( is expected."));
 		}
 		if (_n.type == S) {
 			read(NAME);
@@ -438,7 +439,7 @@ public class Processor {
 						choiceList.add(_n.toString());
 						read(PCDATA_END);
 					} else {
-						throw new ParseException("Name is expected.", offset(_n));
+						throw new ParseException(_result.error(offset(_n), "Name is expected."));
 					}
 					if (_n.type == S) {
 						read(PCDATA_END);
@@ -447,11 +448,11 @@ public class Processor {
 				if (_n.type == PCDATA_END) {
 					read();
 				} else {
-					throw new ParseException(")* is expected.", offset(_n));
+					throw new ParseException(_result.error(offset(_n), ")* is expected."));
 				}
 				cs = new ContentSpec(choiceList);
 			} else {
-				throw new ParseException(") or )* is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), ") or )* is expected."));
 			}
 		} else {
 			Object choiceOrSequence;
@@ -493,7 +494,7 @@ public class Processor {
 			if (_n.type == ')') {
 				read();
 			} else {
-				throw new ParseException(") is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), ") is expected."));
 			}
 			if (_n.type == '?') {
 				read();
@@ -516,7 +517,7 @@ public class Processor {
 		if (_n.type == '(') {
 			read(NAME);
 		} else {
-			throw new ParseException("( is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "( is expected."));
 		}
 		if (_n.type == S) {
 			read(NAME);
@@ -559,7 +560,7 @@ public class Processor {
 		if (_n.type == ')') {
 			read();
 		} else {
-			throw new ParseException(") is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), ") is expected."));
 		}
 		return choiceOrSequence;
 	}
@@ -594,13 +595,13 @@ public class Processor {
 		if (_n.type == S) {
 			read(NAME);
 		} else {
-			throw new ParseException("White space is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "White space is expected."));
 		}
 		if (_n.type == NAME) {
 			name = _n.toString();
 			read();
 		} else {
-			throw new ParseException("White space is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "White space is expected."));
 		}
 		if (_n.type == S) {
 			read(NAME);
@@ -610,13 +611,13 @@ public class Processor {
 				if (_n.type == S) {
 					read();
 				} else {
-					throw new ParseException("White space is expected.", offset(_n));
+					throw new ParseException(_result.error(offset(_n), "White space is expected."));
 				}
 				Object type = parseAttType();
 				if (_n.type == S) {
 					read();
 				} else {
-					throw new ParseException("White space is expected.", offset(_n));
+					throw new ParseException(_result.error(offset(_n), "White space is expected."));
 				}
 				AttributeDefault value = parseDefaultDecl();
 				AttributeDefinition adef = new AttributeDefinition(key, type, value);
@@ -631,7 +632,7 @@ public class Processor {
 		if (_n.type == TAG_END) {
 			read();
 		} else {
-			throw new ParseException("End of attlist declaration is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "End of attlist declaration is expected."));
 		}
 		AttributeListDeclaration ald = new AttributeListDeclaration(pop(), name, defList);
 		store(ald);
@@ -659,7 +660,7 @@ public class Processor {
 			type = parseEnumeration();
 			break;
 		default:
-			throw new ParseException("AttType is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "AttType is expected."));
 		}
 		return type;
 	}
@@ -669,17 +670,17 @@ public class Processor {
 		if (_n.type == TYPE_NOTATION) {
 			read();
 		} else {
-			throw new ParseException("NOTATION is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "NOTATION is expected."));
 		}
 		if (_n.type == S) {
 			read();
 		} else {
-			throw new ParseException("White space is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "White space is expected."));
 		}
 		if (_n.type == '(') {
 			read(NAME);
 		} else {
-			throw new ParseException("( is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "( is expected."));
 		}
 		if (_n.type == S) {
 			read(NAME);
@@ -688,7 +689,7 @@ public class Processor {
 			nt = new NotationType(_n.toString());
 			read();
 		} else {
-			throw new ParseException("Name is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "Name is expected."));
 		}
 		if (_n.type == S) {
 			read();
@@ -702,7 +703,7 @@ public class Processor {
 				nt.add(_n.toString());
 				read();
 			} else {
-				throw new ParseException("Name is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "Name is expected."));
 			}
 			if (_n.type == S) {
 				read();
@@ -711,7 +712,7 @@ public class Processor {
 		if (_n.type == ')') {
 			read();
 		} else {
-			throw new ParseException(") is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), ") is expected."));
 		}
 		return nt;
 	}
@@ -721,7 +722,7 @@ public class Processor {
 		if (_n.type == '(') {
 			read(NMTOKEN);
 		} else {
-			throw new ParseException("( is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "( is expected."));
 		}
 		if (_n.type == S) {
 			read(NMTOKEN);
@@ -730,7 +731,7 @@ public class Processor {
 			et = new EnumerationType(_n.toString());
 			read();
 		} else {
-			throw new ParseException("Nmtoken is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "Nmtoken is expected."));
 		}
 		if (_n.type == S) {
 			read();
@@ -744,7 +745,7 @@ public class Processor {
 				et.add(_n.toString());
 				read();
 			} else {
-				throw new ParseException("NMTOKEN is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "NMTOKEN is expected."));
 			}
 			if (_n.type == S) {
 				read();
@@ -753,7 +754,7 @@ public class Processor {
 		if (_n.type == ')') {
 			read();
 		} else {
-			throw new ParseException(") is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), ") is expected."));
 		}
 		return et;
 	}
@@ -775,13 +776,13 @@ public class Processor {
 			if (_n.type == S) {
 				read();
 			} else {
-				throw new ParseException("white space is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "white space is expected."));
 			}
 			if (_n.type == ATT_VALUE) {
 				value = ((QuotedString)_n).innerText();
 				read();
 			} else {
-				throw new ParseException("AttValue is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "AttValue is expected."));
 			}
 			ad = new AttributeDefault(AttributeDefault.DEFAULT_FIXED, value);
 			break;
@@ -790,7 +791,7 @@ public class Processor {
 				value = ((QuotedString)_n).innerText();
 				read();
 			} else {
-				throw new ParseException("AttValue is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "AttValue is expected."));
 			}
 			ad = new AttributeDefault(value);
 			break;
@@ -806,7 +807,7 @@ public class Processor {
 		if (_n.type == S) {
 			read(NAME);
 		} else {
-			throw new ParseException("White space is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "White space is expected."));
 		}
 		if (_n.type == NAME) {
 			key = _n.toString();
@@ -814,7 +815,7 @@ public class Processor {
 			if (_n.type == S) {
 				read();
 			} else {
-				throw new ParseException("White space is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "White space is expected."));
 			}
 			if (_n.type == ENTITY_VALUE) {
 				definition = new InternalEntityDefinition(key, ((QuotedString)_n).innerText());
@@ -829,37 +830,37 @@ public class Processor {
 						if (_n.type == S) {
 							read(NAME);
 						} else {
-							throw new ParseException("White space is expected.", offset(_n));
+							throw new ParseException(_result.error(offset(_n), "White space is expected."));
 						}
 						if (_n.type == NAME) {
 							ndata = _n.toString();
 							read();
 						} else {
-							throw new ParseException("Name is expected.", offset(_n));
+							throw new ParseException(_result.error(offset(_n), "Name is expected."));
 						}
 					}
 				}
 				definition = new ExternalEntityDefinition(key, extid, ndata);
 			} else {
-				throw new ParseException("Entity value or external ID is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "Entity value or external ID is expected."));
 			}
 		} else if (_n.type == '%') {
 			read();
 			if (_n.type == S) {
 				read(NAME);
 			} else {
-				throw new ParseException("White space is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "White space is expected."));
 			}
 			if (_n.type == NAME) {
 				key = _n.toString();
 				read();
 			} else {
-				throw new ParseException("Name is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "Name is expected."));
 			}
 			if (_n.type == S) {
 				read();
 			} else {
-				throw new ParseException("White space is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "White space is expected."));
 			}
 			if (_n.type == ENTITY_VALUE) {
 				definition = new InternalParameterEntityDefinition(key, ((QuotedString)_n).innerText());
@@ -868,19 +869,19 @@ public class Processor {
 				ExternalIdentifiers extid = parseExternalId();
 				definition = new ExternalParameterEntityDefinition(key, extid);
 			} else {
-				throw new ParseException("Entity value or external ID is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "Entity value or external ID is expected."));
 			}
 		} else {
-			throw new ParseException("Name or % is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "Name or % is expected."));
 		}
-		_em.putEntity(key, definition);
+		_entityMap.put(key, definition);
 		if (_n.type == S) {
 			read();
 		}
 		if (_n.type == TAG_END) {
 			read();
 		} else {
-			throw new ParseException("End of entity declaration is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "End of entity declaration is expected."));
 		}
 		EntityDeclaration ed = new EntityDeclaration(pop(), definition);
 		store(ed);
@@ -895,23 +896,23 @@ public class Processor {
 		if (_n.type == S) {
 			read(NAME);
 		} else {
-			throw new ParseException("White space is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "White space is expected."));
 		}
 		if (_n.type == NAME) {
 			name = _n.toString();
 			read();
 		} else {
-			throw new ParseException("Name is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "Name is expected."));
 		}
 		if (_n.type == S) {
 			read();
 		} else {
-			throw new ParseException("White space is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "White space is expected."));
 		}
 		if (_n.type == SYSTEM || _n.type == PUBLIC) {
 			extid = parseExternalId(false);
 		} else {
-			throw new ParseException("External ID or Public ID is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "External ID or Public ID is expected."));
 		}
 		if (_n.type == S) {
 			read();
@@ -919,7 +920,7 @@ public class Processor {
 		if (_n.type == TAG_END) {
 			read();
 		} else {
-			throw new ParseException("End of notation declaration is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "End of notation declaration is expected."));
 		}
 		NotationDeclaration nd = new NotationDeclaration(pop(), name, extid);
 		store(nd);
@@ -938,13 +939,13 @@ public class Processor {
 			if (_n.type == S) {
 				read(SYSTEM_LITERAL);
 			} else {
-				throw new ParseException("White space is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "White space is expected."));
 			}
 			if (_n.type == SYSTEM_LITERAL) {
 				sysValue = ((QuotedString)_n).innerText();
 				read();
 			} else {
-				throw new ParseException("System literal is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "System literal is expected."));
 			}
 			return new ExternalIdentifiers(sysValue);
 		} else if (_n.type == PUBLIC) {
@@ -952,25 +953,25 @@ public class Processor {
 			if (_n.type == S) {
 				read(PUBID_LITERAL);
 			} else {
-				throw new ParseException("White space is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "White space is expected."));
 			}
 			if (_n.type == PUBID_LITERAL) {
 				pubValue = ((QuotedString)_n).innerText();
 				read();
 			} else {
-				throw new ParseException("Pubid literal is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "Pubid literal is expected."));
 			}
 			if (systemLiteralIsMandatory) {
 				if (_n.type == S) {
 					read(SYSTEM_LITERAL);
 				} else {
-					throw new ParseException("White space is expected.", offset(_n));
+					throw new ParseException(_result.error(offset(_n), "White space is expected."));
 				}
 				if (_n.type == SYSTEM_LITERAL) {
 					sysValue = ((QuotedString)_n).innerText();
 					read();
 				} else {
-					throw new ParseException("System literal is expected.", offset(_n));
+					throw new ParseException(_result.error(offset(_n), "System literal is expected."));
 				}
 			} else if (_n.type == S) {
 				read(SYSTEM_LITERAL);
@@ -1003,12 +1004,12 @@ public class Processor {
 			push();
 			read();
 		} else {
-			throw new ParseException("Tag start is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "Tag start is expected."));
 		}
 		if (_n.type == NAME) {
 			read();
 		} else {
-			throw new ParseException("Name is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "Name is expected."));
 		}
 		if (_n.type == S) {
 			read();
@@ -1022,20 +1023,20 @@ public class Processor {
 				if (_n.type == EQ) {
 					read();
 				} else {
-					throw new ParseException("Equal sign is expected.", offset(_n));
+					throw new ParseException(_result.error(offset(_n), "Equal sign is expected."));
 				}
 				if (_n.type == S) {
 					read();
 				}
 				if (_n.type == ATT_VALUE) {
 					QuotedString qs = (QuotedString)_n;
-					String value = _em.translate(qs.innerText());
+					String value = _entityMap.translate(qs.innerText());
 					read();
 					Attribute attribute = new Attribute(pop(), key, value);
 					attributeList.add(attribute);
 					store(attribute);
 				} else {
-					throw new ParseException("Attribute value is expected.", offset(_n));
+					throw new ParseException(_result.error(offset(_n), "Attribute value is expected."));
 				}
 				if (_n.type == S) {
 					read();
@@ -1053,7 +1054,7 @@ public class Processor {
 			tag = EmptyElementTag.of(pop(), attributeList);
 			return store(tag);
 		} else {
-			throw new ParseException("Tag end is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "Tag end is expected."));
 		}
 	}
 
@@ -1069,8 +1070,14 @@ public class Processor {
 				break;
 			case ENTITY_REF:
 				EntityRef er = (EntityRef)_n;
-				String value = _em.getEntity(er.name);
-				_n = er.with(value != null ? value : er.toString());
+				String value = _entityMap.getEntity(er.name);
+				if (value != null) {
+					_n = er.with(value);
+				} else if (_entityMap.get(er.name) instanceof ExternalEntityDefinition) {
+					_result.warning(offset(_n), "External entity reference %s cannot be expanded as it is not supported.", er.name);
+				} else {
+					_result.warning(offset(_n), "Entity reference %s is not defined.", er.name);
+				}
 				read();
 				break;
 			case CHAR_REF:
@@ -1098,15 +1105,15 @@ public class Processor {
 			push();
 			read();
 		} else {
-			throw new ParseException("End tag start is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "End tag start is expected."));
 		}
 		if (_n.type == NAME) {
 			if (!_n.toString().equals(name)) {
-				throw new ParseException("Tags mismatch.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "Tags mismatch. expected=%s actual=%s", name, _n.toString()));
 			}
 			read();
 		} else {
-			throw new ParseException("Name is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "Name is expected."));
 		}
 		if (_n.type == S) {
 			read();
@@ -1114,7 +1121,7 @@ public class Processor {
 		if (_n.type == ETAG_END) {
 			read();
 		} else {
-			throw new ParseException("ETag end is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "ETag end is expected."));
 		}
 		EndTag tag = EndTag.of(pop());
 		store(tag);
@@ -1129,15 +1136,15 @@ public class Processor {
 				String dtdName = parts[1];
 				String version = parts[2];
 				String language = parts[3];
-				_tm.addInformation("DTD %s PUBID org=\"%s\" dtd=\"%s\" ver=\"%s\" lang=\"%s\"", name, organization, dtdName, version, language);
-				_tm.addInformation("DTD %s Catalog not supported.", name, organization, dtdName, version, language);
+				_result.information(-1, "DTD %s PUBID org=\"%s\" dtd=\"%s\" ver=\"%s\" lang=\"%s\"", name, organization, dtdName, version, language);
+				_result.information(-1, "DTD %s Catalog not supported.", name, organization, dtdName, version, language);
 			} else {
-				_tm.addWarning("DTD %s PUBID %s cannot be parsed.", name, extid.pubidLiteral);
+				_result.warning(-1, "DTD %s PUBID %s cannot be parsed.", name, extid.pubidLiteral);
 			}
 		}
 		if (extid.systemLiteral != null) {
 			if (extid.systemLiteral.matches("^(?i)https?://.*")) {
-				_tm.addInformation("DTD %s Processor doesn't load document from %s.", name, extid.systemLiteral);
+				_result.information(-1, "DTD %s Processor doesn't load document from %s.", name, extid.systemLiteral);
 			} else if (extid.systemLiteral.matches("^(?i)file://.*")) {
 				path = Path.of(URI.create(extid.systemLiteral));
 			} else {
@@ -1147,13 +1154,13 @@ public class Processor {
 		if (path != null) {
 			try {
 				byte[] content = Files.readAllBytes(path);
-				Processor processor = new Processor(content, _em, _tm, _markupDeclarations);
+				Processor processor = new Processor(content, _entityMap, _result, _markupDeclarationList);
 				processor.parseExternalSubset();
-				_tm.addInformation("DTD %s Processor loaded external document from %s.", name, extid.systemLiteral);
+				_result.information(-1, "DTD %s Processor loaded external document from %s.", name, extid.systemLiteral);
 			} catch (NoSuchFileException e) {
-				_tm.addWarning("DTD %s Processor failed to load external document from %s: No such file.", name, extid.systemLiteral);
+				_result.warning(-1, "DTD %s Processor failed to load external document from %s: No such file.", name, extid.systemLiteral);
 			} catch (Exception e) {
-				_tm.addWarning("DTD %s Processor failed to load external document from %s: %s", name, extid.systemLiteral, e.getMessage());
+				_result.warning(-1, "DTD %s Processor failed to load external document from %s: %s", name, extid.systemLiteral, e.getMessage());
 			}
 		}
 	}
@@ -1174,17 +1181,17 @@ public class Processor {
 				} else {
 					read();
 					ProcessingInstruction pi = parseProcessingInstruction(name);
-					_markupDeclarations.add(pi);
+					_markupDeclarationList.add(pi);
 				}
 			} else {
-				throw new ParseException("Name is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "Name is expected."));
 			}
 		}
 		while (parseExternalSubsetDeclaration()) {
 			continue;
 		}
 		if (_n.type != EOF) {
-			throw new ParseException("EOF is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "EOF is expected."));
 		}
 		return _nn;
 	}
@@ -1196,12 +1203,12 @@ public class Processor {
 		if (_n.type == S) {
 			read();
 		} else {
-			throw new ParseException("White space is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "White space is expected."));
 		}
 		if (_n.type == NAME) {
 			name = _n.toString();
 		} else {
-			throw new ParseException("encoding is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "encoding is expected."));
 		}
 		if (name.equals("version")) {
 			read();
@@ -1211,7 +1218,7 @@ public class Processor {
 			if (_n.type == EQ) {
 				read();
 			} else {
-				throw new ParseException("Equal sign is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "Equal sign is expected."));
 			}
 			if (_n.type == S) {
 				read();
@@ -1219,27 +1226,27 @@ public class Processor {
 			if (_n.type == ATT_VALUE) {
 				version = ((QuotedString)_n).innerText();
 				if (!version.matches("1\\.[0-9]+")) {
-					throw new ParseException("Malformed version number.", offset(_n));
+					throw new ParseException(_result.error(offset(_n), "Malformed version number."));
 				}
 				read();
 			} else {
-				throw new ParseException("version number is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "version number is expected."));
 			}
 			if (_n.type == S) {
 				read();
 			} else {
-				throw new ParseException("White space is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "White space is expected."));
 			}
 			if (_n.type == NAME) {
 				name = _n.toString();
 			} else {
-				throw new ParseException("encoding is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "encoding is expected."));
 			}
 		}
 		if (name.equals("encoding")) {
 			read();
 		} else {
-			throw new ParseException("encoding is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "encoding is expected."));
 		}
 		if (_n.type == S) {
 			read();
@@ -1247,7 +1254,7 @@ public class Processor {
 		if (_n.type == EQ) {
 			read();
 		} else {
-			throw new ParseException("Equal sign is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "Equal sign is expected."));
 		}
 		if (_n.type == S) {
 			read();
@@ -1256,7 +1263,7 @@ public class Processor {
 			encoding = ((QuotedString)_n).innerText();
 			read();
 		} else {
-			throw new ParseException("encoding name is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "encoding name is expected."));
 		}
 		if (_n.type == S) {
 			read();
@@ -1264,7 +1271,7 @@ public class Processor {
 		if (_n.type == XML_END) {
 			read();
 		} else {
-			throw new ParseException("?> is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "?> is expected."));
 		}
 		XmlDeclaration t = new XmlDeclaration(pop(), version, encoding, null);
 		store(t);
@@ -1274,26 +1281,26 @@ public class Processor {
 		switch (_n.type) {
 		case ELEMENT_DECL_START:
 			ElementTypeDeclaration etd = parseElementDecl();
-			_markupDeclarations.add(etd);
+			_markupDeclarationList.add(etd);
 			return true;
 		case ATTLIST_DECL_START:
 			AttributeListDeclaration ald = parseAttlistDecl();
-			_markupDeclarations.add(ald);
+			_markupDeclarationList.add(ald);
 			return true;
 		case ENTITY_DECL_START:
 			EntityDeclaration ed = parseEntityDecl();
-			_markupDeclarations.add(ed);
+			_markupDeclarationList.add(ed);
 			return true;
 		case NOTATION_DECL_START:
 			NotationDeclaration nd = parseNotationDecl();
-			_markupDeclarations.add(nd);
+			_markupDeclarationList.add(nd);
 			return true;
 		case PI_START:
 			ProcessingInstruction pi = parseProcessingInstruction();
-			_markupDeclarations.add(pi);
+			_markupDeclarationList.add(pi);
 			return true;
 		case COMMENT:
-			_markupDeclarations.add(_n);
+			_markupDeclarationList.add(_n);
 			read();
 			return true;
 		case S:
@@ -1321,7 +1328,7 @@ public class Processor {
 			if (_n.type == '[') {
 				read();
 			} else {
-				throw new ParseException("[ is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "[ is expected."));
 			}
 			while (parseExternalSubsetDeclaration()) {
 				continue;
@@ -1329,7 +1336,7 @@ public class Processor {
 			if (_n.type == SECTION_END) {
 				read();
 			} else {
-				throw new ParseException("]]> is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "]]> is expected."));
 			}
 			break;
 		case IGNORE:
@@ -1340,21 +1347,21 @@ public class Processor {
 			if (_n.type == '[') {
 				read();
 			} else {
-				throw new ParseException("[ is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "[ is expected."));
 			}
 			if (_n.type == IGNORE_SECTION_CONTENTS) {
 				read();
 			} else {
-				throw new ParseException("ignore section contents are expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "ignore section contents are expected."));
 			}
 			if (_n.type == SECTION_END) {
 				read();
 			} else {
-				throw new ParseException("]]> is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "]]> is expected."));
 			}
 			break;
 		default:
-			throw new ParseException("INCLUDE or IGNORE is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "INCLUDE or IGNORE is expected."));
 		}
 	}
 
@@ -1370,12 +1377,12 @@ public class Processor {
 			if (_n.type == NAME) {
 				name = _n.toString();
 				if (name.toLowerCase().equals("xml")) {
-					throw new ParseException("xml is now allowed for PI.", offset(_n));
+					throw new ParseException(_result.error(offset(_n), "xml is now allowed for PI."));
 				} else {
 					read();
 				}
 			} else {
-				throw new ParseException("Name is expected.", offset(_n));
+				throw new ParseException(_result.error(offset(_n), "Name is expected."));
 			}
 		}
 		if (_n.type == S) {
@@ -1388,7 +1395,7 @@ public class Processor {
 		if (_n.type == PI_END) {
 			read();
 		} else {
-			throw new ParseException("PI end is expected.", offset(_n));
+			throw new ParseException(_result.error(offset(_n), "PI end is expected."));
 		}
 		ProcessingInstruction pi = new ProcessingInstruction(pop(), name, body); 
 		return store(pi);
@@ -1436,7 +1443,8 @@ public class Processor {
 					_n = _lexer.read(preferred);
 				}
 			} else if (_n.type == PEREFERENCE && _lexer.getContext() >= LexerContext.DOCTYPE) {
-				String value = _em.getParameterEntity(((ParameterEntityReference)_n).name);
+				ParameterEntityReference per = (ParameterEntityReference)_n;
+				String value = _entityMap.getParameterEntity(per.name);
 				if (value != null) {
 					if (_lexerStack.isEmpty()) {
 						store(_n);
@@ -1447,6 +1455,9 @@ public class Processor {
 					if (sp && _n.type == S) {
 						_n = _lexer.read(preferred);
 					}
+				} else if (_entityMap.get(EntityMap.peKey(per.name)) instanceof ExternalParameterEntityDefinition) {
+					_result.warning(offset(_n), "External parameter entity %s cannot be expanded as it is not supported.", per.name);
+					break;
 				} else {
 					break;
 				}

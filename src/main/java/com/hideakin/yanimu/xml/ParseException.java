@@ -6,9 +6,9 @@ public class ParseException extends Exception {
 
 	protected final int _offset;
 
-	public ParseException(String message, int offset) {
-		super(message);
-		_offset = offset;
+	public ParseException(ParseResult result) {
+		super(result.error().message);
+		_offset = result.error().offset;
 	}
 
 	public int offset() {

@@ -22,8 +22,6 @@ public class Document extends NodeList {
 	protected XmlDeclaration _xml;
 	protected DocumentTypeDeclaration _dtd;
 	protected Element _root;
-	protected String[] _warnings;
-	protected String[] _information;
 	protected int _indentation = INDENTATION_DEFAULT;
 
 	public Document() {
@@ -132,13 +130,15 @@ public class Document extends NodeList {
 	}
 
 	public void load(byte[] content) throws Exception {
+		load(content, new ParseResult());
+	}
+
+	public void load(byte[] content, ParseResult result) throws Exception {
 		_nodeList.clear();
 		_xml = null;
 		_dtd = null;
 		_root = null;
-		_warnings = null;
-		_information = null;
-		Processor processor = new Processor(content);
+		Processor processor = new Processor(content, result);
 		List<Node> nodeList = processor.parse();
 		_nodeList.addAll(nodeList);
 		if (first() instanceof XmlDeclaration xml) {
@@ -153,16 +153,6 @@ public class Document extends NodeList {
 				_dtd = dtd;
 			}
 		}
-		_warnings = processor.warnings();
-		_information = processor.information();
-	}
-
-	public String[] warnings() {
-		return _warnings;
-	}
-
-	public String[] information() {
-		return _information;
 	}
 
 	public int toLineNumber(int offset) {
