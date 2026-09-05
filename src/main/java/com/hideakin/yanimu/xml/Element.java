@@ -340,6 +340,11 @@ public class Element extends NodeList {
 		}
 	}
 
+	public Element getElement(String name) {
+		List<Element> elementList = getElements(name);
+		return elementList.size() > 0 ? elementList.get(0) : null;
+	}
+
 	public void indent(byte[] eol, int indentation, int level) {
 		if (!empty()) {
 			content().indent(eol, indentation, level + 1);

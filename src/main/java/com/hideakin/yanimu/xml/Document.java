@@ -214,6 +214,11 @@ public class Document extends NodeList {
 		return elementList;
 	}
 
+	public Element getElement(String name) {
+		List<Element> elementList = getElements(name);
+		return elementList.size() > 0 ? elementList.get(0) : null;
+	}
+
 	public byte[] endOfLineSequence() {
 		byte[] s = endOfLineSequence(_nodeList);
 		return s != null ? s : LF_SEQUENCE;
