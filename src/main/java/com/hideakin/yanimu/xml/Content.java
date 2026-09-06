@@ -30,11 +30,6 @@ public class Content extends NodeList {
 	}
 
 	@Override
-	public byte[] sequence() {
-		return super.sequence();
-	}
-
-	@Override
 	public void removeAll() {
 		for (Node node : _nodeList) {
 			if (node instanceof Element element) {
@@ -170,7 +165,7 @@ public class Content extends NodeList {
 				elementList.addAll(element.getElements(names, index, true));
 			}
 		}
-		return elementList;	
+		return elementList;
 	}
 
 	public void indent(byte[] eol, int indentation, int level) {

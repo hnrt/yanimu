@@ -2,7 +2,7 @@ package com.hideakin.yanimu.maven;
 
 import com.hideakin.yanimu.xml.Element;
 
-public class Plugin extends Artifact {
+public class Plugin extends SimpleArtifact {
 
 	private static final long serialVersionUID = -5628543134369984893L;
 

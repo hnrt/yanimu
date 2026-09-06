@@ -22,8 +22,22 @@ public class NodeList extends Node {
 	}
 
 	@Override
-	public byte[] sequence() {
+	public boolean isChanged() {
 		if (_sequence == null) {
+			return true;
+		}
+		for (Node node : _nodeList) {
+			if (node.isChanged()) {
+				_sequence = null;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public byte[] sequence() {
+		if (isChanged()) {
 			_sequence = buildSequence(_nodeList);
 		}
 		return _sequence;
@@ -65,6 +79,7 @@ public class NodeList extends Node {
 		int size = _nodeList.size();
 		if (0 <= index && index < size) {
 			_nodeList.set(index, node);
+			clearSequence();
 		} else {
 			throw new RuntimeException("NodeList::set: Index out of range.");
 		}
@@ -80,8 +95,14 @@ public class NodeList extends Node {
 		return length;
 	}
 
+	/**
+	 * This method returns the offset of the given node from the first node in this node list
+	 * if the given node was found. Otherwise, it returns -1.
+	 * @param target to check
+	 * @return offset of the given node if it was found, otherwise -1.
+	 */
 	@Override
-	public int length(Node target) {
+	public int offset(Node target) {
 		if (this == target) {
 			return 0;
 		}
@@ -89,9 +110,9 @@ public class NodeList extends Node {
 		int size = _nodeList.size();
 		for (int index = 0; index < size; index++) {
 			Node node = _nodeList.get(index);
-			int length2 = node.length(target);
-			if (length2 >= 0) {
-				return length + length2;
+			int delta = node.offset(target);
+			if (delta >= 0) {
+				return length + delta;
 			}
 			length += node.length();
 		}

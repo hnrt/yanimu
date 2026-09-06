@@ -154,8 +154,13 @@ public class MetadataDocument extends Document {
 		MetadataDocument document = new MetadataDocument(path);
 		document.load(content);
 		try {
+			Path directory = path.getParent();
+			if (!Files.exists(directory)) {
+				Files.createDirectories(directory);
+			}
 			Files.write(path, content);
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		return document;
 	}

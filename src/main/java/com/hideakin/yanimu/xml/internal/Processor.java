@@ -1474,7 +1474,7 @@ public class Processor {
 		int size = _nn.size();
 		for (int i = 0; i < size; i++) {
 			Node node = _nn.get(i);
-			int delta = node.length(target);
+			int delta = node.offset(target);
 			if (delta >= 0) {
 				return length + delta;
 			}

@@ -16,11 +16,15 @@ public class PropertyManager extends LinkedHashMap<String, String> {
 
 	private static final long serialVersionUID = 3445726735357959153L;
 
+	private Element _root;
+	private Element _properties;
+
 	public PropertyManager() {
 		super();
 	}
 
 	public void load(Element root, Path path) {
+		_root = root;
 		super.clear();
 		super.put("project.packaging", "jar");
 		super.put("project.basedir", path.toAbsolutePath().getParent().toString());
@@ -43,11 +47,10 @@ public class PropertyManager extends LinkedHashMap<String, String> {
 				}
 			}
 		}
-		for (Element element : root.getElements("/properties")) {
-			for (Node node : element.children()) {
-				if (node instanceof Element child) {
-					super.put(child.name, child.innerText());
-				}
+		_properties = root.getElement("/properties");
+		if (_properties != null) {
+			for (Element element : _properties.getElements("/*")) {
+				super.put(element.name, element.innerText());
 			}
 		}
 	}
@@ -58,6 +61,26 @@ public class PropertyManager extends LinkedHashMap<String, String> {
 			list.add(new Property(entry.getKey(), entry.getValue()));
 		}
 		return List.copyOf(list);
+	}
+
+	@Override
+	public String put(String key, String value) {
+		String old = super.put(key, value);
+		if (_properties != null) {
+			Element element = _properties.getElement("/" + key);
+			if (element != null) {
+				element.setInnerText(value);
+			} else {
+				element = new Element(key, value);
+				_properties.addChild(element);
+			}
+		} else {
+			Element element = new Element(key, value);
+			_properties = new Element("properties");
+			_root.addChild(_properties);
+			_properties.addChild(element);
+		}
+		return old;
 	}
 
 	public String translate(String source) {

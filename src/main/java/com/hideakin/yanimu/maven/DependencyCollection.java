@@ -15,17 +15,17 @@ public class DependencyCollection extends ArtifactCollection<Dependency> {
 		super();
 	}
 
-	public void load(Element element) {
-		super.load(element, "dependency", e -> new Dependency(e));
+	public void load(Element element, PropertyManager propertyManager) {
+		super.load(element, "dependency", propertyManager, e -> new Dependency(e));
 	}
 
-	public void load(Element element, RepositoryCollection repositories) {
-		super.load(element, "dependency", e -> new Dependency(e));
+	public void load(Element element, RepositoryCollection repositories, PropertyManager propertyManager) {
+		super.load(element, "dependency", propertyManager, e -> new Dependency(e));
 		_poms.clear();
 		for (Dependency dependency : super.values()) {
 			if (dependency.scope() == DependencyScope.IMPORT && dependency.type() == ArtifactType.POM) {
 				boolean successful = false;
-				PomDocument pom = PomDocument.of(dependency);
+				PomDocument pom = PomDocument.of(dependency, propertyManager);
 				if (pom.path() == null) {
 					continue;
 				}
@@ -33,17 +33,19 @@ public class DependencyCollection extends ArtifactCollection<Dependency> {
 					pom.load();
 					successful = true;
 				} catch (Exception e) {
+					e.printStackTrace();
 				}
 				if (!successful) {
 					try {
 						pom.load(repositories);
 						successful = true;
 					} catch (Exception e) {
+						e.printStackTrace();
 					}
 				}
 				if (successful) {
 					for (Dependency d : pom.dependencyManagement().values()) {
-						_poms.put(d.ga(), pom);
+						_poms.put(d.ga(propertyManager), pom);
 					}
 				}
 			}

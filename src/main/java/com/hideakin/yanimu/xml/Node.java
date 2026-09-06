@@ -148,20 +148,24 @@ public class Node {
 		return s != null ? new String(s, StandardCharsets.UTF_8) : "";
 	}
 
+	public boolean isChanged() {
+		return _sequence == null;
+	}
+
 	public byte[] sequence() {
 		return _sequence;
 	}
 
 	public void clearSequence() {
-		throw new RuntimeException("Node::clearSequence: Not allowed!");
+		throw new RuntimeException("Node::clearSequence: IMMUTABLE!");
 	}
 
 	public void setSequence(byte[] sequence) {
-		throw new RuntimeException("EntityRef::setSequence: Not allowed!");
+		throw new RuntimeException("Node::setSequence: IMMUTABLE!");
 	}
 
 	public void setSequence(String string) {
-		throw new RuntimeException("EntityRef::setSequence: Not allowed!");
+		throw new RuntimeException("Node::setSequence: IMMUTABLE!");
 	}
 
 	protected static byte[] buildSequence(List<Node> nodeList) {
@@ -184,7 +188,12 @@ public class Node {
 		return sequence().length;
 	}
 
-	public int length(Node target) {
+	/**
+	 * This method returns 0 if the given node is identical to this node. Otherwise, it returns -1.
+	 * @param target to check
+	 * @return 0 if the given node is identical to this node. Otherwise, -1.
+	 */
+	public int offset(Node target) {
 		return this == target ? 0 : -1;
 	}
 

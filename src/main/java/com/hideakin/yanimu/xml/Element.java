@@ -3,6 +3,8 @@ package com.hideakin.yanimu.xml;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.hideakin.yanimu.xml.internal.Lexer;
+
 public class Element extends NodeList {
 
 	public final String name;
@@ -28,6 +30,16 @@ public class Element extends NodeList {
 		_parent = parent;
 	}
 
+	@Override
+	public void clearSequence() {
+		_sequence = null;
+		if (_parent instanceof Element parentElement) {
+			parentElement.clearSequence();
+		} else if (_parent instanceof Document document) {
+			document.clearSequence();
+		}
+	}
+
 	public void set(List<Node> nodeList) {
 		if (_nodeList.size() == 0 &&
 			((nodeList.size() == 1 && nodeList.get(0).type == EETAG) ||
@@ -35,14 +47,6 @@ public class Element extends NodeList {
 			_nodeList.addAll(nodeList);
 		} else {
 			throw new RuntimeException("Element::set(nodeList): Incorrect use!");
-		}
-	}
-
-	@Override
-	public void clearSequence() {
-		_sequence = null;
-		if (_parent instanceof Node node) {
-			node.clearSequence();
 		}
 	}
 
@@ -155,24 +159,16 @@ public class Element extends NodeList {
 	public boolean empty() {
 		if (isEmptyElement()) {
 			return true;
+		} else if (hasElement()) {
+			return false;
 		} else {
-			int count = childCount();
-			if (count > 1) {
-				return false;
-			} else if (count == 1) {
-				Node node = content().get(0);
-				if (node.type != CHAR_DATA) {
+			String text = content().innerText();
+			for (int i = 0; i < text.length(); i++) {
+				int c = text.charAt(i);
+				if (Lexer.isWhiteSpace(c)) {
+					continue;
+				} else {
 					return false;
-				}
-				byte[] sequence = node.sequence();
-				int length = sequence.length;
-				for (int i = 0; i < length; i++) {
-					int c = sequence[i];
-					if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
-						continue;
-					} else {
-						return false;
-					}
 				}
 			}
 			EmptyElementTag eetag = startTag().toEmptyElementTag();
@@ -280,6 +276,7 @@ public class Element extends NodeList {
 			_nodeList.add(EndTag.of(name));
 		}
 		content().setInnerText(value);
+		clearSequence();
 	}
 
 	public int level() {

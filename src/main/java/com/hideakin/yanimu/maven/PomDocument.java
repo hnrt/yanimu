@@ -21,14 +21,14 @@ import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.ParseResult;
 
 @SuppressWarnings("unused")
-public class PomDocument extends Document {
+public class PomDocument extends Document implements Artifact {
 
 	public static PomDocument of(Path path) {
 		return new PomDocument(path);
 	}
 
-	public static PomDocument of(Artifact artifact) {
-		return new PomDocument(artifact);
+	public static PomDocument of(Artifact artifact, PropertyManager propertyManager) {
+		return new PomDocument(artifact, propertyManager);
 	}
 
 	private String _modelVersion;
@@ -47,25 +47,28 @@ public class PomDocument extends Document {
 		super(path);
 	}
 
-	private PomDocument(Artifact artifact) {
-		super(LocalRepository.pathOfPom(artifact));
-		_groupId = artifact.groupId();
-		_artifactId = artifact.artifactId();
-		_version = artifact.version();
+	private PomDocument(Artifact artifact, PropertyManager propertyManager) {
+		super(LocalRepository.pathOfPom(artifact, propertyManager));
+		_groupId = propertyManager.translate(artifact.groupId());
+		_artifactId = propertyManager.translate(artifact.artifactId());
+		_version = propertyManager.translate(artifact.version());
 	}
 
 	public String modelVersion() {
 		return _modelVersion;
 	}
 
+	@Override
 	public String groupId() {
 		return _groupId;
 	}
 
+	@Override
 	public String artifactId() {
 		return _artifactId;
 	}
 
+	@Override
 	public String version() {
 		return _version;
 	}
@@ -76,6 +79,14 @@ public class PomDocument extends Document {
 
 	public String property(String key) {
 		return _propertyManager.get(key);
+	}
+
+	public void setProperty(String key, String value) {
+		_propertyManager.put(key, value);
+	}
+
+	public String translate(String text) {
+		return _propertyManager.translate(text);
 	}
 
 	public PluginCollection pluginManagement() {
@@ -100,23 +111,6 @@ public class PomDocument extends Document {
 	
 	public RepositoryCollection pluginRepositories() {
 		return _pluginRepositories;
-	}
-
-	public List<String> repositoryUrls() {
-		List<String> urls = new ArrayList<>();
-		for (Repository repository : _repositories.values()) {
-			String url = repository.url();
-			if (!urls.contains(url)) {
-				urls.add(url);
-			}
-		}
-		for (Repository repository : _pluginRepositories.values()) {
-			String url = repository.url();
-			if (!urls.contains(url)) {
-				urls.add(url);
-			}
-		}
-		return List.copyOf(urls);
 	}
 
 	@Override
@@ -173,10 +167,10 @@ public class PomDocument extends Document {
 		_propertyManager.load(super.root(), super.path());
 		_repositories.load(super.root().getElement("/repositories"));
 		_pluginRepositories.load(super.root().getElement("/pluginRepositories"));
-		_pluginManagement.load(super._root.getElement("/build/pluginManagement/plugins"));
-		_plugins.load(super._root.getElement("/build/plugins"));
-		_dependencyManagement.load(super.root().getElement("/dependencyManagement/dependencies"), _repositories);
-		_dependencies.load(super.root().getElement("/dependencies"));
+		_pluginManagement.load(super._root.getElement("/build/pluginManagement/plugins"), _propertyManager);
+		_plugins.load(super._root.getElement("/build/plugins"), _propertyManager);
+		_dependencyManagement.load(super.root().getElement("/dependencyManagement/dependencies"), _repositories, _propertyManager);
+		_dependencies.load(super.root().getElement("/dependencies"), _propertyManager);
 	}
 
 	public void load(RepositoryCollection repositories) throws Exception {
@@ -199,12 +193,60 @@ public class PomDocument extends Document {
 	}
 
 	public void load(String baseUrl) throws Exception {
-		String url = RemoteRepository.urlOfPom(baseUrl, baseUrl, baseUrl, baseUrl);
+		String url = RemoteRepository.urlOfPom(baseUrl, _groupId, _artifactId, _version);
 		byte[] content = RemoteRepository.download(url);
 		load(content);
 		try {
+			Path directory = _path.getParent();
+			if (!Files.exists(directory)) {
+				Files.createDirectories(directory);
+			}
 			Files.write(_path, content);
 		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public String ga(PropertyManager propertyManager) {
+		String g = propertyManager.translate(groupId());
+		String a = propertyManager.translate(artifactId());
+		return SimpleArtifact.ga(g, a);
+	}
+
+	@Override
+	public String gav(PropertyManager propertyManager) {
+		String g = propertyManager.translate(groupId());
+		String a = propertyManager.translate(artifactId());
+		String v = propertyManager.translate(version());
+		return SimpleArtifact.gav(g, a, v);
+	}
+
+	public String ga() {
+		String g = groupId();
+		String a = artifactId();
+		return SimpleArtifact.ga(g, a);
+	}
+
+	public String ga(Artifact artifact) {
+		return artifact.ga(_propertyManager);
+	}
+
+	private static final String PROPERTY_REFERENCE_PATTERN = "^\\$\\{[^${}]*\\}$";
+
+	public String referencingPropertyKey(String value) {
+		if (value.matches(PROPERTY_REFERENCE_PATTERN)) {
+			String key;
+			do {
+				key = value.substring(2, value.length() - 1);
+				value = property(key);
+				if (value == null) {
+					break;
+				}
+			} while(value.matches(PROPERTY_REFERENCE_PATTERN));
+			return key;
+		} else {
+			return null;
 		}
 	}
 

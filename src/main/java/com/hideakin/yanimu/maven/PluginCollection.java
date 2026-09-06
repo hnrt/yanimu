@@ -10,8 +10,8 @@ public class PluginCollection extends ArtifactCollection<Plugin> {
 		super();
 	}
 
-	public void load(Element element) {
-		super.load(element, "plugin", e -> new Plugin(e));
+	public void load(Element element, PropertyManager propertyManager) {
+		super.load(element, "plugin", propertyManager, e -> new Plugin(e));
 	}
 
 }
