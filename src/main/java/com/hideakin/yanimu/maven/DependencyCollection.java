@@ -25,7 +25,10 @@ public class DependencyCollection extends ArtifactCollection<Dependency> {
 		for (Dependency dependency : super.values()) {
 			if (dependency.scope() == DependencyScope.IMPORT && dependency.type() == ArtifactType.POM) {
 				boolean successful = false;
-				PomDocument pom = PomDocument.of(dependency, propertyManager);
+				String groupId = propertyManager.translate(dependency.groupId());
+				String artifactId = propertyManager.translate(dependency.artifactId());
+				String version = propertyManager.translate(dependency.version());
+				PomDocument pom = PomDocument.of(groupId, artifactId, version);
 				if (pom.path() == null) {
 					continue;
 				}
@@ -45,7 +48,7 @@ public class DependencyCollection extends ArtifactCollection<Dependency> {
 				}
 				if (successful) {
 					for (Dependency d : pom.dependencyManagement().values()) {
-						_poms.put(d.ga(propertyManager), pom);
+						_poms.put(pom.translate(d.ga()), pom);
 					}
 				}
 			}

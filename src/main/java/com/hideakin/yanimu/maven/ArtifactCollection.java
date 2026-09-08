@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.function.Function;
 
 import com.hideakin.yanimu.xml.Element;
+import com.hideakin.yanimu.xml.Node;
 
 public class ArtifactCollection<T extends SimpleArtifact> extends LinkedHashMap<String, T> {
 
@@ -26,7 +27,7 @@ public class ArtifactCollection<T extends SimpleArtifact> extends LinkedHashMap<
 			String pattern = "/" + name;
 			for (Element child : _element.getElements(pattern)) {
 				T artifact = creator.apply(child);
-				String key = artifact.ga(propertyManager);
+				String key = propertyManager.translate(artifact.ga());
 				if (super.containsKey(key)) {
 					continue;
 				}
@@ -40,10 +41,23 @@ public class ArtifactCollection<T extends SimpleArtifact> extends LinkedHashMap<
 		return super.get(key);
 	}
 
-	public void add(T artifact, PropertyManager propertyManager) {
+	@Override
+	public T put(String key, T artifact) {
+		T existing = super.put(key, artifact);
+		if (existing != null) {
+			for (int i = 0; i < _element.childCount(); i++) {
+				Node child = _element.child(i);
+				if (child.type == Node.ELEMENT && (Element)child == existing.element()) {
+					_element.removeChild(i);
+					_element.addChild(i, artifact.element());
+					return existing;
+				}
+			}
+			//NEVER REACH HERE BUT PASS THROUGH JUST IN CASE
+		}
 		_element.addChild(artifact.element());
-		String key = artifact.ga(propertyManager);
-		super.put(key, artifact);
+		_element.indent();
+		return null;
 	}
 
 }

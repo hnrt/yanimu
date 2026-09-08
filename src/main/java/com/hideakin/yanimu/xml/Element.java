@@ -342,6 +342,16 @@ public class Element extends NodeList {
 		return elementList.size() > 0 ? elementList.get(0) : null;
 	}
 
+	public void indent() {
+		Document d = document();
+		if (d != null) {
+			byte[] eol = d.endOfLineSequence();
+			int i = d.indentation();
+			int l = level();
+			indent(eol, i, l);
+		}
+	}
+
 	public void indent(byte[] eol, int indentation, int level) {
 		if (!empty()) {
 			content().indent(eol, indentation, level + 1);

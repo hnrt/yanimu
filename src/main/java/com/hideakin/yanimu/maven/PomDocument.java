@@ -27,8 +27,8 @@ public class PomDocument extends Document implements Artifact {
 		return new PomDocument(path);
 	}
 
-	public static PomDocument of(Artifact artifact, PropertyManager propertyManager) {
-		return new PomDocument(artifact, propertyManager);
+	public static PomDocument of(String groupId, String artifactId, String version) {
+		return new PomDocument(groupId, artifactId, version);
 	}
 
 	private String _modelVersion;
@@ -47,11 +47,11 @@ public class PomDocument extends Document implements Artifact {
 		super(path);
 	}
 
-	private PomDocument(Artifact artifact, PropertyManager propertyManager) {
-		super(LocalRepository.pathOfPom(artifact, propertyManager));
-		_groupId = propertyManager.translate(artifact.groupId());
-		_artifactId = propertyManager.translate(artifact.artifactId());
-		_version = propertyManager.translate(artifact.version());
+	private PomDocument(String groupId, String artifactId, String version) {
+		super(LocalRepository.pathOfPom(groupId, artifactId, version));
+		_groupId = groupId;
+		_artifactId = artifactId;
+		_version = version;
 	}
 
 	public String modelVersion() {
@@ -71,6 +71,13 @@ public class PomDocument extends Document implements Artifact {
 	@Override
 	public String version() {
 		return _version;
+	}
+
+	@Override
+	public String ga() {
+		String g = groupId();
+		String a = artifactId();
+		return SimpleArtifact.ga(g, a);
 	}
 
 	public List<Property> properties() {
@@ -206,31 +213,6 @@ public class PomDocument extends Document implements Artifact {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	@Override
-	public String ga(PropertyManager propertyManager) {
-		String g = propertyManager.translate(groupId());
-		String a = propertyManager.translate(artifactId());
-		return SimpleArtifact.ga(g, a);
-	}
-
-	@Override
-	public String gav(PropertyManager propertyManager) {
-		String g = propertyManager.translate(groupId());
-		String a = propertyManager.translate(artifactId());
-		String v = propertyManager.translate(version());
-		return SimpleArtifact.gav(g, a, v);
-	}
-
-	public String ga() {
-		String g = groupId();
-		String a = artifactId();
-		return SimpleArtifact.ga(g, a);
-	}
-
-	public String ga(Artifact artifact) {
-		return artifact.ga(_propertyManager);
 	}
 
 	private static final String PROPERTY_REFERENCE_PATTERN = "^\\$\\{[^${}]*\\}$";

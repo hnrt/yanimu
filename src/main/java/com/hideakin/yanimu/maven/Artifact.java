@@ -5,7 +5,6 @@ public interface Artifact {
 	String groupId();
 	String artifactId();
 	String version();
-	String ga(PropertyManager propertyManager);
-	String gav(PropertyManager propertyManager);
+	String ga();
 
 }

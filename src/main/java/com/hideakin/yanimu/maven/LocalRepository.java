@@ -8,10 +8,7 @@ public class LocalRepository {
 	public static final Path PATH = Path.of(System.getProperty("user.home"), ".m2", "repository");
 	public static final Path CUSTOM_PATH = Path.of(System.getProperty("user.home"), ".yanimu");
 
-	public static Path pathOfPom(Artifact artifact, PropertyManager propertyManager) {
-		String groupId = propertyManager.translate(artifact.groupId());
-		String artifactId = propertyManager.translate(artifact.artifactId());
-		String version = propertyManager.translate(artifact.version());
+	public static Path pathOfPom(String groupId, String artifactId, String version) {
 		if (groupId != null && groupId.indexOf('.') > 0 && artifactId != null && version != null) {
 			String fileName = artifactId + "-" + version + ".pom";
 			String[] d = groupId.split("\\.");

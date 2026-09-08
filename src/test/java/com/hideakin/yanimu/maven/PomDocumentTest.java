@@ -48,13 +48,13 @@ public class PomDocumentTest {
 				if (v1 != null) {
 					dep1 = dep;
 				} else {
-					dep1 = pom.dependencyManagement().get(pom.ga(dep));
+					dep1 = pom.dependencyManagement().get(dep.ga());
 					if (dep1 != null) {
 						v1 = dep1.version();
 						System.out.printf("#pomDocumentTest001: dependencyManagement v=%s\n",
 								v1);
 					} else {
-						PomDocument pomBom = pom.dependencyManagement().pomDocument(pom.ga(dep));
+						PomDocument pomBom = pom.dependencyManagement().pomDocument(dep.ga());
 						if (pomBom != null) {
 							System.out.printf("#pomDocumentTest001: POM/IMPORT g=%s a=%s v=%s\n",
 									pomBom.groupId(),

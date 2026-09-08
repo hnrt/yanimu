@@ -6,6 +6,10 @@ public class SimpleArtifact extends PomMap implements Artifact {
 
 	private static final long serialVersionUID = 2059870372450308123L;
 
+	public static String ga(String g, String a) {
+		return (g != null ? g : "") + ":" + (a != null ? a : "");
+	}
+
 	protected SimpleArtifact(String name) {
 		super(name);
 	}
@@ -30,6 +34,13 @@ public class SimpleArtifact extends PomMap implements Artifact {
 		return super.getString("version", null);
 	}
 
+	@Override
+	public String ga() {
+		String g = groupId();
+		String a = artifactId();
+		return ga(g, a);
+	}
+
 	public void setGroupId(String value) {
 		setString("groupId", value);
 	}
@@ -40,29 +51,6 @@ public class SimpleArtifact extends PomMap implements Artifact {
 
 	public void setVersion(String value) {
 		setString("version", value);
-	}
-
-	@Override
-	public String ga(PropertyManager propertyManager) {
-		String g = propertyManager.translate(groupId());
-		String a = propertyManager.translate(artifactId());
-		return ga(g, a);
-	}
-
-	@Override
-	public String gav(PropertyManager propertyManager) {
-		String g = propertyManager.translate(groupId());
-		String a = propertyManager.translate(artifactId());
-		String v = propertyManager.translate(version());
-		return gav(g, a, v);
-	}
-
-	public static String ga(String g, String a) {
-		return (g != null ? g : "") + ":" + (a != null ? a : "");
-	}
-
-	public static String gav(String g, String a, String v) {
-		return (g != null ? g : "") + ":" + (a != null ? a : "") + ":" + (v != null ? v : "");
 	}
 
 }
