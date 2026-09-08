@@ -150,7 +150,8 @@ public class PomDocument extends Document implements Artifact {
 	}
 
 	private void initialize() {
-		if (super.root() == null) {
+		Element root = super.root();
+		if (root == null) {
 			return;
 		}
 		Map<String, Consumer<Element>> map = new HashMap<>();
@@ -158,19 +159,19 @@ public class PomDocument extends Document implements Artifact {
 		map.put("groupId", e -> _groupId = e.innerText());
 		map.put("artifactId", e -> _artifactId = e.innerText());
 		map.put("version", e -> _version = e.innerText());
-		for (Element e : super.root().getElements("/*")) {
+		for (Element e : root.getElements("/*")) {
 			Consumer<Element> c = map.get(e.name);
 			if (c != null) {
 				c.accept(e);
 			}
 		}
-		_propertyManager.load(super.root(), super.path());
-		_repositories.load(super.root().getElement("/repositories"));
-		_pluginRepositories.load(super.root().getElement("/pluginRepositories"));
+		_propertyManager.load(root, super.path());
+		_repositories.load(root.getElement("/repositories"), root.getElements("/repositories/repository"));
+		_pluginRepositories.load(root.getElement("/pluginRepositories"), root.getElements("/pluginRepositories/pluginRepository"));
 		_pluginManagement.load(super._root.getElement("/build/pluginManagement/plugins"), _propertyManager);
 		_plugins.load(super._root.getElement("/build/plugins"), _propertyManager);
-		_dependencyManagement.load(super.root().getElement("/dependencyManagement/dependencies"), _repositories, _propertyManager);
-		_dependencies.load(super.root().getElement("/dependencies"), _propertyManager);
+		_dependencyManagement.load(root.getElement("/dependencyManagement/dependencies"), _repositories, _propertyManager);
+		_dependencies.load(root.getElement("/dependencies"), _propertyManager);
 	}
 
 	public void load(RepositoryCollection repositories) throws Exception {

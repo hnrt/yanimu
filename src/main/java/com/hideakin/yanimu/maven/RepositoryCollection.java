@@ -1,6 +1,7 @@
 package com.hideakin.yanimu.maven;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import com.hideakin.yanimu.xml.Element;
 
@@ -14,11 +15,11 @@ public class RepositoryCollection extends LinkedHashMap<String, Repository> {
 		super();
 	}
 
-	public void load(Element element) {
+	public void load(Element element, List<Element> elementList) {
 		super.clear();
 		_element = element;
 		if (_element != null) {
-			for (Element child : _element.getElements("/repository")) {
+			for (Element child : elementList) {
 				Repository repository = new Repository(child);
 				String id = repository.id();
 				if (id == null || super.containsKey(id)) {
