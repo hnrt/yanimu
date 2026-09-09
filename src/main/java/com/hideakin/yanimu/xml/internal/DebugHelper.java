@@ -41,7 +41,7 @@ public class DebugHelper {
 		nt.put(Integer.valueOf(Node.ELEMENT), "ELEMENT");
 		nt.put(Integer.valueOf(Node.STAG), "STAG");
 		nt.put(Integer.valueOf(Node.STAG_START), "STAG_START");
-		nt.put(Integer.valueOf(Node.STAG_START), "STAG_END");
+		nt.put(Integer.valueOf(Node.STAG_END), "STAG_END");
 		nt.put(Integer.valueOf(Node.ATTRIBUTE), "ATTRIBUTE");
 		nt.put(Integer.valueOf(Node.ETAG), "ETAG");
 		nt.put(Integer.valueOf(Node.ETAG_START), "ETAG_START");
