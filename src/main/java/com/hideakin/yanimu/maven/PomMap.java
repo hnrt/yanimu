@@ -56,7 +56,8 @@ public class PomMap extends LinkedHashMap<String, Element> {
 		} else {
 			child = new Element(key, value);
 			super.put(key, child);
-			_element.addChild(child);
+			_element.add(child);
+			_element.indent();
 		}
 	}
 
@@ -75,7 +76,8 @@ public class PomMap extends LinkedHashMap<String, Element> {
 		} else {
 			child = new Element(key, value ? "true" : "false");
 			super.put(key, child);
-			_element.addChild(child);
+			_element.add(child);
+			_element.indent();
 		}
 	}
 

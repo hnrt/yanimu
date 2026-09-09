@@ -20,7 +20,8 @@ public class Element extends NodeList {
 		super(ELEMENT, List.of(StartTag.of(name), Content.of(), EndTag.of(name)));
 		this.name = name;
 		_parent = null;
-		content().setInnerText(innerText);
+		Content content = (Content)_nodeList.get(1);
+		content.setText(innerText);
 	}
 
 	// Note that set must be called later to fill _nodeList with the real nodes.
@@ -46,10 +47,14 @@ public class Element extends NodeList {
 			 (nodeList.size() == 3 && nodeList.get(0).type == STAG && nodeList.get(1).type == CONTENT && nodeList.get(2).type == ETAG))) {
 			_nodeList.addAll(nodeList);
 		} else {
-			throw new RuntimeException("Element::set(nodeList): Incorrect use!");
+			throw new RuntimeException("Element::set: INCORRECT USE!");
 		}
 	}
 
+	/**
+	 * This method returns its parent element.
+	 * @return parent element or null if it is not set.
+	 */
 	public Element parent() {
 		if (_parent instanceof Element element) {
 			return element;
@@ -60,8 +65,12 @@ public class Element extends NodeList {
 
 	public void setParent(Object parent) {
 		_parent = parent;
-		if (_parent instanceof Node node) {
-			node.clearSequence();
+		if (_parent instanceof Element parentElement) {
+			parentElement.clearSequence();
+		} else if (_parent instanceof Document document) {
+			document.clearSequence();
+		} else if (_parent != null) {
+			throw new RuntimeException("Element::setParent(" + _parent.getClass().getCanonicalName() + "): INCORRECT USE!");
 		}
 	}
 
@@ -77,27 +86,86 @@ public class Element extends NodeList {
 
 	@Override
 	public void add(Node node) {
-		throw new RuntimeException("Element::add: Not allowed!");
+		StartTag stag = (StartTag)_nodeList.get(0);
+		if (stag.type == EETAG) {
+			_nodeList.clear();
+			_nodeList.add(stag.toStartTag());
+			_nodeList.add(Content.of());
+			_nodeList.add(EndTag.of(stag.name));
+		}
+		Content content = (Content)_nodeList.get(1);
+		content.add(node);
+		if (node instanceof Element element) {
+			element.setParent(this);
+		} else {
+			clearSequence();
+		}
 	}
 
 	@Override
 	public void add(int index, Node node) {
-		throw new RuntimeException("Element::add: Not allowed!");
+		StartTag stag = (StartTag)_nodeList.get(0);
+		if (stag.type == EETAG) {
+			_nodeList.clear();
+			_nodeList.add(stag.toStartTag());
+			_nodeList.add(Content.of());
+			_nodeList.add(EndTag.of(name));
+		}
+		Content content = (Content)_nodeList.get(1);
+		content.add(index, node);
+		if (node instanceof Element element) {
+			element.setParent(this);
+		} else {
+			clearSequence();
+		}
+	}
+
+	@Override
+	public void removeAll() {
+		if (_nodeList.size() > 1) {
+			Content content = (Content)_nodeList.get(1);
+			content.removeAll();
+			clearSequence();
+		}
 	}
 
 	@Override
 	public Node remove(int index) {
-		throw new RuntimeException("Element::remove: Not allowed!");
+		if (_nodeList.size() > 1) {
+			Content content = (Content)_nodeList.get(1);
+			Node removed = content.remove(index);
+			if (removed.type != NULL) {
+				clearSequence();
+				return removed;
+			}
+		}
+		return NullNode;
 	}
 
 	@Override
 	public Node remove(Node node) {
-		throw new RuntimeException("Element::remove: Not allowed!");
+		if (_nodeList.size() > 1) {
+			Content content = (Content)_nodeList.get(1);
+			Node removed = content.remove(node);
+			if (removed.type != NULL) {
+				clearSequence();
+				return removed;
+			}
+		}
+		return NullNode;
 	}
 
 	@Override
 	public Node remove(Node node, int start, int end) {
-		throw new RuntimeException("Element::remove: Not allowed!");
+		if (_nodeList.size() > 1) {
+			Content content = (Content)_nodeList.get(1);
+			Node removed = content.remove(node, start, end);
+			if (removed.type != NULL) {
+				clearSequence();
+				return removed;
+			}
+		}
+		return NullNode;
 	}
 
 	public boolean isEmptyElement() {
@@ -105,11 +173,7 @@ public class Element extends NodeList {
 	}
 
 	public StartTag startTag() {
-		return (StartTag)first();
-	}
-
-	public Content content() {
-		return _nodeList.size() == 3 ? (Content)_nodeList.get(1) : null;
+		return (StartTag)_nodeList.get(0);
 	}
 
 	public EndTag endTag() {
@@ -141,19 +205,30 @@ public class Element extends NodeList {
 	}
 
 	public int childCount() {
-		return _nodeList.size() == 3 ? ((Content)_nodeList.get(1)).count() : 0;
+		if (_nodeList.size() == 3) {
+			Content content = (Content)_nodeList.get(1);
+			return content.count();
+		} else {
+			return 0;
+		}
 	}
 
 	public List<Node> children() {
-		return _nodeList.size() == 3 ? ((Content)_nodeList.get(1)).nodeList() : List.of();
+		if (_nodeList.size() == 3) {
+			Content content = (Content)_nodeList.get(1);
+			return content.nodeList();
+		} else {
+			return List.of();
+		}
 	}
 
 	public Node child(int index) {
 		if (_nodeList.size() == 3) {
 			Content content = (Content)_nodeList.get(1);
 			return content.get(index);
+		} else {
+			return NullNode;
 		}
-		return NullNode;
 	}
 
 	public boolean empty() {
@@ -162,7 +237,8 @@ public class Element extends NodeList {
 		} else if (hasElement()) {
 			return false;
 		} else {
-			String text = content().innerText();
+			Content content = (Content)_nodeList.get(1);
+			String text = content.text();
 			for (int i = 0; i < text.length(); i++) {
 				int c = text.charAt(i);
 				if (Lexer.isWhiteSpace(c)) {
@@ -171,111 +247,33 @@ public class Element extends NodeList {
 					return false;
 				}
 			}
-			EmptyElementTag eetag = startTag().toEmptyElementTag();
+			StartTag stag = (StartTag)_nodeList.get(0);
 			_nodeList.clear();
-			_nodeList.add(eetag);
+			_nodeList.add(stag.toEmptyElementTag());
 			clearSequence();
 			return true;
 		}
 	}
 
-	public void addChild(Node node) {
-		if (isEmptyElement()) {
-			StartTag stag = startTag().toStartTag();
-			_nodeList.clear();
-			_nodeList.add(stag);
-			_nodeList.add(Content.of());
-			_nodeList.add(EndTag.of(stag.name));
-		}
-		Content content = this.content();
-		if (node instanceof Element element) {
-			element.setParent(this);
-			Document document = this.document();
-			byte[] eol = document != null ? document.endOfLineSequence() : Document.LF_SEQUENCE;
-			int indentation = document != null ? document.indentation() : Document.INDENTATION_DEFAULT;
-			int level = this.level();
-			if (content.count() == 0) {
-				content.add(Node.endOfLineAndIndentation(eol, indentation, level + 1));
-				content.add(node);
-				content.add(Node.endOfLineAndIndentation(eol, indentation, level));
-			} else if (content.last().isEndOfLineAndIndentation()) {
-				content.add(content.lastIndex(), Node.endOfLineAndIndentation(eol, indentation, level + 1));
-				content.add(content.lastIndex(), node);
-			} else {
-				content.add(node);
-			}
-		} else {
-			content.add(node);
-		}
-		clearSequence();
-	}
-
-	public void addChild(int index, Node node) {
-		if (isEmptyElement()) {
-			StartTag stag = startTag().toStartTag();
-			_nodeList.clear();
-			_nodeList.add(stag);
-			_nodeList.add(Content.of());
-			_nodeList.add(EndTag.of(name));
-		}
-		if (node instanceof Element element) {
-			element.setParent(this);
-		}
-		content().add(index, node);
-		clearSequence();
-	}
-
-	public void removeAllChildren() {
-		Content content = this.content();
-		if (content != null) {
-			Node node;
-			for (int i = 0; (node = content.get(i)).type != NULL; i++) {
-				if (node instanceof Element element) {
-					element.setParent(null);
-				}
-			}
-			content.removeAll();
-			clearSequence();
-		}
-	}
-
-	public Node removeChild(int index) {
-		Content content = this.content();
-		if (content != null) {
-			Node node = content.remove(index);
-			if (node.type != NULL) {
-				clearSequence();
-				return node;
-			}
-		}
-		return NullNode;
-	}
-
-	public Node removeChild(Node node) {
-		Content content = this.content();
-		if (content != null) {
-			node = content.remove(node);
-			if (node.type != NULL) {
-				clearSequence();
-				return node;
-			}
-		}
-		return NullNode;
-	}
-
 	public String innerText() {
-		return isEmptyElement() ? null : content().innerText();
+		if (_nodeList.size() > 1) {
+			Content content = (Content)_nodeList.get(1);
+			return content.text();
+		} else {
+			return null;
+		}
 	}
 
 	public void setInnerText(String value) {
-		if (isEmptyElement()) {
+		if (_nodeList.size() == 1) {
 			StartTag stag = startTag().toStartTag();
 			_nodeList.clear();
 			_nodeList.add(stag);
 			_nodeList.add(Content.of());
 			_nodeList.add(EndTag.of(name));
 		}
-		content().setInnerText(value);
+		Content content = (Content)_nodeList.get(1);
+		content.setText(value);
 		clearSequence();
 	}
 
@@ -290,10 +288,11 @@ public class Element extends NodeList {
 	}
 
 	public boolean hasElement() {
-		if (isEmptyElement()) {
-			return false;
+		if (_nodeList.size() > 1) {
+			Content content = (Content)_nodeList.get(1);
+			return content.hasElement();
 		} else {
-			return content().hasElement();
+			return false;
 		}
 	}
 
@@ -319,10 +318,9 @@ public class Element extends NodeList {
 	}
 
 	public List<Element> getElements(String[] names, int index, boolean isRelative) {
-		if (isEmptyElement()) {
-			return new ArrayList<>();
-		} else {
-			List<Element> elementList = content().getElements(names[index]);
+		if (_nodeList.size() > 1) {
+			Content content = (Content)_nodeList.get(1);
+			List<Element> elementList = content.getElements(names[index]);
 			if (index + 1 < names.length && elementList.size() > 0) {
 				List<Element> elementList2 = new ArrayList<>();
 				for (Element element : elementList) {
@@ -331,9 +329,11 @@ public class Element extends NodeList {
 				elementList = elementList2;
 			}
 			if (isRelative) {
-				content().getElementsRecursively(names, index, elementList);
+				content.getElementsRecursively(names, index, elementList);
 			}
 			return elementList;
+		} else {
+			return new ArrayList<>();
 		}
 	}
 
@@ -354,7 +354,8 @@ public class Element extends NodeList {
 
 	public void indent(byte[] eol, int indentation, int level) {
 		if (!empty()) {
-			content().indent(eol, indentation, level + 1);
+			Content content = (Content)_nodeList.get(1);
+			content.indent(eol, indentation, level + 1);
 			clearSequence();
 		}
 	}

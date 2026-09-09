@@ -72,13 +72,15 @@ public class PropertyManager extends LinkedHashMap<String, String> {
 				element.setInnerText(value);
 			} else {
 				element = new Element(key, value);
-				_properties.addChild(element);
+				_properties.add(element);
+				_properties.indent();
 			}
 		} else {
 			Element element = new Element(key, value);
 			_properties = new Element("properties");
-			_root.addChild(_properties);
-			_properties.addChild(element);
+			_root.add(_properties);
+			_properties.add(element);
+			_root.indent();
 		}
 		return old;
 	}

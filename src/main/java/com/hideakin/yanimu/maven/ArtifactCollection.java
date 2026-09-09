@@ -48,14 +48,14 @@ public class ArtifactCollection<T extends SimpleArtifact> extends LinkedHashMap<
 			for (int i = 0; i < _element.childCount(); i++) {
 				Node child = _element.child(i);
 				if (child.type == Node.ELEMENT && (Element)child == existing.element()) {
-					_element.removeChild(i);
-					_element.addChild(i, artifact.element());
+					_element.remove(i);
+					_element.add(i, artifact.element());
 					return existing;
 				}
 			}
 			//NEVER REACH HERE BUT PASS THROUGH JUST IN CASE
 		}
-		_element.addChild(artifact.element());
+		_element.add(artifact.element());
 		_element.indent();
 		return null;
 	}

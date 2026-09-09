@@ -191,7 +191,8 @@ public class ElementTest {
 			System.out.printf("test213: content.length=%d actual=%d\n", content1.length, end1);
 			Document sup = new Document();
 			sup.load("<X><hello/></X>".getBytes());
-			doc.root().addChild(sup.root().removeChild(0));
+			doc.root().add(sup.root().remove(0));
+			doc.root().indent();
 			System.out.printf("test213: root=%d\n", doc.root().sequence().length);
 			int end2 = checkDocument("test13AFTER", doc, content2);
 			System.out.printf("test213: content.length=%d actual=%d\n", content2.length, end2);
@@ -216,7 +217,8 @@ public class ElementTest {
 			System.out.printf("test214: content.length=%d actual=%d\n", content1.length, end1);
 			Document sup = new Document();
 			sup.load("<X><hello>WOW!</hello></X>".getBytes());
-			doc.root().addChild(sup.root().removeChild(0));
+			doc.root().add(sup.root().remove(0));
+			doc.root().indent();
 			int end2 = checkDocument("test214AFTER", doc, content2);
 			System.out.printf("test214: content.length=%d actual=%d\n", content2.length, end2);
 		} catch (Exception e) {

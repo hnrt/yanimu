@@ -66,7 +66,7 @@ public class Content extends NodeList {
 		return node;
 	}
 
-	public String innerText() {
+	public String text() {
 		StringBuilder buffer = new StringBuilder();
 		for (Node node : _nodeList) {
 			switch (node.type) {
@@ -89,7 +89,7 @@ public class Content extends NodeList {
 		return buffer.toString();
 	}
 
-	public void setInnerText(String value) {
+	public void setText(String value) {
 		removeAll();
 		int h = 0;
 		int i = 0;
