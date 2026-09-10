@@ -53,6 +53,12 @@ public class Element extends NodeList {
 		}
 	}
 
+	/**
+	 * This method sets the given object to the parent element of this element.<br/>
+	 * For the root element, pass the document instance to this method instead.
+	 * @param parent instance of Element or Document<br/>
+	 * null if this element is to be detached from its parent element.
+	 */
 	public void setParent(Object parent) {
 		_parent = parent;
 	}
@@ -97,7 +103,8 @@ public class Element extends NodeList {
 
 	/**
 	 * This method returns the first child node in this element.
-	 * @return The first child node if it exists or NullNode if this element has no child nodes
+	 * @return First child node if it exists or<br/>
+	 * NullNode if this element has no child nodes
 	 */
 	@Override
 	public Node first() {
@@ -111,7 +118,8 @@ public class Element extends NodeList {
 
 	/**
 	 * This method returns the last child node in this element.
-	 * @return The last child node if it exists or NullNode if this element has no child nodes
+	 * @return Last child node if it exists or<br/>
+	 * NullNode if this element has no child nodes
 	 */
 	@Override
 	public Node last() {
@@ -124,8 +132,9 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This method returns the index number of the last child node in this element.
-	 * @return The index number of the last child node if it exist, or -1 if this element has no child nodes
+	 * This method locates the last child node in this element.
+	 * @return Index number of the last node if it exists or<br/>
+	 * -1 if this element has no child nodes
 	 */
 	@Override
 	public int lastIndex() {
@@ -244,10 +253,18 @@ public class Element extends NodeList {
 		return _nodeList.size() == 1;
 	}
 
+	/**
+	 * This method returns the start tag node of this element.
+	 * @return Start tag node
+	 */
 	public StartTag startTag() {
 		return (StartTag)_nodeList.get(0);
 	}
 
+	/**
+	 * This method returns the end tag node of this element.
+	 * @return End tag node
+	 */
 	public EndTag endTag() {
 		return _nodeList.size() == 3 ? (EndTag)_nodeList.get(2) : null;
 	}
@@ -316,7 +333,7 @@ public class Element extends NodeList {
 		}
 	}
 
-	/***
+	/**
 	 * This method attempts to change itself to an empty element if possible.
 	 * @return True if this element is an empty element as a result or false if not.
 	 */
@@ -343,6 +360,10 @@ public class Element extends NodeList {
 		}
 	}
 
+	/**
+	 * This method returns the inner text string of this element.
+	 * @return Inner text string of this element
+	 */
 	public String innerText() {
 		if (_nodeList.size() > 1) {
 			Content content = (Content)_nodeList.get(1);
@@ -352,6 +373,10 @@ public class Element extends NodeList {
 		}
 	}
 
+	/**
+	 * This method sets the given string to the inner text string of this element.
+	 * @param value to be set
+	 */
 	public void setInnerText(String value) {
 		if (_nodeList.size() == 1) {
 			StartTag stag = startTag().toStartTag();
@@ -364,6 +389,12 @@ public class Element extends NodeList {
 		content.setText(value);
 	}
 
+	/**
+	 * This method returns the nesting level of this element.
+	 * For example, the nesting level of the root element is zero.
+	 * The nesting level of the child elements of the root element is one.
+	 * @return The nesting level of this element
+	 */
 	public int level() {
 		int n = 0;
 		Object parent = _parent;
@@ -374,6 +405,10 @@ public class Element extends NodeList {
 		return n;
 	}
 
+	/**
+	 * This method checks if this element has one or more child elements.
+	 * @return true if this element has one or more child elements or<br/>false if not
+	 */
 	public boolean hasElement() {
 		if (_nodeList.size() > 1) {
 			Content content = (Content)_nodeList.get(1);
@@ -430,19 +465,19 @@ public class Element extends NodeList {
 	}
 
 	public void indent() {
-		Document d = document();
-		if (d != null) {
-			byte[] eol = d.lineSeparator();
-			int i = d.indentation();
-			int l = level();
-			indent(eol, i, l);
+		Document document = document();
+		if (document != null) {
+			byte[] lineSeparator = document.lineSeparator();
+			int indentation = document.indentation();
+			int level = level();
+			indent(lineSeparator, indentation, level);
 		}
 	}
 
-	public void indent(byte[] eol, int indentation, int level) {
+	public void indent(byte[] lineSeparator, int indentation, int level) {
 		if (!empty()) {
 			Content content = (Content)_nodeList.get(1);
-			content.indent(eol, indentation, level + 1);
+			content.indent(lineSeparator, indentation, level + 1);
 		}
 	}
 
