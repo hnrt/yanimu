@@ -2,14 +2,14 @@ package com.hideakin.yanimu.xml;
 
 import java.nio.charset.StandardCharsets;
 
-public class QuotedString extends Node {
+public class QuotedString extends TerminalNode {
 
 	public static QuotedString of(int type, byte[] sequence) {
 		return new QuotedString(type, sequence);
 	}
 
-	public static QuotedString of(int type, String value) {
-		return new QuotedString(type, value.getBytes(StandardCharsets.UTF_8));
+	public static QuotedString of(int type, String source) {
+		return new QuotedString(type, source.getBytes(StandardCharsets.UTF_8));
 	}
 
 	protected QuotedString(int type, byte[] sequence) {

@@ -31,16 +31,6 @@ public class Element extends NodeList {
 		_parent = parent;
 	}
 
-	@Override
-	public void clearSequence() {
-		_sequence = null;
-		if (_parent instanceof Element parentElement) {
-			parentElement.clearSequence();
-		} else if (_parent instanceof Document document) {
-			document.clearSequence();
-		}
-	}
-
 	public void set(List<Node> nodeList) {
 		if (_nodeList.size() == 0 &&
 			((nodeList.size() == 1 && nodeList.get(0).type == EETAG) ||
@@ -65,13 +55,6 @@ public class Element extends NodeList {
 
 	public void setParent(Object parent) {
 		_parent = parent;
-		if (_parent instanceof Element parentElement) {
-			parentElement.clearSequence();
-		} else if (_parent instanceof Document document) {
-			document.clearSequence();
-		} else if (_parent != null) {
-			throw new RuntimeException("Element::setParent(" + _parent.getClass().getCanonicalName() + "): INCORRECT USE!");
-		}
 	}
 
 	public Document document() {
@@ -81,6 +64,99 @@ public class Element extends NodeList {
 			return theDocument;
 		} else {
 			return null;
+		}
+	}
+
+	/**
+	 * This method returns the child nodes in this element.
+	 * @return List of the child nodes
+	 */
+	@Override
+	public List<Node> nodeList() {
+		if (_nodeList.size() > 1) {
+			Content content = (Content)_nodeList.get(1);
+			return content.nodeList();
+		} else {
+			return List.of();
+		}
+	}
+
+	/**
+	 * This method returns the number of the child nodes in this element.
+	 * @return Number of the child nodes
+	 */
+	@Override
+	public int size() {
+		if (_nodeList.size() > 1) {
+			Content content = (Content)_nodeList.get(1);
+			return content.size();
+		} else {
+			return 0;
+		}
+	}
+
+	/**
+	 * This method returns the first child node in this element.
+	 * @return The first child node if it exists or NullNode if this element has no child nodes
+	 */
+	@Override
+	public Node first() {
+		if (_nodeList.size() > 1) {
+			Content content = (Content)_nodeList.get(1);
+			return content.first();
+		} else {
+			return NullNode;
+		}
+	}
+
+	/**
+	 * This method returns the last child node in this element.
+	 * @return The last child node if it exists or NullNode if this element has no child nodes
+	 */
+	@Override
+	public Node last() {
+		if (_nodeList.size() > 1) {
+			Content content = (Content)_nodeList.get(1);
+			return content.last();
+		} else {
+			return NullNode;
+		}
+	}
+
+	/**
+	 * This method returns the index number of the last child node in this element.
+	 * @return The index number of the last child node if it exist, or -1 if this element has no child nodes
+	 */
+	@Override
+	public int lastIndex() {
+		if (_nodeList.size() > 1) {
+			Content content = (Content)_nodeList.get(1);
+			return content.lastIndex();
+		} else {
+			return -1;
+		}
+	}
+
+	@Override
+	public Node get(int index) {
+		if (_nodeList.size() > 1) {
+			Content content = (Content)_nodeList.get(1);
+			return content.get(index);
+		} else {
+			return NullNode;
+		}
+	}
+
+	@Override
+	public void set(int index, Node node) {
+		if (_nodeList.size() > 1) {
+			Content content = (Content)_nodeList.get(1);
+			content.set(index, node);
+			if (node instanceof Element element) {
+				element.setParent(this);
+			}
+		} else {
+			throw new RuntimeException("Element::set: No content.");
 		}
 	}
 
@@ -97,8 +173,6 @@ public class Element extends NodeList {
 		content.add(node);
 		if (node instanceof Element element) {
 			element.setParent(this);
-		} else {
-			clearSequence();
 		}
 	}
 
@@ -115,8 +189,6 @@ public class Element extends NodeList {
 		content.add(index, node);
 		if (node instanceof Element element) {
 			element.setParent(this);
-		} else {
-			clearSequence();
 		}
 	}
 
@@ -125,7 +197,6 @@ public class Element extends NodeList {
 		if (_nodeList.size() > 1) {
 			Content content = (Content)_nodeList.get(1);
 			content.removeAll();
-			clearSequence();
 		}
 	}
 
@@ -135,7 +206,6 @@ public class Element extends NodeList {
 			Content content = (Content)_nodeList.get(1);
 			Node removed = content.remove(index);
 			if (removed.type != NULL) {
-				clearSequence();
 				return removed;
 			}
 		}
@@ -148,7 +218,6 @@ public class Element extends NodeList {
 			Content content = (Content)_nodeList.get(1);
 			Node removed = content.remove(node);
 			if (removed.type != NULL) {
-				clearSequence();
 				return removed;
 			}
 		}
@@ -161,13 +230,16 @@ public class Element extends NodeList {
 			Content content = (Content)_nodeList.get(1);
 			Node removed = content.remove(node, start, end);
 			if (removed.type != NULL) {
-				clearSequence();
 				return removed;
 			}
 		}
 		return NullNode;
 	}
 
+	/**
+	 * This method checks if this element is an empty element.
+	 * @return True if this element is an empty element or false if it is not.
+	 */
 	public boolean isEmptyElement() {
 		return _nodeList.size() == 1;
 	}
@@ -204,17 +276,25 @@ public class Element extends NodeList {
 		return startTag().attributeKeys();
 	}
 
+	/**
+	 * This is equivalent to size method.
+	 * @return number of nodes in the content
+	 */
 	public int childCount() {
-		if (_nodeList.size() == 3) {
+		if (_nodeList.size() > 1) {
 			Content content = (Content)_nodeList.get(1);
-			return content.count();
+			return content.size();
 		} else {
 			return 0;
 		}
 	}
 
+	/**
+	 * This is equivalent to nodeList method.
+	 * @return List of nodes
+	 */
 	public List<Node> children() {
-		if (_nodeList.size() == 3) {
+		if (_nodeList.size() > 1) {
 			Content content = (Content)_nodeList.get(1);
 			return content.nodeList();
 		} else {
@@ -222,8 +302,13 @@ public class Element extends NodeList {
 		}
 	}
 
+	/**
+	 * This is equivalent to get method.
+	 * @param index of the node to be returned
+	 * @return node in the content
+	 */
 	public Node child(int index) {
-		if (_nodeList.size() == 3) {
+		if (_nodeList.size() > 1) {
 			Content content = (Content)_nodeList.get(1);
 			return content.get(index);
 		} else {
@@ -231,6 +316,10 @@ public class Element extends NodeList {
 		}
 	}
 
+	/***
+	 * This method attempts to change itself to an empty element if possible.
+	 * @return True if this element is an empty element as a result or false if not.
+	 */
 	public boolean empty() {
 		if (isEmptyElement()) {
 			return true;
@@ -250,7 +339,6 @@ public class Element extends NodeList {
 			StartTag stag = (StartTag)_nodeList.get(0);
 			_nodeList.clear();
 			_nodeList.add(stag.toEmptyElementTag());
-			clearSequence();
 			return true;
 		}
 	}
@@ -274,7 +362,6 @@ public class Element extends NodeList {
 		}
 		Content content = (Content)_nodeList.get(1);
 		content.setText(value);
-		clearSequence();
 	}
 
 	public int level() {
@@ -345,7 +432,7 @@ public class Element extends NodeList {
 	public void indent() {
 		Document d = document();
 		if (d != null) {
-			byte[] eol = d.endOfLineSequence();
+			byte[] eol = d.lineSeparator();
 			int i = d.indentation();
 			int l = level();
 			indent(eol, i, l);
@@ -356,7 +443,6 @@ public class Element extends NodeList {
 		if (!empty()) {
 			Content content = (Content)_nodeList.get(1);
 			content.indent(eol, indentation, level + 1);
-			clearSequence();
 		}
 	}
 

@@ -57,7 +57,7 @@ public class Document extends NodeList {
 			}
 		} else if (xml != null) {
 			add(0, xml);
-			add(1, Node.of(Node.S, endOfLineSequence()));
+			add(1, TerminalNode.of(Node.S, lineSeparator()));
 		}
 		_xml = xml;
 	}
@@ -84,7 +84,7 @@ public class Document extends NodeList {
 			case NULL:
 				if (dtd != null) {
 					add(i, dtd);
-					add(i + 1, Node.of(S, endOfLineSequence()));
+					add(i + 1, TerminalNode.of(S, lineSeparator()));
 				}
 				_dtd = dtd;
 				return;
@@ -219,25 +219,30 @@ public class Document extends NodeList {
 		return elementList.size() > 0 ? elementList.get(0) : null;
 	}
 
-	public byte[] endOfLineSequence() {
-		byte[] s = endOfLineSequence(_nodeList);
+	public byte[] lineSeparator() {
+		byte[] s = lineSeparator(_nodeList);
 		return s != null ? s : LF_SEQUENCE;
 	}
 
-	private static byte[] endOfLineSequence(List<Node> nodeList) {
+	private static byte[] lineSeparator(List<Node> nodeList) {
 		for (Node node : nodeList) {
 			if (node.type == S || node.type == CHAR_DATA) {
 				byte[] s = node.sequence();
-				int n = s.length;
-				for (int i = 0; i < n; i++) {
-					if (s[i] == 10) {
+				if (s.length > 0) {
+					int n = s.length - 1;
+					for (int i = 0; i < n; i++) {
+						if (s[i] == 10) {
+							return LF_SEQUENCE;
+						} else if (s[i] == 13 && s[i + 1] == 10) {
+							return CRLF_SEQUENCE;
+						}
+					}
+					if (s[n] == 10) {
 						return LF_SEQUENCE;
-					} else if (s[i] == 13 && i + 1 < n && s[i + 1] == 10) {
-						return CRLF_SEQUENCE;
 					}
 				}
-			} else if (node.type == ELEMENT) {
-				byte[] s = endOfLineSequence(((NodeList)node)._nodeList);
+			} else if (node instanceof NodeList nodeListNode) {
+				byte[] s = lineSeparator(nodeListNode._nodeList);
 				if (s != null) {
 					return s;
 				}
@@ -247,15 +252,15 @@ public class Document extends NodeList {
 	}
 
 	public void indent() {
-		byte[] eol = endOfLineSequence();
+		byte[] eol = lineSeparator();
 		Node node;
 		for (int i = 0; (node = get(i)).type != NULL; i++) {
 			switch (node.type) {
 			case ELEMENT:
 				if (i > 0 && get(i - 1).type == S) {
-					set(i - 1, Node.of(S, eol));
+					set(i - 1, TerminalNode.of(S, eol));
 				} else {
-					add(i, Node.of(S, eol));
+					add(i, TerminalNode.of(S, eol));
 					i++;
 				}
 				((Element)node).indent(eol, _indentation, 0);

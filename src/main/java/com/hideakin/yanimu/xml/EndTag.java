@@ -17,9 +17,9 @@ public class EndTag extends Tag {
 
 	private EndTag(String name) {
 		super(ETAG,
-				List.of(Node.of(ETAG_START, START_SEQUENCE),
-						Node.of(NAME, name),
-						Node.of(ETAG_END, END_SEQUENCE)));
+				List.of(TerminalNode.of(ETAG_START, START_SEQUENCE),
+						TerminalNode.of(NAME, name),
+						TerminalNode.of(ETAG_END, END_SEQUENCE)));
 	}
 
 	private EndTag(List<Node> nodeList) {

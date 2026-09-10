@@ -7,6 +7,7 @@ import com.hideakin.yanimu.xml.EntityRef;
 import com.hideakin.yanimu.xml.Node;
 import com.hideakin.yanimu.xml.ParameterEntityReference;
 import com.hideakin.yanimu.xml.QuotedString;
+import com.hideakin.yanimu.xml.TerminalNode;
 
 import static com.hideakin.yanimu.xml.Node.*;
 
@@ -40,7 +41,7 @@ public class NodeFactory {
 		case PEREFERENCE:
 			return ParameterEntityReference.of(sequence);
 		default:
-			return Node.of(type, sequence);
+			return TerminalNode.of(type, sequence);
 		}
 	}
 

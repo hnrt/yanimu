@@ -15,9 +15,9 @@ public class EmptyElementTag extends StartTag {
 
 	private EmptyElementTag(String name) {
 		super(EETAG, new ArrayList<>(
-				List.of(Node.of(STAG_START, START_SEQUENCE),
-						Node.of(NAME, name),
-						Node.of(EETAG_END, EETAG_END_SEQUENCE))),
+				List.of(TerminalNode.of(STAG_START, START_SEQUENCE),
+						TerminalNode.of(NAME, name),
+						TerminalNode.of(EETAG_END, EETAG_END_SEQUENCE))),
 				new ArrayList<>());
 	}
 

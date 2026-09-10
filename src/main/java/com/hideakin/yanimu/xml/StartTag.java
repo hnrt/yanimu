@@ -21,9 +21,9 @@ public class StartTag extends Tag {
 
 	protected StartTag(String name) {
 		this(STAG,
-				List.of(Node.of(STAG_START, START_SEQUENCE),
-						Node.of(NAME, name),
-						Node.of(STAG_END, STAG_END_SEQUENCE)),
+				List.of(TerminalNode.of(STAG_START, START_SEQUENCE),
+						TerminalNode.of(NAME, name),
+						TerminalNode.of(STAG_END, STAG_END_SEQUENCE)),
 				List.of());
 	}
 
@@ -81,7 +81,7 @@ public class StartTag extends Tag {
 			return StartTag.of(_nodeList, _attributeList);
 		} else {
 			List<Node> nodeList = new ArrayList<>(_nodeList);
-			nodeList.set(nodeList.size() - 1, Node.of(STAG_END, STAG_END_SEQUENCE));
+			nodeList.set(nodeList.size() - 1, TerminalNode.of(STAG_END, STAG_END_SEQUENCE));
 			return StartTag.of(nodeList, _attributeList);
 		}
 	}
@@ -91,7 +91,7 @@ public class StartTag extends Tag {
 			return EmptyElementTag.of(_nodeList, _attributeList);
 		} else {
 			List<Node> nodeList = new ArrayList<>(_nodeList);
-			nodeList.set(nodeList.size() - 1, Node.of(EETAG_END, EETAG_END_SEQUENCE));
+			nodeList.set(nodeList.size() - 1, TerminalNode.of(EETAG_END, EETAG_END_SEQUENCE));
 			return EmptyElementTag.of(nodeList, _attributeList);
 		}
 	}

@@ -30,6 +30,15 @@ public class Content extends NodeList {
 	}
 
 	@Override
+	public void set(int index, Node node) {
+		Node previous = super.get(index);
+		if (previous instanceof Element element) {
+			element.setParent(null);
+		}
+		super.set(index, node);
+	}
+
+	@Override
 	public void removeAll() {
 		for (Node node : _nodeList) {
 			if (node instanceof Element element) {
@@ -99,14 +108,14 @@ public class Content extends NodeList {
 			switch (c) {
 			case '<':
 				if (h < i) {
-					add(Node.of(CHAR_DATA, value.substring(h, i)));
+					add(TerminalNode.of(CHAR_DATA, value.substring(h, i)));
 				}
 				add(EntityRef.of("lt", "<"));
 				h = ++i;
 				break;
 			case '&':
 				if (h < i) {
-					add(Node.of(CHAR_DATA, value.substring(h, i)));
+					add(TerminalNode.of(CHAR_DATA, value.substring(h, i)));
 				}
 				add(EntityRef.of("amp", "&"));
 				h = ++i;
@@ -114,7 +123,7 @@ public class Content extends NodeList {
 			case ']':
 				if (i + 2 < n && value.charAt(i + 1) == ']' && value.charAt(i + 2) == '>') {
 					if (h < i) {
-						add(Node.of(CHAR_DATA, value.substring(h, i)));
+						add(TerminalNode.of(CHAR_DATA, value.substring(h, i)));
 					}
 					add(CharRef.of(']'));
 					add(CharRef.of(']'));
@@ -131,9 +140,9 @@ public class Content extends NodeList {
 			}
 		}
 		if (h == 0) {
-			add(Node.of(CHAR_DATA, value));
+			add(TerminalNode.of(CHAR_DATA, value));
 		} else if (h < n) {
-			add(Node.of(CHAR_DATA, value.substring(h, n)));
+			add(TerminalNode.of(CHAR_DATA, value.substring(h, n)));
 		}
 	}
 
@@ -175,20 +184,19 @@ public class Content extends NodeList {
 				break;
 			} else if (node instanceof Element element) {
 				if (i == 0 || get(i - 1).type == ELEMENT) {
-					add(i, Node.endOfLineAndIndentation(eol, indentation, level));
+					add(i, Node.lineSeparatorAndIndentation(eol, indentation, level));
 					i++;
-				} else if (get(i - 1).isEndOfLineAndIndentation()) {
-					set(i - 1, Node.endOfLineAndIndentation(eol, indentation, level));
+				} else if (get(i - 1).isLineSeparatorAndIndentation()) {
+					set(i - 1, Node.lineSeparatorAndIndentation(eol, indentation, level));
 				}
 				element.indent(eol, indentation, level);
 			}
 		}
-		if (count() == 0 || last().type == ELEMENT) {
-			add(Node.endOfLineAndIndentation(eol, indentation, level - 1));
-		} else if (last().isEndOfLineAndIndentation()) {
-			set(lastIndex(), Node.endOfLineAndIndentation(eol, indentation, level - 1));
+		if (size() == 0 || last().type == ELEMENT) {
+			add(Node.lineSeparatorAndIndentation(eol, indentation, level - 1));
+		} else if (last().isLineSeparatorAndIndentation()) {
+			set(lastIndex(), Node.lineSeparatorAndIndentation(eol, indentation, level - 1));
 		}
-		clearSequence();
 	}
 
 }

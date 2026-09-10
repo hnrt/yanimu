@@ -2,7 +2,6 @@ package com.hideakin.yanimu.xml;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.List;
 
 public class Node {
 
@@ -91,55 +90,27 @@ public class Node {
 	public static final int MALFORMED_ENTITYREF = 3006800;
 	public static final int MALFORMED_PEREFERENCE = 3006900;
 
-	public static final Node NullNode = new Node(NULL, new byte[0]);
+	public static final Node NullNode = TerminalNode.of(NULL, new byte[0]);
 
-	public static Node of(int type, byte[] sequence) {
-		return new Node(type, sequence);
+	public static Node lineSeparatorAndIndentation(byte[] lineSeparator, int indentation, int level) {
+		return lineSeparatorAndIndentation(CHAR_DATA, lineSeparator, indentation, level);
 	}
 
-	public static Node of(int type, String sequence) {
-		return new Node(type, sequence);
-	}
-
-	public static Node of(int type, char...characters) {
-		return new Node(type, new String(characters));
-	}
-
-	public static Node endOfLineAndIndentation(byte[] eol, int indentation, int level) {
-		return endOfLineAndIndentation(CHAR_DATA, eol, indentation, level);
-	}
-
-	public static Node endOfLineAndIndentation(int type, byte[] eol, int indentation, int level) {
-		int n1 = eol.length;
+	public static Node lineSeparatorAndIndentation(int type, byte[] lineSeparator, int indentation, int level) {
+		int n1 = lineSeparator.length;
 		int n2 = indentation * level;
 		int n = n1 + n2;
-		byte[] sequence = Arrays.copyOf(eol, n);
+		byte[] sequence = Arrays.copyOf(lineSeparator, n);
 		for (int i = n1; i < n; i++) {
 			sequence[i] = 32;
 		}
-		return new Node(type, sequence);
+		return TerminalNode.of(type, sequence);
 	}
 
 	public final int type;
-	protected byte[] _sequence;
 
 	protected Node(int type) {
 		this.type = type;
-		_sequence = null;
-	}
-
-	protected Node(int type, byte[] sequence) {
-		this.type = type;
-		_sequence = sequence;
-	}
-
-	protected Node(int type, String sequence) {
-		this.type = type;
-		_sequence = sequence.getBytes(StandardCharsets.UTF_8);
-	}
-
-	protected Node(int type, List<Node> nodeList) {
-		this(type, buildSequence(nodeList));
 	}
 
 	@Override
@@ -148,44 +119,12 @@ public class Node {
 		return s != null ? new String(s, StandardCharsets.UTF_8) : "";
 	}
 
-	public boolean isChanged() {
-		return _sequence == null;
-	}
-
 	public byte[] sequence() {
-		return _sequence;
-	}
-
-	public void clearSequence() {
-		throw new RuntimeException("Node::clearSequence: IMMUTABLE!");
-	}
-
-	public void setSequence(byte[] sequence) {
-		throw new RuntimeException("Node::setSequence: IMMUTABLE!");
-	}
-
-	public void setSequence(String string) {
-		throw new RuntimeException("Node::setSequence: IMMUTABLE!");
-	}
-
-	protected static byte[] buildSequence(List<Node> nodeList) {
-		int requiredLength = 0;
-		for (Node node : nodeList) {
-			requiredLength += node.sequence().length;
-		}
-		byte[] destination = new byte[requiredLength];
-		int offset = 0;
-		for (Node node : nodeList) {
-			byte[] source = node.sequence(); 
-			int length = source.length;
-			System.arraycopy(source, 0, destination, offset, length);
-			offset += length;
-		}
-		return destination;
+		throw new RuntimeException("Node::sequence: NO IMPLEMENTATION!");
 	}
 
 	public int length() {
-		return sequence().length;
+		throw new RuntimeException("Node::length: NO IMPLEMENTATION!");
 	}
 
 	/**
@@ -199,7 +138,8 @@ public class Node {
 
 	public int lineCount() {
 		int count = 0;
-		for (byte b : sequence()) {
+		byte[] bb = sequence();
+		for (byte b : bb) {
 			if (b == 10) {
 				count++;
 			}
@@ -209,19 +149,22 @@ public class Node {
 
 	public int lineCount(int offset) {
 		int count = 0;
-		for (byte b : sequence()) {
-			if (offset-- <= 0) {
+		int remaining = offset;
+		byte[] bb = sequence();
+		for (byte b : bb) {
+			if (remaining-- <= 0) {
 				return count;
-			}
-			if (b == 10) {
+			} else if (b == 10) {
 				count++;
 			}
 		}
 		return count;
 	}
 
-	public int columnCount(int count) {
-		for (byte b : sequence()) {
+	public int columnCount(int initialCount) {
+		int count = initialCount;
+		byte[] bb = sequence();
+		for (byte b : bb) {
 			if (b == 10) {
 				count = 0;
 			} else {
@@ -231,9 +174,12 @@ public class Node {
 		return count;
 	}
 
-	public int columnCount(int offset, int count) {
-		for (byte b : sequence()) {
-			if (offset-- <= 0) {
+	public int columnCount(int offset, int initialCount) {
+		int count = initialCount;
+		int remaining = offset;
+		byte[] bb = sequence();
+		for (byte b : bb) {
+			if (remaining-- <= 0) {
 				return count;
 			}
 			if (b == 10) {
@@ -245,28 +191,28 @@ public class Node {
 		return count;
 	}
 
-	public boolean isEndOfLineAndIndentation() {
+	public boolean isLineSeparatorAndIndentation() {
 		if (type == CHAR_DATA || type == S) {
-			if (_sequence != null) {
-				int i;
-				if (_sequence.length > 0 && _sequence[0] == 10) {
-					i = 1;
-				} else if (_sequence.length > 1 && _sequence[0] == 13 && _sequence[1] == 10) {
-					i = 2;
+			byte[] bb = sequence();
+			int i;
+			if (bb.length > 0 && bb[0] == 10) {
+				i = 1;
+			} else if (bb.length > 1 && bb[0] == 13 && bb[1] == 10) {
+				i = 2;
+			} else {
+				return false;
+			}
+			while (i < bb.length) {
+				if (bb[i] == 32) {
+					i++;
 				} else {
 					return false;
 				}
-				while (i < _sequence.length) {
-					if (_sequence[i] == 32) {
-						i++;
-					} else {
-						return false;
-					}
-				}
-				return true;
 			}
+			return true;
+		} else {
+			return false;
 		}
-		return false;
 	}
 
 }

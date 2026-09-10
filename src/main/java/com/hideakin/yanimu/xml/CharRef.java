@@ -2,7 +2,7 @@ package com.hideakin.yanimu.xml;
 
 import java.nio.charset.StandardCharsets;
 
-public class CharRef extends Node {
+public class CharRef extends TerminalNode {
 
 	public static final String START = "&#";
 	public static final String START_HEX = "&#x";
@@ -23,7 +23,7 @@ public class CharRef extends Node {
 	public final int codepoint;
 
 	private CharRef(int codepoint) {
-		super(CHAR_REF, String.format("%s%d%s", START, codepoint, END));
+		super(CHAR_REF, String.format("%s%d%s", START, codepoint, END).getBytes(StandardCharsets.UTF_8));
 		this.codepoint = codepoint;
 	}
 

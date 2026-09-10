@@ -2,7 +2,7 @@ package com.hideakin.yanimu.xml;
 
 import java.nio.charset.StandardCharsets;
 
-public class Comment extends Node {
+public class Comment extends TerminalNode {
 
 	public static final String START = "<!--";
 	public static final String END = "-->";
@@ -14,8 +14,23 @@ public class Comment extends Node {
 		return new Comment(sequence);
 	}
 
-	public static Comment of(String sequence) {
-		return new Comment(sequence.getBytes(StandardCharsets.UTF_8));
+	public static Comment of(String source) {
+		byte[] sequence;
+		if (source.startsWith(START)) {
+			if (source.endsWith(END)) {
+				sequence = source.getBytes(StandardCharsets.UTF_8);
+			} else {
+				String processed = source + END;
+				sequence = processed.getBytes(StandardCharsets.UTF_8);
+			}
+		} else if (source.endsWith(END)) {
+			String processed = START + source;
+			sequence = processed.getBytes(StandardCharsets.UTF_8);
+		} else {
+			String processed = START + source + END;
+			sequence = processed.getBytes(StandardCharsets.UTF_8);
+		}
+		return new Comment(sequence);
 	}
 
 	private Comment(byte[] sequence) {
