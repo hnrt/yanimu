@@ -152,10 +152,10 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * This method returns the offset of the given node from the first node in this node list
-	 * if the given node was found. Otherwise, it returns -1.
-	 * @param target to check
-	 * @return offset of the given node if it was found, otherwise -1.
+	 * Returns the offset of the specified node from the first node in this list.<br/>
+	 * If the node is not found, this method returns -1.
+	 * @param target the node to search for
+	 * @return the offset of the node, or -1 if not found
 	 */
 	@Override
 	public int offset(Node target) {
@@ -207,13 +207,13 @@ public class NodeList extends Node {
 	}
 
 	@Override
-	public int columnCount(int offset, int initialCount) {
+	public int columnCount(int initialCount, int offset) {
 		int count = initialCount;
 		int remaining = offset;
 		for (Node node : _nodeList) {
 			int length = node.length();
 			if (remaining < length) {
-				return node.columnCount(remaining, count);
+				return node.columnCount(count, remaining);
 			}
 			count = node.columnCount(count);
 			remaining -= length;

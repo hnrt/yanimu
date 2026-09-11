@@ -1,15 +1,6 @@
 package com.hideakin.yanimu.xml.internal;
 
-import com.hideakin.yanimu.xml.CDATASection;
-import com.hideakin.yanimu.xml.CharRef;
-import com.hideakin.yanimu.xml.Comment;
-import com.hideakin.yanimu.xml.EntityRef;
 import com.hideakin.yanimu.xml.Node;
-import com.hideakin.yanimu.xml.ParameterEntityReference;
-import com.hideakin.yanimu.xml.QuotedString;
-import com.hideakin.yanimu.xml.TerminalNode;
-
-import static com.hideakin.yanimu.xml.Node.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -24,25 +15,7 @@ public class NodeFactory {
 
 	public Node nodeOf(int type) {
 		byte[] sequence = pop();
-		switch (type) {
-		case ENTITY_VALUE:
-		case ATT_VALUE:
-		case SYSTEM_LITERAL:
-		case PUBID_LITERAL:
-			return QuotedString.of(type, sequence);
-		case COMMENT:
-			return Comment.of(sequence);
-		case CD_SECT:
-			return CDATASection.of(sequence);
-		case CHAR_REF:
-			return CharRef.of(sequence);
-		case ENTITY_REF:
-			return EntityRef.of(sequence);
-		case PEREFERENCE:
-			return ParameterEntityReference.of(sequence);
-		default:
-			return TerminalNode.of(type, sequence);
-		}
+		return Node.of(type, sequence);
 	}
 
 	public void push(int c) {
