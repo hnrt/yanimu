@@ -293,6 +293,34 @@ public class Element extends NodeList {
 		return startTag().attributeKeys();
 	}
 
+	public void setAttribute(int index, String key, String value) {
+		startTag().setAttribute(index, key, value);
+	}
+
+	public void setAttribute(String key, String value) {
+		startTag().setAttribute(key, value);
+	}
+
+	public void addAttribute(String key, String value) {
+		startTag().addAttribute(key, value);
+	}
+
+	public void addAttribute(int index, String key, String value) {
+		startTag().addAttribute(index, key, value);
+	}
+
+	public void removeAllAttributes() {
+		startTag().removeAllAttributes();
+	}
+
+	public Node removeAttribute(int index) {
+		return startTag().removeAttribute(index);
+	}
+
+	public Node removeAttribute(String key) {
+		return startTag().removeAttribute(key);
+	}
+
 	/**
 	 * This is equivalent to size method.
 	 * @return number of nodes in the content

@@ -139,7 +139,7 @@ public class ElementTest {
 			assertEquals("ABC", doc.root().attribute("xyz"));
 			assertEquals("<&x\'\">", doc.root().attribute(0));
 			assertEquals("ABC", doc.root().attribute(1));
-			assertEquals("ABC", doc.root().attribute(-1));
+			assertEquals(null, doc.root().attribute(-1));
 			assertEquals(null, doc.root().attribute("opq"));
 			assertEquals(null, doc.root().attribute(2));
 		} catch (Exception e) {

@@ -27,8 +27,7 @@ public class TestHelper {
 	private static String _methodName;
 
 	public static <T> void start(Class<T> clazz) {
-		String[] ss = clazz.getName().split("\\.");
-		_className = ss[ss.length - 1];
+		_className = clazz.getSimpleName();
 		_methodName = null;
 		print("Started.");
 	}

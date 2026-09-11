@@ -5,22 +5,6 @@ import java.util.List;
 
 public class NodeList extends Node {
 
-	protected static byte[] buildSequence(List<Node> nodeList) {
-		int requiredLength = 0;
-		for (Node node : nodeList) {
-			requiredLength += node.sequence().length;
-		}
-		byte[] destination = new byte[requiredLength];
-		int offset = 0;
-		for (Node node : nodeList) {
-			byte[] source = node.sequence(); 
-			int length = source.length;
-			System.arraycopy(source, 0, destination, offset, length);
-			offset += length;
-		}
-		return destination;
-	}
-
 	protected final List<Node> _nodeList = new ArrayList<>();
 
 	protected NodeList(int type) {
