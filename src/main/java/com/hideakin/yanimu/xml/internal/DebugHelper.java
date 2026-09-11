@@ -1,6 +1,5 @@
 package com.hideakin.yanimu.xml.internal;
 
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,7 +7,9 @@ import com.hideakin.yanimu.xml.Node;
 
 public class DebugHelper {
 
-	public static boolean enabled = false;
+	public static final int FLAG_LEXER = 1;
+
+	public static int enabled = 0;
 
 	public static final Map<Integer, String> NODE_TYPES;
 	public static final Map<Integer, String> LEXER_CONTEXTS;
@@ -112,27 +113,18 @@ public class DebugHelper {
 		LEXER_CONTEXTS = Map.copyOf(lc);
 	}
 
-	public static void print(Node node) {
-		if (!enabled) return;
-		String label = NODE_TYPES.get(Integer.valueOf(node.type));
-		if (label == null) {
-			if (node.type <= Character.MAX_CODE_POINT) {
-				label = String.format("%c", node.type);
-			} else {
-				label = String.format("%d", node.type);
-			}
-		} 
-		String text = new String(node.sequence(), StandardCharsets.UTF_8).replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("\t", "\\\\t");
-		System.out.printf("#NODE %s %s\n", label, text);
+	public static void printForLexer(Node node) {
+		if ((enabled & FLAG_LEXER) == 0) return;
+		System.out.printf("# NODE %s\n", node.toDebuggingString());
 	}
 
 	public static void printLexerContext(int ctx) {
-		if (!enabled) return;
+		if ((enabled & FLAG_LEXER) == 0) return;
 		String label = LEXER_CONTEXTS.get(Integer.valueOf(ctx));
 		if (label == null) {
 			label = String.format("%d", ctx);
 		}
-		System.out.printf("#LCTX %s\n", label);
+		System.out.printf("# LCTX %s\n", label);
 	}
 
 }

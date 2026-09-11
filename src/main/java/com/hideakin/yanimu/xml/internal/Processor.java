@@ -89,7 +89,7 @@ public class Processor {
 		DebugHelper.printLexerContext(_lexer.getContext());
 		_nn = new ArrayList<>();
 		_n = _lexer.read();
-		DebugHelper.print(_n);
+		DebugHelper.printForLexer(_n);
 		parseProlog();
 		parseElement(null);
 		while (parseMisc()) {
@@ -1465,7 +1465,7 @@ public class Processor {
 				break;
 			}
 		}
-		DebugHelper.print(_n);
+		DebugHelper.printForLexer(_n);
 		return _n;
 	}
 

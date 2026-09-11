@@ -4,7 +4,13 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import com.hideakin.yanimu.model.SemanticVersion;
 import com.hideakin.yanimu.xml.Node;
@@ -13,7 +19,31 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
+import static com.hideakin.yanimu.util.TestHelper.finish;
+import static com.hideakin.yanimu.util.TestHelper.start;
+import static com.hideakin.yanimu.util.TestHelper.print;
+
 public class PomDocumentTest {
+
+	@BeforeAll
+	static void initAll() {
+		start(PomDocumentTest.class);
+	}
+
+	@AfterAll
+	static void tearDownAll() {
+		finish(PomDocumentTest.class);
+	}
+
+	@BeforeEach
+    void beforeEach(TestInfo info) {
+		start(info);
+    }
+
+	@AfterEach
+	void afterEach(TestInfo info) {
+		finish(info);
+	}
 
 	public static class StartEnd {
 
@@ -28,11 +58,11 @@ public class PomDocumentTest {
 	}
 
 	@Test
-	public void pomDocumentTest001() {
+	void test001() {
 		try {
 			URL url = getClass().getResource("/com/hideakin/yanimu/maven/test001.xml");
 			Path path = Path.of(url.toURI());
-			System.out.printf("#pomDocumentTest001: path=%s\n", path);
+			print("path=%s", path);
 			PomDocument pom = PomDocument.of(path);
 			pom.load();
 			for (Dependency dep : pom.dependencies().values()) {
@@ -41,7 +71,7 @@ public class PomDocumentTest {
 				int start1 = -1, end1 = -1, start2 = -1, end2 = -1;
 				byte[] content1 = pom.sequence();
 				String v1 = dep.version();
-				System.out.printf("#pomDocumentTest001: g=%s a=%s v=%s\n",
+				print("g=%s a=%s v=%s",
 						dep.groupId(),
 						dep.artifactId(),
 						v1);
@@ -51,12 +81,12 @@ public class PomDocumentTest {
 					dep1 = pom.dependencyManagement().get(dep.ga());
 					if (dep1 != null) {
 						v1 = dep1.version();
-						System.out.printf("#pomDocumentTest001: dependencyManagement v=%s\n",
+						print("dependencyManagement v=%s",
 								v1);
 					} else {
 						PomDocument pomBom = pom.dependencyManagement().pomDocument(dep.ga());
 						if (pomBom != null) {
-							System.out.printf("#pomDocumentTest001: POM/IMPORT g=%s a=%s v=%s\n",
+							print("POM/IMPORT g=%s a=%s v=%s",
 									pomBom.groupId(),
 									pomBom.artifactId(),
 									pomBom.version());
@@ -81,7 +111,7 @@ public class PomDocumentTest {
 					}
 				}
 				assertEquals(true, meta.root() != null);
-				System.out.printf("#pomDocumentTest001: %s l=%s r=%s\n",
+				print("%s l=%s r=%s",
 						meta.path(),
 						meta.latest(),
 						meta.release());
@@ -115,7 +145,7 @@ public class PomDocumentTest {
 				} else {
 					dep1.setVersion(sv2.toString());
 				}
-				System.out.printf("#pomDocumentTest001: %d,%d (%s) ==> %d,%d (%s)\n",
+				print("%d,%d (%s) ==> %d,%d (%s)",
 						start1,
 						end1,
 						sv1 != null ? sv1 : "?",
@@ -132,7 +162,7 @@ public class PomDocumentTest {
 				assertEquals(sv1.toString(), x1);
 				assertEquals(sv2.toString(), x2);
 			}
-			System.out.printf("#pomDocumentTest001:\n%s\n", new String(pom.sequence(), StandardCharsets.UTF_8));
+			print("%s", new String(pom.sequence(), StandardCharsets.UTF_8));
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("Failed: " + e.getMessage());

@@ -3,11 +3,39 @@ package com.hideakin.yanimu.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
+import static com.hideakin.yanimu.util.TestHelper.finish;
+import static com.hideakin.yanimu.util.TestHelper.start;
+import static com.hideakin.yanimu.util.TestHelper.print;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SemanticVersionTest {
+
+	@BeforeAll
+	static void initAll() {
+		start(SemanticVersionTest.class);
+	}
+
+	@AfterAll
+	static void tearDownAll() {
+		finish(SemanticVersionTest.class);
+	}
+
+	@BeforeEach
+    void beforeEach(TestInfo info) {
+		start(info);
+    }
+
+	@AfterEach
+	void afterEach(TestInfo info) {
+		finish(info);
+	}
 
 	@Test
 	void test001() {
@@ -27,33 +55,33 @@ public class SemanticVersionTest {
 				.toList();
 		int i = 0;
 		for (String s : source) {
-			System.out.printf("test001:BEFORE[%d]=%s\n", i, s);
+			print("BEFORE[%d]=%s", i, s);
 			SemanticVersion sv = SemanticVersion.of(s);
-			System.out.printf("test001:BEFORE[%d] major=%d\n", i, sv.major());
-			System.out.printf("test001:BEFORE[%d] minor=%d\n", i, sv.minor());
-			System.out.printf("test001:BEFORE[%d] patch=%d\n", i, sv.minor());
+			print("BEFORE[%d] major=%d", i, sv.major());
+			print("BEFORE[%d] minor=%d", i, sv.minor());
+			print("BEFORE[%d] patch=%d", i, sv.minor());
 			List<Object> pr = sv.preRelease();
 			if (pr != null) {
 				int j = 0;
 				for (Object obj : pr) {
 					if (obj instanceof Long n) {
-						System.out.printf("test001:BEFORE[%d] pr[%d]=Long %d\n", i, j, n);
+						print("BEFORE[%d] pr[%d]=Long %d", i, j, n);
 					} else if (obj instanceof String t) {
-						System.out.printf("test001:BEFORE[%d] pr[%d]=String \"%s\"\n", i, j, t);
+						print("BEFORE[%d] pr[%d]=String \"%s\"", i, j, t);
 					} else {
-						System.out.printf("test001:BEFORE[%d] pr[%d]=(UNKNOWN)\n", i, j);
+						print("BEFORE[%d] pr[%d]=(UNKNOWN)", i, j);
 					}
 					j++;
 				}
 			}
 			if (sv.build() != null) {
-				System.out.printf("test001:BEFORE[%d] build=%s\n", i, sv.build());
+				print("BEFORE[%d] build=%s", i, sv.build());
 			}
 			i++;
 		}
 		i = 0;
 		for (SemanticVersion sv : sorted) {
-			System.out.printf("test001:AFTER[%d]=%s\n", i, sv);
+			print("AFTER[%d]=%s", i, sv);
 			i++;
 		}
 		assertEquals("1.0.0-alpha", sorted.get(0).toString());

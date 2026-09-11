@@ -1,11 +1,18 @@
 package com.hideakin.yanimu.xml;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import com.hideakin.yanimu.xml.internal.DebugHelper;
 
-import static com.hideakin.yanimu.xml.TestHelper.checkDocument;
-
+import static com.hideakin.yanimu.util.TestHelper.checkDocument;
+import static com.hideakin.yanimu.util.TestHelper.start;
+import static com.hideakin.yanimu.util.TestHelper.finish;
+import static com.hideakin.yanimu.util.TestHelper.print;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -20,6 +27,26 @@ import java.util.List;
 
 public class DocumentTest {
 
+	@BeforeAll
+	static void initAll() {
+		start(DocumentTest.class);
+	}
+
+	@AfterAll
+	static void tearDownAll() {
+		finish(DocumentTest.class);
+	}
+
+	@BeforeEach
+    void beforeEach(TestInfo info) {
+		start(info);
+    }
+
+	@AfterEach
+	void afterEach(TestInfo info) {
+		finish(info);
+	}
+
 	@Test
 	void test101() {
 		String source = "<?xml version=\"1.0\"?>\r\n"
@@ -32,8 +59,8 @@ public class DocumentTest {
 			boolean result = doc.root().empty();
 			assertEquals(false, result);
 			byte[] content = source.getBytes();
-			int end = checkDocument("test101", doc, content);
-			System.out.printf("test101: content.length=%d actual=%d\n", content.length, end);
+			int end = checkDocument("doc", doc, content);
+			print("content.length=%d actual=%d", content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -50,8 +77,8 @@ public class DocumentTest {
 			byte[] content = source.getBytes();
 			doc.load(content);
 			assertEquals("UTF-8", doc.xml().encoding);
-			int end = checkDocument("test102", doc, content);
-			System.out.printf("test102: content.length=%d actual=%d\n", content.length, end);
+			int end = checkDocument("doc", doc, content);
+			print("content.length=%d actual=%d", content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -70,8 +97,8 @@ public class DocumentTest {
 			byte[] content = source.getBytes();
 			doc.load(content);
 			assertEquals("yes", doc.xml().standalone);
-			int end = checkDocument("test103", doc, content);
-			System.out.printf("test103: content.length=%d actual=%d\n", content.length, end);
+			int end = checkDocument("doc", doc, content);
+			print("content.length=%d actual=%d", content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -93,8 +120,8 @@ public class DocumentTest {
 			doc.load(content);
 			assertEquals("no", doc.xml().standalone);
 			assertEquals("Hello, world!", doc.root().innerText());
-			int end = checkDocument("test104", doc, content);
-			System.out.printf("test104: content.length=%d end=%d\n", content.length, end);
+			int end = checkDocument("doc", doc, content);
+			print("content.length=%d end=%d", content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -153,8 +180,8 @@ public class DocumentTest {
 		try {
 			byte[] content = source.getBytes();
 			doc.load(content);
-			int end = checkDocument("test105", doc, content);
-			System.out.printf("test105: content.length=%d end=%d\n", content.length, end);
+			int end = checkDocument("doc", doc, content);
+			print("content.length=%d end=%d", content.length, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -170,8 +197,8 @@ public class DocumentTest {
 			byte[] content = source.getBytes(StandardCharsets.UTF_8);
 			doc.load(content);
 			assertEquals("Hello, world!", doc.root().innerText());
-			int end = checkDocument("test106", doc, Arrays.copyOfRange(content, 3, content.length));
-			System.out.printf("test106: content.length=%d-3=%d actual=%d\n", content.length, content.length - 3, end);
+			int end = checkDocument("doc", doc, Arrays.copyOfRange(content, 3, content.length));
+			print("content.length=%d-3=%d actual=%d", content.length, content.length - 3, end);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -223,8 +250,8 @@ public class DocumentTest {
 			assertEquals("400", elements.get(2).innerText());
 			assertEquals("void func(int x) {\n\treturn x < 100 ? x * 4 : x * 2;\n}//<>&bogus;", doc.root().getElements("code").get(0).innerText());
 			assertEquals("<waldo>", doc.root().getElements("options").get(0).attribute("xyzzy"));
-			int end = checkDocument("test108", doc, content);
-			System.out.printf("test108: content.length=%d actual=%d\n", content.length, end);
+			int end = checkDocument("doc", doc, content);
+			print("content.length=%d actual=%d", content.length, end);
 			assertEquals(244, doc.offset(elements.get(0)));
 			assertEquals(258, doc.offset(elements.get(0).endTag()));
 			assertEquals(271, doc.offset(elements.get(1)));
@@ -330,28 +357,28 @@ public class DocumentTest {
 				+ "    <!-- ENTITY 展開確認用 -->\r\n"
 				+ "    <footer>&copyright;</footer>\r\n"
 				+ "</library>\r\n";
-		DebugHelper.enabled = true;
+		DebugHelper.enabled ^= DebugHelper.FLAG_LEXER;
 		Document doc = new Document();
 		ParseResult result = new ParseResult();
 		try {
 			byte[] content = source.getBytes(StandardCharsets.UTF_8);
 			doc.load(content, result);
-			int end = checkDocument("test109", doc, content);
-			System.out.printf("test109: content.length=%d actual=%d\n", content.length, end);
+			int end = checkDocument("doc", doc, content);
+			print("content.length=%d actual=%d", content.length, end);
 			List<Element> authors = doc.root().getElements("author");
 			assertEquals("Unknown Author", authors.get(0).innerText());
 			assertEquals("Hanako", authors.get(1).innerText());
 			for (ParseResult.Message warning : result.warnings()) {
-				System.out.printf("test109: WARN: %s\n", warning.message);
+				print("WARN: %s", warning.message);
 			}
 			for (ParseResult.Message information : result.information()) {
-				System.out.printf("test109: INFO: %s\n", information.message);
+				print("INFO: %s", information.message);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
 		} finally {
-			DebugHelper.enabled = false;
+			DebugHelper.enabled ^= DebugHelper.FLAG_LEXER;
 		}
 	}
 
@@ -377,16 +404,16 @@ public class DocumentTest {
 		try {
 			byte[] content2 = source2.getBytes();
 			Files.write(path2, content2, StandardOpenOption.CREATE);
-			System.out.printf("test110: Wrote to %s\n", path2);
+			print("Wrote to %s", path2);
 			byte[] content1 = source1.getBytes();
 			doc.load(content1);
-			int end = checkDocument("test10", doc, content1);
-			System.out.printf("test110: content.length=%d actual=%d\n", content1.length, end);
+			int end = checkDocument("doc", doc, content1);
+			print("content.length=%d actual=%d", content1.length, end);
 			for (ParseResult.Message warning : result.warnings()) {
-				System.out.printf("test110: WARN: %s\n", warning.message);
+				print("WARN: %s", warning.message);
 			}
 			for (ParseResult.Message information : result.information()) {
-				System.out.printf("test110: INFO: %s\n", information.message);
+				print("INFO: %s", information.message);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -394,7 +421,7 @@ public class DocumentTest {
 		} finally {
 			try {
 				if (Files.deleteIfExists(path2)) {
-					System.out.printf("test110: Deleted %s\n", path2);
+					print("Deleted %s", path2);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();

@@ -3,6 +3,8 @@ package com.hideakin.yanimu.xml;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import static com.hideakin.yanimu.xml.internal.DebugHelper.NODE_TYPES;
+
 public class Node {
 
 	public static final int EOF = -1;
@@ -307,6 +309,50 @@ public class Node {
 		} else {
 			return false;
 		}
+	}
+
+	public String toDebuggingString() {
+		StringBuilder buffer = new StringBuilder();
+		String label = NODE_TYPES.get(Integer.valueOf(type));
+		if (label == null) {
+			if (type <= Character.MAX_CODE_POINT) {
+				label = String.format("'%c'", type);
+			} else {
+				label = String.format("%d", type);
+			}
+		}
+		buffer.append(label);
+		buffer.append(" ");
+		if (type == Node.S) {
+			byte[] bb = sequence();
+			switch (bb[0]) {
+			case HT: buffer.append("HT"); break;
+			case CR: buffer.append("CR"); break;
+			case LF: buffer.append("LF"); break;
+			case SP: buffer.append("SP"); break;
+			default: buffer.append("?"); break;
+			}
+			for (int i = 1; i < bb.length; i++) {
+				switch (bb[i]) {
+				case HT: buffer.append(" HT"); break;
+				case CR: buffer.append(" CR"); break;
+				case LF: buffer.append(" LF"); break;
+				case SP: buffer.append(" SP"); break;
+				default: buffer.append(" ?"); break;
+				}
+			}
+		} else if (this instanceof Element element) {
+			buffer.append(element.startTag().toString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("\t", "\\\\t"));
+			if (!element.isEmptyElement()) {
+				if (element.size() > 0) {
+					buffer.append("...");
+				}
+				buffer.append(element.endTag().toString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("\t", "\\\\t"));
+			}
+		} else  {
+			buffer.append(toString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("\t", "\\\\t"));
+		}
+		return buffer.toString();
 	}
 
 }

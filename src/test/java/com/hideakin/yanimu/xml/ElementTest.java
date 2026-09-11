@@ -1,14 +1,42 @@
 package com.hideakin.yanimu.xml;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
-import static com.hideakin.yanimu.xml.TestHelper.checkDocument;
+import static com.hideakin.yanimu.util.TestHelper.checkDocument;
+import static com.hideakin.yanimu.util.TestHelper.finish;
+import static com.hideakin.yanimu.util.TestHelper.start;
+import static com.hideakin.yanimu.util.TestHelper.print;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 
 public class ElementTest {
+
+	@BeforeAll
+	static void initAll() {
+		start(ElementTest.class);
+	}
+
+	@AfterAll
+	static void tearDownAll() {
+		finish(ElementTest.class);
+	}
+
+	@BeforeEach
+    void beforeEach(TestInfo info) {
+		start(info);
+    }
+
+	@AfterEach
+	void afterEach(TestInfo info) {
+		finish(info);
+	}
 
 	@Test
 	void test201() {
@@ -131,14 +159,14 @@ public class ElementTest {
 			byte[] content1 = source.getBytes();
 			byte[] content2 = expectation.getBytes();
 			doc.load(content1);
-			int end1 = checkDocument("test211BEFORE", doc, content1);
-			System.out.printf("test211: content.length=%d actual=%d\n", content1.length, end1);
+			int end1 = checkDocument("BEFORE", doc, content1);
+			print("content.length=%d actual=%d", content1.length, end1);
 			assertEquals(Node.STAG, doc.root().startTag().type);
 			boolean result = doc.root().empty();
 			assertEquals(true, result);
 			assertEquals(Node.EETAG, doc.root().startTag().type);
-			int end2 = checkDocument("test211AFTER", doc, content2);
-			System.out.printf("test211: content.length=%d actual=%d\n", content2.length, end2);
+			int end2 = checkDocument("AFTER", doc, content2);
+			print("content.length=%d actual=%d", content2.length, end2);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -156,8 +184,8 @@ public class ElementTest {
 			byte[] content1 = source.getBytes();
 			byte[] content2 = expectation.getBytes();
 			doc.load(content1);
-			int end1 = checkDocument("test212BEFORE", doc, content1);
-			System.out.printf("test212: content.length=%d actual=%d\n", content1.length, end1);
+			int end1 = checkDocument("BEFORE", doc, content1);
+			print("content.length=%d actual=%d", content1.length, end1);
 			assertEquals(Node.STAG, doc.root().startTag().type);
 			boolean result = doc.root().empty();
 			assertEquals(true, result);
@@ -166,8 +194,8 @@ public class ElementTest {
 			assertEquals(true, result2);
 			boolean result3 = doc.root().empty();
 			assertEquals(true, result3);
-			int end2 = checkDocument("test212AFTER", doc, content2);
-			System.out.printf("test212: content.length=%d actual=%d\n", content2.length, end2);
+			int end2 = checkDocument("AFTER", doc, content2);
+			print("content.length=%d actual=%d", content2.length, end2);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -187,15 +215,15 @@ public class ElementTest {
 			byte[] content1 = source.getBytes();
 			byte[] content2 = expectation.getBytes();
 			doc.load(content1);
-			int end1 = checkDocument("test213BEFORE", doc, content1);
-			System.out.printf("test213: content.length=%d actual=%d\n", content1.length, end1);
+			int end1 = checkDocument("BEFORE", doc, content1);
+			print("content.length=%d actual=%d", content1.length, end1);
 			Document sup = new Document();
 			sup.load("<X><hello/></X>".getBytes());
 			doc.root().add(sup.root().remove(0));
 			doc.root().indent();
-			System.out.printf("test213: root=%d\n", doc.root().sequence().length);
-			int end2 = checkDocument("test13AFTER", doc, content2);
-			System.out.printf("test213: content.length=%d actual=%d\n", content2.length, end2);
+			print("root=%d", doc.root().sequence().length);
+			int end2 = checkDocument("AFTER", doc, content2);
+			print("content.length=%d actual=%d", content2.length, end2);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -213,14 +241,14 @@ public class ElementTest {
 			byte[] content1 = source.getBytes();
 			byte[] content2 = expectation.getBytes();
 			doc.load(content1);
-			int end1 = checkDocument("test214BEFORE", doc, content1);
-			System.out.printf("test214: content.length=%d actual=%d\n", content1.length, end1);
+			int end1 = checkDocument("BEFORE", doc, content1);
+			print("content.length=%d actual=%d", content1.length, end1);
 			Document sup = new Document();
 			sup.load("<X><hello>WOW!</hello></X>".getBytes());
 			doc.root().add(sup.root().remove(0));
 			doc.root().indent();
-			int end2 = checkDocument("test214AFTER", doc, content2);
-			System.out.printf("test214: content.length=%d actual=%d\n", content2.length, end2);
+			int end2 = checkDocument("AFTER", doc, content2);
+			print("content.length=%d actual=%d", content2.length, end2);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -244,11 +272,11 @@ public class ElementTest {
 			byte[] content1 = source.getBytes();
 			byte[] content2 = expectation.getBytes();
 			doc.load(content1);
-			int end1 = checkDocument("test215BEFORE", doc, content1);
-			System.out.printf("test215: content.length=%d actual=%d\n", content1.length, end1);
+			int end1 = checkDocument("BEFORE", doc, content1);
+			print("content.length=%d actual=%d", content1.length, end1);
 			doc.indent();
-			int end2 = checkDocument("test215AFTER", doc, content2);
-			System.out.printf("test215: content.length=%d actual=%d\n", content2.length, end2);
+			int end2 = checkDocument("AFTER", doc, content2);
+			print("content.length=%d actual=%d", content2.length, end2);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
