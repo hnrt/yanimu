@@ -171,7 +171,7 @@ public class Document extends NodeList {
 	}
 
 	public int toColumnNumber(int offset) {
-		return offset < 0 ? 0 : columnCount(offset, 0) + 1;
+		return offset < 0 ? 0 : columnCount(0, offset) + 1;
 	}
 
 	public int indentation() {
