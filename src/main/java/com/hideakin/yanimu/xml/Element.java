@@ -10,12 +10,28 @@ public class Element extends NodeList {
 	public final String name;
 	protected Object _parent;
 
+	/**
+	 * Constructs a new Element that has an empty content.
+	 * <p>
+	 * The newly created Element has no parent (its parent is initialized to {@code null}).
+	 * @param name the tag name
+	 */
 	public Element(String name) {
 		super(ELEMENT, EmptyElementTag.of(name));
 		this.name = name;
 		_parent = null;
 	}
 
+	/**
+	 * Constructs a new Element whose content is provided as a String.
+	 * <p>
+	 * The specified {@code innerText} may be represented as multiple nodes,
+	 * such as CHAR_DATA, ENTITY_REF, or CHAR_REF, depending on its content.
+	 * <p>
+	 * The newly created Element has no parent (its parent is initialized to {@code null}).
+	 * @param name the tag name
+	 * @param innerText the textual content to be set in this element
+	 */
 	public Element(String name, String innerText) {
 		super(ELEMENT, List.of(StartTag.of(name), Content.of(), EndTag.of(name)));
 		this.name = name;
@@ -24,13 +40,28 @@ public class Element extends NodeList {
 		content.setText(innerText);
 	}
 
-	// Note that set must be called later to fill _nodeList with the real nodes.
+	/**
+	 * Constructs a new Element node with the specified parent.
+	 * <p>
+	 * The content of this Element is not initialized at creation time;
+	 * {@link Element#set} must be invoked later to populate the node list.
+	 * @param name the tag name
+	 * @param parent the parent Element
+	 */
 	public Element(String name, Element parent) {
 		super(ELEMENT);
 		this.name = name;
 		_parent = parent;
 	}
 
+	/**
+	 * Populates this Element with its actual terminal nodes.
+	 * <p>
+	 * This method must be invoked if the Element was created via
+	 * {@link Element#Element(String, Element)},
+	 * because that constructor does not initialize the node list.
+	 * @param nodeList the list of nodes to be assigned to this Element
+	 */
 	public void set(List<Node> nodeList) {
 		if (_nodeList.size() == 0 &&
 			((nodeList.size() == 1 && nodeList.get(0).type == EETAG) ||
@@ -54,15 +85,25 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This method sets the given object to the parent element of this element.<br/>
-	 * For the root element, pass the document instance to this method instead.
-	 * @param parent instance of Element or Document<br/>
-	 * null if this element is to be detached from its parent element.
+	 * Sets the parent of this Element to the specified object.
+	 * <p>
+	 * If this Element is the root of the tree,
+	 * a {@code Document} instance should be provided
+	 * instead of an {@code Element}.
+	 * @param parent the Element or Document to be assigned as the parent;
+	 * {@code null} detaches this Element from its current parent
 	 */
 	public void setParent(Object parent) {
 		_parent = parent;
 	}
 
+	/**
+	 * Returns the Document to which this Element belongs.
+	 * <p>
+	 * A {@code Document} instance must be assigned as the parent of the
+	 * root Element for this method to return a non-null value.
+	 * @return the associated Document, or {@code null} if no Document has been set
+	 */
 	public Document document() {
 		if (_parent instanceof Element parentElement) {
 			return parentElement.document();
@@ -74,8 +115,8 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This method returns the child nodes in this element.
-	 * @return List of the child nodes
+	 * Returns the list of child nodes contained in this Element.
+	 * @return the list of child nodes
 	 */
 	@Override
 	public List<Node> nodeList() {
@@ -88,8 +129,8 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This method returns the number of the child nodes in this element.
-	 * @return Number of the child nodes
+	 * Returns the number of the child nodes contained in this Element.
+	 * @return the number of children
 	 */
 	@Override
 	public int size() {
@@ -102,9 +143,9 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This method returns the first child node in this element.
-	 * @return First child node if it exists or<br/>
-	 * NullNode if this element has no child nodes
+	 * Returns the first child node in this Element.
+	 * @return the first child node,
+	 * or {@code NullNode} if this Element has no children
 	 */
 	@Override
 	public Node first() {
@@ -117,9 +158,9 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This method returns the last child node in this element.
-	 * @return Last child node if it exists or<br/>
-	 * NullNode if this element has no child nodes
+	 * Returns the last child node in this Element.
+	 * @return the last child node,
+	 * or {@code NullNode} if this Element has no children
 	 */
 	@Override
 	public Node last() {
@@ -132,9 +173,9 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This method locates the last child node in this element.
-	 * @return Index number of the last node if it exists or<br/>
-	 * -1 if this element has no child nodes
+	 * Returns the index of the last child node in this Element.
+	 * @return the index of the last child node,
+	 * or -1 if this Element has no children
 	 */
 	@Override
 	public int lastIndex() {
@@ -146,6 +187,10 @@ public class Element extends NodeList {
 		}
 	}
 
+	/**
+	 * Returns the child node at the specified index in the content of this Element.
+	 * @return the child node, or {@code NullNode} if this Element has no children
+	 */
 	@Override
 	public Node get(int index) {
 		if (_nodeList.size() > 1) {
