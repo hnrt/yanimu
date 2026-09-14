@@ -9,6 +9,8 @@ import org.junit.jupiter.api.AfterEach;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.nio.charset.StandardCharsets;
+
 import static com.hideakin.yanimu.util.TestHelper.*;
 
 public class NodeTest {
@@ -67,7 +69,7 @@ public class NodeTest {
 
 	@Test
 	void test005() {
-		Node node = Node.of(Node.ATT_VALUE, "'日本語'".getBytes());
+		Node node = Node.of(Node.ATT_VALUE, "'日本語'".getBytes(StandardCharsets.UTF_8));
 		assertEquals(Node.ATT_VALUE, node.type);
 		assertEquals(true, node instanceof QuotedString);
 		assertEquals("日本語", ((QuotedString)node).innerText());
@@ -75,7 +77,7 @@ public class NodeTest {
 
 	@Test
 	void test006() {
-		Node node = Node.of(Node.SYSTEM_LITERAL, "\"日本語\"".getBytes());
+		Node node = Node.of(Node.SYSTEM_LITERAL, "\"日本語\"".getBytes(StandardCharsets.UTF_8));
 		assertEquals(Node.SYSTEM_LITERAL, node.type);
 		assertEquals(true, node instanceof QuotedString);
 		assertEquals("日本語", ((QuotedString)node).innerText());
