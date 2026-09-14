@@ -21,39 +21,4 @@ public class Tag extends NodeList {
 		throw new RuntimeException("Tag: No name.");
 	}
 
-	@Override
-	public void set(int index, Node node) {
-		throw new RuntimeException(this.getClass().getSimpleName() + "::set: Forbidden.");
-	}
-
-	@Override
-	public void add(Node node) {
-		throw new RuntimeException(this.getClass().getSimpleName() + "::add: Forbidden.");
-	}
-
-	@Override
-	public void add(int index, Node node) {
-		throw new RuntimeException(this.getClass().getSimpleName() + "::add: Forbidden.");
-	}
-
-	@Override
-	public void removeAll() {
-		throw new RuntimeException(this.getClass().getSimpleName() + "::removeAll: Forbidden.");
-	}
-
-	@Override
-	public Node remove(int index) {
-		throw new RuntimeException(this.getClass().getSimpleName() + "::remove: Forbidden.");
-	}
-
-	@Override
-	public Node remove(Node node) {
-		throw new RuntimeException(this.getClass().getSimpleName() + "::remove: Forbidden.");
-	}
-
-	@Override
-	public Node remove(Node node, int start, int end) {
-		throw new RuntimeException(this.getClass().getSimpleName() + "::remove: Forbidden.");
-	}
-
 }
