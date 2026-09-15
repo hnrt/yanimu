@@ -999,7 +999,6 @@ public class Processor {
 
 	private StartTag parseStartTag() throws Exception {
 		StartTag tag;
-		List<Attribute> attributeList = new ArrayList<>();
 		if (_n.type == STAG_START) {
 			push();
 			read();
@@ -1033,7 +1032,6 @@ public class Processor {
 					String value = _entityMap.translate(qs.innerText());
 					read();
 					Attribute attribute = new Attribute(pop(), key, value);
-					attributeList.add(attribute);
 					store(attribute);
 				} else {
 					throw new ParseException(_result.error(offset(_n), "Attribute value is expected."));
@@ -1047,11 +1045,11 @@ public class Processor {
 		}
 		if (_n.type == STAG_END) {
 			read();
-			tag = StartTag.of(pop(), attributeList);
+			tag = StartTag.of(pop());
 			return store(tag);
 		} else if (_n.type == EETAG_END) {
 			read();
-			tag = EmptyElementTag.of(pop(), attributeList);
+			tag = EmptyElementTag.of(pop());
 			return store(tag);
 		} else {
 			throw new ParseException(_result.error(offset(_n), "Tag end is expected."));

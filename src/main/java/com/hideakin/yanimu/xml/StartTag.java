@@ -10,8 +10,8 @@ public class StartTag extends Tag {
 		return new StartTag(name);
 	}
 
-	public static StartTag of(List<Node> nodeList, List<Attribute> attributeList) {
-		return new StartTag(nodeList, attributeList);
+	public static StartTag of(List<Node> nodeList) {
+		return new StartTag(nodeList);
 	}
 
 	protected static final byte[] START_SEQUENCE = {'<'};
@@ -20,23 +20,19 @@ public class StartTag extends Tag {
 	protected static final byte[] EQ_SEQUENCE = {'='};
 	protected static final byte[] SP_SEQUENCE = {' '};
 
-	protected final List<Attribute> _attributeList = new ArrayList<>();
-
 	protected StartTag(String name) {
-		this(STAG,
-				List.of(TerminalNode.of(STAG_START, START_SEQUENCE),
-						TerminalNode.of(NAME, name),
-						TerminalNode.of(STAG_END, STAG_END_SEQUENCE)),
-				List.of());
+		this(STAG, List.of(
+				TerminalNode.of(STAG_START, START_SEQUENCE),
+				TerminalNode.of(NAME, name),
+				TerminalNode.of(STAG_END, STAG_END_SEQUENCE)));
 	}
 
-	protected StartTag(List<Node> nodeList, List<Attribute> attributeList) {
-		this(STAG, nodeList, attributeList);
+	protected StartTag(List<Node> nodeList) {
+		this(STAG, nodeList);
 	}
 
-	protected StartTag(int type, List<Node> nodeList, List<Attribute> attributeList) {
+	protected StartTag(int type, List<Node> nodeList) {
 		super(type, nodeList);
-		_attributeList.addAll(attributeList);
 	}
 
 	/**
@@ -44,7 +40,36 @@ public class StartTag extends Tag {
 	 * @return the number of attributes
 	 */
 	public int attributeCount() {
-		return _attributeList.size();
+		int size = _nodeList.size();
+		if (size >= 3
+				&& _nodeList.get(0).type == STAG_START
+				&& _nodeList.get(1).type == NAME
+				&& (_nodeList.get(size - 1).type == STAG_END || _nodeList.get(size - 1).type == EETAG_END)) {
+			int count = 0;
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = _nodeList.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::attributeCount:: Possible corruption.");
+				}
+				node = _nodeList.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					count++;
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::attributeCount:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || _nodeList.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(this.getClass().getSimpleName() + "::attributeCount:: Possible corruption.");
+			}
+			return count;
+		} else {
+			throw new RuntimeException(this.getClass().getSimpleName() + "::attributeCount:: Possible corruption.");
+		}
 	}
 
 	/**
@@ -63,13 +88,38 @@ public class StartTag extends Tag {
 	 * @return the attribute value if it exists, or {@code defaultValue} if not
 	 */
 	public String attribute(int index, String defaultValue) {
-		int size = _attributeList.size();
-		if (0 <= index && index < size) {
-			Attribute a = _attributeList.get(index); 
-			return a.value;
+		int size = _nodeList.size();
+		if (size >= 3
+				&& _nodeList.get(0).type == STAG_START
+				&& _nodeList.get(1).type == NAME
+				&& (_nodeList.get(size - 1).type == STAG_END || _nodeList.get(size - 1).type == EETAG_END)) {
+			int attrIndex = -1;
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = _nodeList.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::attribute:: Possible corruption.");
+				}
+				node = _nodeList.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					if (++attrIndex == index) {
+						return ((Attribute)node).value;
+					}
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::attribute:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || _nodeList.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(this.getClass().getSimpleName() + "::attribute:: Possible corruption.");
+			}
 		} else {
-			return defaultValue;
+			throw new RuntimeException(this.getClass().getSimpleName() + "::attribute:: Possible corruption.");
 		}
+		return defaultValue;
 	}
 
 	/**
@@ -88,10 +138,36 @@ public class StartTag extends Tag {
 	 * @return the attribute value if it exists, or {@code defaultValue} if not
 	 */
 	public String attribute(String key, String defaultValue) {
-		for (Attribute a : _attributeList) {
-			if (a.key.equals(key)) {
-				return a.value;
+		int size = _nodeList.size();
+		if (size >= 3
+				&& _nodeList.get(0).type == STAG_START
+				&& _nodeList.get(1).type == NAME
+				&& (_nodeList.get(size - 1).type == STAG_END || _nodeList.get(size - 1).type == EETAG_END)) {
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = _nodeList.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::attribute:: Possible corruption.");
+				}
+				node = _nodeList.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					Attribute a = (Attribute)node;
+					if (a.key.equals(key)) {
+						return a.value;
+					}
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::attribute:: Possible corruption.");
+				}
 			}
+			if (upperBound == size - 1 || _nodeList.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(this.getClass().getSimpleName() + "::attribute:: Possible corruption.");
+			}
+		} else {
+			throw new RuntimeException(this.getClass().getSimpleName() + "::attribute:: Possible corruption.");
 		}
 		return defaultValue;
 	}
@@ -101,7 +177,37 @@ public class StartTag extends Tag {
 	 * @return the immutable list of the attributes
 	 */
 	public List<Attribute> attributeList() {
-		return List.copyOf(_attributeList);
+		List<Attribute> aa = new ArrayList<>();
+		int size = _nodeList.size();
+		if (size >= 3
+				&& _nodeList.get(0).type == STAG_START
+				&& _nodeList.get(1).type == NAME
+				&& (_nodeList.get(size - 1).type == STAG_END || _nodeList.get(size - 1).type == EETAG_END)) {
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = _nodeList.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::attributeList:: Possible corruption.");
+				}
+				node = _nodeList.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					Attribute a = (Attribute)node;
+					aa.add(a);
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::attributeList:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || _nodeList.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(this.getClass().getSimpleName() + "::attributeList:: Possible corruption.");
+			}
+		} else {
+			throw new RuntimeException(this.getClass().getSimpleName() + "::attributeList:: Possible corruption.");
+		}
+		return List.copyOf(aa);
 	}
 
 	/**
@@ -109,9 +215,35 @@ public class StartTag extends Tag {
 	 * @return the immutable list of the attribute keys
 	 */
 	public List<String> attributeKeys() {
-		List<String> keys = new ArrayList<>(_attributeList.size());
-		for (Attribute a : _attributeList) {
-			keys.add(a.key);
+		List<String> keys = new ArrayList<>();
+		int size = _nodeList.size();
+		if (size >= 3
+				&& _nodeList.get(0).type == STAG_START
+				&& _nodeList.get(1).type == NAME
+				&& (_nodeList.get(size - 1).type == STAG_END || _nodeList.get(size - 1).type == EETAG_END)) {
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = _nodeList.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::attributeKeys:: Possible corruption.");
+				}
+				node = _nodeList.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					Attribute a = (Attribute)node;
+					keys.add(a.key);
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::attributeKeys:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || _nodeList.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(this.getClass().getSimpleName() + "::attributeKeys:: Possible corruption.");
+			}
+		} else {
+			throw new RuntimeException(this.getClass().getSimpleName() + "::attributeKeys:: Possible corruption.");
 		}
 		return List.copyOf(keys);
 	}
@@ -121,52 +253,85 @@ public class StartTag extends Tag {
 	 * @return the immutable list of the attribute values
 	 */
 	public List<String> attributeValues() {
-		int size = _attributeList.size();
-		List<String> values = new ArrayList<>(size);
-		for (Attribute a : _attributeList) {
-			values.add(a.value);
+		List<String> values = new ArrayList<>();
+		int size = _nodeList.size();
+		if (size >= 3
+				&& _nodeList.get(0).type == STAG_START
+				&& _nodeList.get(1).type == NAME
+				&& (_nodeList.get(size - 1).type == STAG_END || _nodeList.get(size - 1).type == EETAG_END)) {
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = _nodeList.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::attributeValues:: Possible corruption.");
+				}
+				node = _nodeList.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					Attribute a = (Attribute)node;
+					values.add(a.value);
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::attributeValues:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || _nodeList.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(this.getClass().getSimpleName() + "::attributeValues:: Possible corruption.");
+			}
+		} else {
+			throw new RuntimeException(this.getClass().getSimpleName() + "::attributeValues:: Possible corruption.");
 		}
 		return List.copyOf(values);
 	}
 
 	/**
-	 * Sets an attribute to the specified index in this start tag.
-	 * @param index the attribute to be inserted
+	 * Sets an attribute at the specified index in this start tag.
+	 * @param index the index at which the attribute to be set
 	 * @param key the key of the attribute
 	 * @param value the raw attribute value, not enclosed in quotes
 	 */
 	public void setAttribute(int index, String key, String value) {
-		int size = _attributeList.size();
-		if (0 <= index && index < size) {
-			int nodeIndex = 2;
-			int attributeIndex = -1;
-			Node node;
-			while (true) {
-				node = _nodeList.get(nodeIndex);
-				if (node.type == ATTRIBUTE) {
-					attributeIndex++;
-					if (attributeIndex == index) {
-						break;
-					}
-				} else if (node.type == STAG_END || node.type == EETAG_END) {
-					throw new RuntimeException(this.getClass().getSimpleName() + "::setAttribte:: Possible corruption.");
+		int size = _nodeList.size();
+		if (size >= 3
+				&& _nodeList.get(0).type == STAG_START
+				&& _nodeList.get(1).type == NAME
+				&& (_nodeList.get(size - 1).type == STAG_END || _nodeList.get(size - 1).type == EETAG_END)) {
+			int attrIndex = -1;
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = _nodeList.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
 				}
-				nodeIndex++;
+				node = _nodeList.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					if (++attrIndex == index) {
+						Attribute attributeOld = (Attribute)node;
+						List<Node> nodeListNew = new ArrayList<>(attributeOld.nodeList());
+						Node keyNode = Node.of(NAME, key.getBytes(StandardCharsets.UTF_8));
+						int quoteCharacter = attributeOld.last().sequence()[0];
+						Node valueNode = Node.of(ATT_VALUE, attributeValue(value, quoteCharacter));
+						nodeListNew.set(0, keyNode);
+						nodeListNew.set(nodeListNew.size() - 1, valueNode);
+						Attribute attributeNew = new Attribute(nodeListNew, key, value);
+						_nodeList.set(nodeIndex + 1, attributeNew);
+						return;
+					}
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
+				}
 			}
-			Attribute attributeOld = (Attribute)node;
-			int quoteCharacter = attributeOld.last().sequence()[0];
-			Node valueNode = Node.of(ATT_VALUE, attributeValue(value, quoteCharacter));
-			List<Node> nodeListNew = new ArrayList<>(attributeOld.nodeList());
-			if (!attributeOld.key.equals(key)) {
-				Node keyNode = Node.of(NAME, key.getBytes(StandardCharsets.UTF_8));
-				nodeListNew.set(0, keyNode);
+			if (upperBound == size - 1 || _nodeList.get(upperBound).type == S) {
+				throw new RuntimeException(this.getClass().getSimpleName() + "::setAttribute:: Index out of range.");
+			} else {
+				throw new RuntimeException(this.getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
 			}
-			nodeListNew.set(nodeListNew.size() - 1, valueNode);
-			Attribute attributeNew = new Attribute(nodeListNew, key, value);
-			_nodeList.set(nodeIndex, attributeNew);
-			_attributeList.set(attributeIndex, attributeNew);
 		} else {
-			throw new RuntimeException(this.getClass().getSimpleName() + "::setAttribte:: Index out of range.");
+			throw new RuntimeException(this.getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
 		}
 	}
 
@@ -179,42 +344,51 @@ public class StartTag extends Tag {
 	 * @param value the raw attribute value, not enclosed in quotes
 	 */
 	public void setAttribute(String key, String value) {
-		int nodeIndex = 2;
-		int attributeIndex = -1;
-		Node node;
-		while (true) {
-			node = _nodeList.get(nodeIndex);
-			if (node.type == ATTRIBUTE) {
-				Attribute a = (Attribute)node;
-				attributeIndex++;
-				if (a.key.equals(key)) {
-					int quoteCharacter = a.last().sequence()[0];
-					Node valueNode = Node.of(ATT_VALUE, attributeValue(value, quoteCharacter));
-					List<Node> nodeListNew = new ArrayList<>(a.nodeList());
-					nodeListNew.set(nodeListNew.size() - 1, valueNode);
-					Attribute attributeNew = new Attribute(nodeListNew, key, value);
-					_nodeList.set(nodeIndex, attributeNew);
-					_attributeList.set(attributeIndex, attributeNew);
-					break;
+		int size = _nodeList.size();
+		if (size >= 3
+				&& _nodeList.get(0).type == STAG_START
+				&& _nodeList.get(1).type == NAME
+				&& (_nodeList.get(size - 1).type == STAG_END || _nodeList.get(size - 1).type == EETAG_END)) {
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = _nodeList.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
 				}
-			} else if (node.type == STAG_END || node.type == EETAG_END) {
-				attributeIndex++;
-				Node nodePrevious = _nodeList.get(nodeIndex - 1);
-				if (nodePrevious.type == S) {
-					nodeIndex--;
+				node = _nodeList.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					Attribute a = (Attribute)node;
+					if (a.key.equals(key)) {
+						List<Node> nodeListNew = new ArrayList<>(a.nodeList());
+						Node keyNode = Node.of(NAME, key.getBytes(StandardCharsets.UTF_8));
+						int quoteCharacter = a.last().sequence()[0];
+						Node valueNode = Node.of(ATT_VALUE, attributeValue(value, quoteCharacter));
+						nodeListNew.set(0, keyNode);
+						nodeListNew.set(nodeListNew.size() - 1, valueNode);
+						Attribute attributeNew = new Attribute(nodeListNew, key, value);
+						_nodeList.set(nodeIndex + 1, attributeNew);
+						return;
+					}
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
 				}
-				_nodeList.add(nodeIndex, Node.of(S, SP_SEQUENCE));
-				nodeIndex++;
-				List<Node> nodeListNew =
-						List.of(Node.of(NAME, key.getBytes(StandardCharsets.UTF_8)),
-						Node.of(EQ, EQ_SEQUENCE),
-						Node.of(ATT_VALUE, attributeValue(value, '\"')));
-				Attribute attributeNew = new Attribute(nodeListNew, key, value);
-				_nodeList.add(nodeIndex, attributeNew);
-				_attributeList.add(attributeIndex, attributeNew);
-				break;
 			}
-			nodeIndex++;
+			if (upperBound == size - 1 || _nodeList.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(this.getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
+			}
+			List<Node> nodeListNew =
+					List.of(Node.of(NAME, key.getBytes(StandardCharsets.UTF_8)),
+					Node.of(EQ, EQ_SEQUENCE),
+					Node.of(ATT_VALUE, attributeValue(value, '\"')));
+			Attribute attributeNew = new Attribute(nodeListNew, key, value);
+			_nodeList.add(upperBound, Node.of(S, SP_SEQUENCE));
+			_nodeList.add(upperBound + 1, attributeNew);
+		} else {
+			throw new RuntimeException(this.getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
 		}
 	}
 
@@ -224,8 +398,27 @@ public class StartTag extends Tag {
 	 * @param value the value of the attribute, not enclosed by quote characters
 	 */
 	public void addAttribute(String key, String value) {
-		int size = _attributeList.size();
-		addAttribute(size, key, value);
+		int size = _nodeList.size();
+		if (size >= 3
+				&& _nodeList.get(0).type == STAG_START
+				&& _nodeList.get(1).type == NAME
+				&& (_nodeList.get(size - 1).type == STAG_END || _nodeList.get(size - 1).type == EETAG_END)) {
+			int upperBound = (size - 1) & ~1;
+			if (upperBound == size - 1 || _nodeList.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(this.getClass().getSimpleName() + "::addAttribute:: Possible corruption.");
+			}
+			List<Node> nodeListNew =
+					List.of(Node.of(NAME, key.getBytes(StandardCharsets.UTF_8)),
+					Node.of(EQ, EQ_SEQUENCE),
+					Node.of(ATT_VALUE, attributeValue(value, '\"')));
+			Attribute attributeNew = new Attribute(nodeListNew, key, value);
+			_nodeList.add(upperBound, Node.of(S, SP_SEQUENCE));
+			_nodeList.add(upperBound + 1, attributeNew);
+		} else {
+			throw new RuntimeException(this.getClass().getSimpleName() + "::addAttribute:: Possible corruption.");
+		}
 	}
 
 	/**
@@ -235,39 +428,202 @@ public class StartTag extends Tag {
 	 * @param value the value of the attribute, not enclosed by quote characters
 	 */
 	public void addAttribute(int index, String key, String value) {
-		int size = _attributeList.size();
-		if (0 <= index && index <= size) {
-			int nodeIndex = 2;
-			int attributeIndex = -1;
-			Node node;
-			while (true) {
-				node = _nodeList.get(nodeIndex);
-				if (node.type == ATTRIBUTE) {
-					attributeIndex++;
-					if (attributeIndex == index) {
-						break;
-					}
-				} else if (node.type == STAG_END || node.type == EETAG_END) {
-					attributeIndex++;
-					break;
+		int size = _nodeList.size();
+		if (size >= 3
+				&& _nodeList.get(0).type == STAG_START
+				&& _nodeList.get(1).type == NAME
+				&& (_nodeList.get(size - 1).type == STAG_END || _nodeList.get(size - 1).type == EETAG_END)) {
+			int attrIndex = -1;
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = _nodeList.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::addAttribute:: Possible corruption.");
 				}
-				nodeIndex++;
+				node = _nodeList.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					if (++attrIndex == index) {
+						List<Node> nodeListNew =
+								List.of(Node.of(NAME, key.getBytes(StandardCharsets.UTF_8)),
+										Node.of(EQ, EQ_SEQUENCE),
+										Node.of(ATT_VALUE, attributeValue(value, '\"')));
+						Attribute attributeNew = new Attribute(nodeListNew, key, value);
+						_nodeList.add(nodeIndex, Node.of(S, SP_SEQUENCE));
+						_nodeList.add(nodeIndex + 1, attributeNew);
+						return;
+					}
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::addAttribute:: Possible corruption.");
+				}
 			}
-			Node nodePrevious = _nodeList.get(nodeIndex - 1);
-			if (nodePrevious.type == S) {
-				nodeIndex--;
+			if (upperBound == size - 1 || _nodeList.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(this.getClass().getSimpleName() + "::addAttribute:: Possible corruption.");
 			}
-			_nodeList.add(nodeIndex, Node.of(S, SP_SEQUENCE));
-			nodeIndex++;
-			List<Node> nodeListNew =
-					List.of(Node.of(NAME, key.getBytes(StandardCharsets.UTF_8)),
-							Node.of(EQ, EQ_SEQUENCE),
-							Node.of(ATT_VALUE, attributeValue(value, '\"')));
-			Attribute attributeNew = new Attribute(nodeListNew, key, value);
-			_nodeList.add(nodeIndex, attributeNew);
-			_attributeList.add(attributeIndex, attributeNew);
+			if (++attrIndex == index) {
+				List<Node> nodeListNew =
+						List.of(Node.of(NAME, key.getBytes(StandardCharsets.UTF_8)),
+						Node.of(EQ, EQ_SEQUENCE),
+						Node.of(ATT_VALUE, attributeValue(value, '\"')));
+				Attribute attributeNew = new Attribute(nodeListNew, key, value);
+				_nodeList.add(upperBound, Node.of(S, SP_SEQUENCE));
+				_nodeList.add(upperBound + 1, attributeNew);
+			} else {
+				throw new RuntimeException(this.getClass().getSimpleName() + "::addAttribute:: Index out of range.");
+			}
 		} else {
-			throw new RuntimeException(this.getClass().getSimpleName() + "::addAttribte:: Index out of range.");
+			throw new RuntimeException(this.getClass().getSimpleName() + "::addAttribute:: Possible corruption.");
+		}
+	}
+
+	/**
+	 * Removes all the attributes in this start tag.
+	 */
+	public void removeAllAttributes() {
+		int size = _nodeList.size();
+		if (size >= 3
+				&& _nodeList.get(0).type == STAG_START
+				&& _nodeList.get(1).type == NAME
+				&& (_nodeList.get(size - 1).type == STAG_END || _nodeList.get(size - 1).type == EETAG_END)) {
+			int upperBound = (size - 1) & ~1;
+			if (upperBound == size - 1) {
+				Node node0 = _nodeList.get(0);
+				Node node1 = _nodeList.get(1);
+				Node node2 =  _nodeList.get(size - 1);
+				_nodeList.clear();
+				_nodeList.add(node0);
+				_nodeList.add(node1);
+				_nodeList.add(node2);
+			} else if (_nodeList.get(upperBound).type == S) {
+				Node node0 = _nodeList.get(0);
+				Node node1 = _nodeList.get(1);
+				Node node2 = _nodeList.get(size - 2);
+				Node node3 =  _nodeList.get(size - 1);
+				_nodeList.clear();
+				_nodeList.add(node0);
+				_nodeList.add(node1);
+				_nodeList.add(node2);
+				_nodeList.add(node3);
+			} else {
+				throw new RuntimeException(this.getClass().getSimpleName() + "::removeAllAttributes:: Possible corruption.");
+			}
+		} else {
+			throw new RuntimeException(this.getClass().getSimpleName() + "::removeAllAttributes:: Possible corruption.");
+		}
+	}
+
+	/**
+	 * Removes the attribute at the specified index.
+	 * @param index of the attribute to be removed
+	 * @return the removed attribute node, or NullNode if the specified index is invalid
+	 */
+	public Node removeAttribute(int index) {
+		int size = _nodeList.size();
+		if (size >= 3
+				&& _nodeList.get(0).type == STAG_START
+				&& _nodeList.get(1).type == NAME
+				&& (_nodeList.get(size - 1).type == STAG_END || _nodeList.get(size - 1).type == EETAG_END)) {
+			int attrIndex = -1;
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = _nodeList.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
+				}
+				node = _nodeList.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					if (++attrIndex == index) {
+						_nodeList.remove(nodeIndex + 1);
+						_nodeList.remove(nodeIndex);
+						return node;
+					}
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || _nodeList.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(this.getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
+			}
+		} else {
+			throw new RuntimeException(this.getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
+		}
+		return NullNode;
+	}
+
+	/**
+	 * Removes the attribute associated with the specified key.
+	 * @param key of the attribute to be removed
+	 * @return the removed attribute node, or NullNode if the specified index is invalid
+	 */
+	public Node removeAttribute(String key) {
+		int size = _nodeList.size();
+		if (size >= 3
+				&& _nodeList.get(0).type == STAG_START
+				&& _nodeList.get(1).type == NAME
+				&& (_nodeList.get(size - 1).type == STAG_END || _nodeList.get(size - 1).type == EETAG_END)) {
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = _nodeList.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
+				}
+				node = _nodeList.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					Attribute a = (Attribute)node;
+					if (a.key.equals(key)) {
+						_nodeList.remove(nodeIndex + 1);
+						_nodeList.remove(nodeIndex);
+						return node;
+					}
+				} else {
+					throw new RuntimeException(this.getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || _nodeList.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(this.getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
+			}
+		} else {
+			throw new RuntimeException(this.getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
+		}
+		return NullNode;
+	}
+
+	/**
+	 * Creates a new start tag node that has the same attributes as this node.
+	 * @return a newly created start tag node
+	 */
+	public StartTag toStartTag() {
+		if (last().type == STAG_END) {
+			return StartTag.of(_nodeList);
+		} else {
+			List<Node> nodeList = new ArrayList<>(_nodeList);
+			nodeList.set(nodeList.size() - 1, TerminalNode.of(STAG_END, STAG_END_SEQUENCE));
+			return StartTag.of(nodeList);
+		}
+	}
+
+	/**
+	 * Creates a new empty element tag node that has the same attributes as this node.
+	 * @return a newly created empty element tag node
+	 */
+	public EmptyElementTag toEmptyElementTag() {
+		if (last().type == EETAG_END) {
+			return EmptyElementTag.of(_nodeList);
+		} else {
+			List<Node> nodeList = new ArrayList<>(_nodeList);
+			nodeList.set(nodeList.size() - 1, TerminalNode.of(EETAG_END, EETAG_END_SEQUENCE));
+			return EmptyElementTag.of(nodeList);
 		}
 	}
 
@@ -330,130 +686,6 @@ public class StartTag extends Tag {
 			buffer.append(source);
 			buffer.append((char)quoteCharacter);
 			return buffer.toString();		
-		}
-	}
-
-	/**
-	 * Removes all the attributes in this start tag.
-	 */
-	public void removeAllAttributes() {
-		while (_attributeList.size() > 0) {
-			Node node = removeAttribute(0);
-			if (node.type == ATTRIBUTE) {
-				continue;
-			} else {
-				throw new RuntimeException(this.getClass().getSimpleName() + "::removeAllAttribtes:: Possible corruption.");
-			}
-		}
-		int size = _nodeList.size();
-		if ((size == 3
-				&& _nodeList.get(0).type == STAG_START
-				&& _nodeList.get(1).type == NAME
-				&& (_nodeList.get(2).type == STAG_END || _nodeList.get(2).type == EETAG_END))
-			|| (size == 4
-					&& _nodeList.get(0).type == STAG_START
-					&& _nodeList.get(1).type == NAME
-					&& _nodeList.get(2).type == S
-					&& (_nodeList.get(3).type == STAG_END || _nodeList.get(3).type == EETAG_END))) {
-			//OK
-		} else {
-			throw new RuntimeException(this.getClass().getSimpleName() + "::removeAllAttribtes:: Possible corruption.");
-		}
-	}
-
-	/**
-	 * Removes the attribute at the specified index.
-	 * @param index of the attribute to be removed
-	 * @return the removed attribute node, or NullNode if the specified index is invalid
-	 */
-	public Node removeAttribute(int index) {
-		int size = _attributeList.size();
-		if (0 <= index && index < size) {
-			int nodeIndex = 2;
-			int attributeIndex = -1;
-			Node node;
-			while (true) {
-				node = _nodeList.get(nodeIndex);
-				if (node.type == ATTRIBUTE) {
-					attributeIndex++;
-					if (attributeIndex == index) {
-						break;
-					}
-				} else if (node.type == STAG_END || node.type == EETAG_END) {
-					throw new RuntimeException(this.getClass().getSimpleName() + "::removeAttribte:: Possible corruption.");
-				}
-				nodeIndex++;
-			}
-			Node nodePrevious = _nodeList.get(nodeIndex - 1);
-			if (nodePrevious.type == S) {
-				_nodeList.remove(nodeIndex);
-				_nodeList.remove(nodeIndex - 1);
-				_attributeList.remove(node);
-				return node;
-			} else {
-				throw new RuntimeException(this.getClass().getSimpleName() + "::removeAttribte:: Possible corruption.");
-			}
-		} else {
-			return NullNode;
-		}
-	}
-
-	/**
-	 * Removes the attribute associated with the specified key.
-	 * @param key of the attribute to be removed
-	 * @return the removed attribute node, or NullNode if the specified index is invalid
-	 */
-	public Node removeAttribute(String key) {
-		int nodeIndex = 2;
-		Node node;
-		while (true) {
-			node = _nodeList.get(nodeIndex);
-			if (node.type == ATTRIBUTE) {
-				Attribute a = (Attribute)node;
-				if (a.key.equals(key)) {
-					break;
-				}
-			} else if (node.type == STAG_END || node.type == EETAG_END) {
-				return NullNode;
-			}
-			nodeIndex++;
-		}
-		Node nodePrevious = _nodeList.get(nodeIndex - 1);
-		if (nodePrevious.type == S) {
-			_nodeList.remove(nodeIndex);
-			_nodeList.remove(nodeIndex - 1);
-			_attributeList.remove(node);
-			return node;
-		} else {
-			throw new RuntimeException(this.getClass().getSimpleName() + "::removeAttribte:: Possible corruption.");
-		}
-	}
-
-	/**
-	 * Creates a new start tag node that has the same attributes as this node.
-	 * @return a newly created start tag node
-	 */
-	public StartTag toStartTag() {
-		if (last().type == STAG_END) {
-			return StartTag.of(_nodeList, _attributeList);
-		} else {
-			List<Node> nodeList = new ArrayList<>(_nodeList);
-			nodeList.set(nodeList.size() - 1, TerminalNode.of(STAG_END, STAG_END_SEQUENCE));
-			return StartTag.of(nodeList, _attributeList);
-		}
-	}
-
-	/**
-	 * Creates a new empty element tag node that has the same attributes as this node.
-	 * @return a newly created empty element tag node
-	 */
-	public EmptyElementTag toEmptyElementTag() {
-		if (last().type == EETAG_END) {
-			return EmptyElementTag.of(_nodeList, _attributeList);
-		} else {
-			List<Node> nodeList = new ArrayList<>(_nodeList);
-			nodeList.set(nodeList.size() - 1, TerminalNode.of(EETAG_END, EETAG_END_SEQUENCE));
-			return EmptyElementTag.of(nodeList, _attributeList);
 		}
 	}
 

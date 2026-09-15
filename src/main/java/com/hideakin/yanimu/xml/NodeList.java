@@ -56,6 +56,11 @@ public class NodeList extends Node {
 		return size > 0 ? _nodeList.get(0) : NullNode;
 	}
 
+	public Node second() {
+		int size = _nodeList.size();
+		return size > 1 ? _nodeList.get(1) : NullNode;
+	}
+
 	public Node last() {
 		int size = _nodeList.size();
 		return size > 0 ? _nodeList.get(size - 1) : NullNode;

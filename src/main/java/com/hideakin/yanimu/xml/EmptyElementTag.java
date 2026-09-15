@@ -1,6 +1,5 @@
 package com.hideakin.yanimu.xml;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class EmptyElementTag extends StartTag {
@@ -9,20 +8,19 @@ public class EmptyElementTag extends StartTag {
 		return new EmptyElementTag(name);
 	}
 
-	public static EmptyElementTag of(List<Node> nodeList, List<Attribute> attributeList) {
-		return new EmptyElementTag(nodeList, attributeList);
+	public static EmptyElementTag of(List<Node> nodeList) {
+		return new EmptyElementTag(nodeList);
 	}
 
 	private EmptyElementTag(String name) {
-		super(EETAG, new ArrayList<>(
-				List.of(TerminalNode.of(STAG_START, START_SEQUENCE),
-						TerminalNode.of(NAME, name),
-						TerminalNode.of(EETAG_END, EETAG_END_SEQUENCE))),
-				new ArrayList<>());
+		super(EETAG, List.of(
+				TerminalNode.of(STAG_START, START_SEQUENCE),
+				TerminalNode.of(NAME, name),
+				TerminalNode.of(EETAG_END, EETAG_END_SEQUENCE)));
 	}
 
-	private EmptyElementTag(List<Node> nodeList, List<Attribute> attributeList) {
-		super(EETAG, nodeList, attributeList);
+	private EmptyElementTag(List<Node> nodeList) {
+		super(EETAG, nodeList);
 	}
 
 }

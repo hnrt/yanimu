@@ -140,6 +140,118 @@ public class StartTagTest {
 	}
 
 	@Test
+	void test050() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			StartTag st = doc.root().startTag();
+			assertEquals(0, st.attributeCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void test051() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting ></greeting>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			StartTag st = doc.root().startTag();
+			assertEquals(0, st.attributeCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void test052() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting x=\"1\"></greeting>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			StartTag st = doc.root().startTag();
+			assertEquals(1, st.attributeCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void test053() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting x=\"1\" />";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			StartTag st = doc.root().startTag();
+			assertEquals(1, st.attributeCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void test054() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting x=\"1\" y=\"2\"/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			StartTag st = doc.root().startTag();
+			assertEquals(2, st.attributeCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void test055() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting x=\"1\" y=\"2\" ></greeting>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			StartTag st = doc.root().startTag();
+			assertEquals(2, st.attributeCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void test056() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting x=\"1\" y=\"2\" z=\"3\"></greeting>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			StartTag st = doc.root().startTag();
+			assertEquals(3, st.attributeCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void test057() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting x=\"1\" y=\"2\" z=\"3\" />";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			StartTag st = doc.root().startTag();
+			assertEquals(3, st.attributeCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
 	void test101() {
 		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"/>";
 		Document doc = new Document();
