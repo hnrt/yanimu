@@ -678,14 +678,14 @@ public class StartTag extends Tag {
 					buffer.append(source.substring(start));
 				}
 				buffer.append((char)quoteCharacter);
-				return buffer.toString();		
+				return buffer.toString();
 			}
 		} else {
 			StringBuilder buffer = new StringBuilder();
 			buffer.append((char)quoteCharacter);
 			buffer.append(source);
 			buffer.append((char)quoteCharacter);
-			return buffer.toString();		
+			return buffer.toString();
 		}
 	}
 
