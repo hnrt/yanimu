@@ -2,7 +2,9 @@ package com.hideakin.yanimu.maven;
 
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.util.Arrays;
 
 import org.junit.jupiter.api.AfterAll;
@@ -102,7 +104,19 @@ public class PomDocumentTest {
 					meta.load();
 				} catch (Exception e) {
 				}
-				if (meta.root() == null) {
+				boolean loadFromRemote = meta.root() == null;
+				if (!loadFromRemote) {
+					try {
+						FileTime ft = Files.getLastModifiedTime(meta.path());
+						if (ft.toMillis() + 24L * 3600L * 1000L < System.currentTimeMillis()) {
+							print("%s: %s (looks old)", meta.path(), ft.toString());
+							loadFromRemote = true;
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				if (loadFromRemote) {
 					try {
 						meta.load(pom.repositories());
 					} catch (Exception e) {
