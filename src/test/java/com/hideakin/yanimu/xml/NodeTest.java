@@ -2,6 +2,9 @@ package com.hideakin.yanimu.xml;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+
+import com.hideakin.yanimu.xml.util.FormatHelper;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -138,7 +141,7 @@ public class NodeTest {
 
 	@Test
 	void test101() {
-		Node node = Node.lineSeparatorAndIndentation(Document.LF_SEQUENCE, 2, 3);
+		Node node = Node.of(Node.CHAR_DATA, FormatHelper.lineSeparatorAndIndentation(FormatHelper.LF_SEQUENCE, 2, 3));
 		assertEquals(Node.CHAR_DATA, node.type);
 		assertEquals(true, node instanceof TerminalNode);
 		assertEquals("\n      ", node.toString());
@@ -146,7 +149,7 @@ public class NodeTest {
 
 	@Test
 	void test102() {
-		Node node = Node.lineSeparatorAndIndentation(Node.S, Document.CRLF_SEQUENCE, 3, 3);
+		Node node = Node.of(Node.S, FormatHelper.lineSeparatorAndIndentation(FormatHelper.CRLF_SEQUENCE, 3, 3));
 		assertEquals(Node.S, node.type);
 		assertEquals(true, node instanceof TerminalNode);
 		assertEquals("\r\n         ", node.toString());
@@ -264,145 +267,145 @@ public class NodeTest {
 	@Test
 	void test501() {
 		Node node = Node.of(Node.S, " ".getBytes());
-		assertEquals(false, node.isLineSeparatorAndIndentation());
+		assertEquals(false, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test502() {
 		Node node = Node.of(Node.S, "  \n".getBytes());
-		assertEquals(false, node.isLineSeparatorAndIndentation());
+		assertEquals(false, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test503() {
 		Node node = Node.of(Node.S, "  \r\n  ".getBytes());
-		assertEquals(false, node.isLineSeparatorAndIndentation());
+		assertEquals(false, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test504() {
 		Node node = Node.of(Node.S, "\n".getBytes());
-		assertEquals(true, node.isLineSeparatorAndIndentation());
+		assertEquals(true, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test505() {
 		Node node = Node.of(Node.S, "\r\n".getBytes());
-		assertEquals(true, node.isLineSeparatorAndIndentation());
+		assertEquals(true, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test506() {
 		Node node = Node.of(Node.S, "\n  ".getBytes());
-		assertEquals(true, node.isLineSeparatorAndIndentation());
+		assertEquals(true, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test507() {
 		Node node = Node.of(Node.S, "\r\n     ".getBytes());
-		assertEquals(true, node.isLineSeparatorAndIndentation());
+		assertEquals(true, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 	
 	@Test
 	void test508() {
 		Node node = Node.of(Node.S, "\n\n".getBytes());
-		assertEquals(false, node.isLineSeparatorAndIndentation());
+		assertEquals(false, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test509() {
 		Node node = Node.of(Node.S, "\r\n\r\n  ".getBytes());
-		assertEquals(false, node.isLineSeparatorAndIndentation());
+		assertEquals(false, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test510() {
 		Node node = Node.of(Node.S, "\n  \n".getBytes());
-		assertEquals(false, node.isLineSeparatorAndIndentation());
+		assertEquals(false, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test521() {
 		Node node = Node.of(Node.CHAR_DATA, " ".getBytes());
-		assertEquals(false, node.isLineSeparatorAndIndentation());
+		assertEquals(false, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test522() {
 		Node node = Node.of(Node.CHAR_DATA, "  \n".getBytes());
-		assertEquals(false, node.isLineSeparatorAndIndentation());
+		assertEquals(false, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test523() {
 		Node node = Node.of(Node.CHAR_DATA, "  \r\n  ".getBytes());
-		assertEquals(false, node.isLineSeparatorAndIndentation());
+		assertEquals(false, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test524() {
 		Node node = Node.of(Node.CHAR_DATA, "\n".getBytes());
-		assertEquals(true, node.isLineSeparatorAndIndentation());
+		assertEquals(true, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test525() {
 		Node node = Node.of(Node.CHAR_DATA, "\r\n".getBytes());
-		assertEquals(true, node.isLineSeparatorAndIndentation());
+		assertEquals(true, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test526() {
 		Node node = Node.of(Node.CHAR_DATA, "\n  ".getBytes());
-		assertEquals(true, node.isLineSeparatorAndIndentation());
+		assertEquals(true, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test527() {
 		Node node = Node.of(Node.CHAR_DATA, "\r\n     ".getBytes());
-		assertEquals(true, node.isLineSeparatorAndIndentation());
+		assertEquals(true, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 	
 	@Test
 	void test528() {
 		Node node = Node.of(Node.CHAR_DATA, "\n\n".getBytes());
-		assertEquals(false, node.isLineSeparatorAndIndentation());
+		assertEquals(false, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test529() {
 		Node node = Node.of(Node.CHAR_DATA, "\r\n\r\n  ".getBytes());
-		assertEquals(false, node.isLineSeparatorAndIndentation());
+		assertEquals(false, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test530() {
 		Node node = Node.of(Node.CHAR_DATA, "\n  \n".getBytes());
-		assertEquals(false, node.isLineSeparatorAndIndentation());
+		assertEquals(false, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test531() {
 		Node node = Node.of(Node.CHAR_DATA, "\r\n     XYZ".getBytes());
-		assertEquals(false, node.isLineSeparatorAndIndentation());
+		assertEquals(false, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test532() {
 		Node node = Node.of(Node.CHAR_DATA, "XYZ".getBytes());
-		assertEquals(false, node.isLineSeparatorAndIndentation());
+		assertEquals(false, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test541() {
 		Node node = Node.of(Node.CHAR_REF, "&#10;".getBytes());
-		assertEquals(false, node.isLineSeparatorAndIndentation());
+		assertEquals(false, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 	@Test
 	void test542() {
 		Node node = Node.of(Node.CHAR_REF, "&#xA;".getBytes());
-		assertEquals(false, node.isLineSeparatorAndIndentation());
+		assertEquals(false, FormatHelper.isLineSeparatorAndIndentation(node));
 	}
 
 }

@@ -73,14 +73,12 @@ public class PropertyManager extends LinkedHashMap<String, String> {
 			} else {
 				element = new Element(key, value);
 				_properties.add(element);
-				_properties.indent();
 			}
 		} else {
 			Element element = new Element(key, value);
 			_properties = new Element("properties");
 			_root.add(_properties);
 			_properties.add(element);
-			_root.indent();
 		}
 		return old;
 	}

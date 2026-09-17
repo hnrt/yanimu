@@ -14,6 +14,7 @@ import static com.hideakin.yanimu.util.TestHelper.start;
 import static com.hideakin.yanimu.util.TestHelper.finish;
 import static com.hideakin.yanimu.util.TestHelper.print;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
@@ -424,6 +425,88 @@ public class DocumentTest {
 					print("Deleted %s", path2);
 				}
 			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void test501() {
+		Path path = Path.of("B5113D95-D5B4-42C0-9E4F-103F7EB875E1", "E780C820-075C-4D1F-B5DB-FC17A0708AAF.xml");
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<greeting>Hello, world!</greeting>";
+		Document doc = new Document(path);
+		try {
+			Files.deleteIfExists(path);
+			Files.deleteIfExists(path.getParent());
+			Files.createDirectories(path.getParent());
+			byte[] sourceBytes = source.getBytes();
+			doc.load(sourceBytes);
+			doc.save();
+			assertArrayEquals(sourceBytes, Files.readAllBytes(path));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		} finally {
+			try {
+				Files.deleteIfExists(path);
+				Files.deleteIfExists(path.getParent());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void test502() {
+		Path path = Path.of("B5113D95-D5B4-42C0-9E4F-103F7EB875E1", "E780C820-075C-4D1F-B5DB-FC17A0708AAF.xml");
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<greeting>Hello, world!</greeting>";
+		Document doc = new Document(path);
+		try {
+			Files.deleteIfExists(path);
+			Files.deleteIfExists(path.getParent());
+			byte[] sourceBytes = source.getBytes();
+			doc.load(sourceBytes);
+			doc.save();
+			assertArrayEquals(sourceBytes, Files.readAllBytes(path));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		} finally {
+			try {
+				Files.deleteIfExists(path);
+				Files.deleteIfExists(path.getParent());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void test503() {
+		Path path = Path.of("B5113D95-D5B4-42C0-9E4F-103F7EB875E1", "E780C820-075C-4D1F-B5DB-FC17A0708AAF.xml");
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<greeting>Hello, world!</greeting>";
+		Document doc = new Document(path);
+		try {
+			Files.deleteIfExists(path);
+			Files.deleteIfExists(path.getParent());
+			Files.createDirectories(path);
+			byte[] sourceBytes = source.getBytes();
+			doc.load(sourceBytes);
+			doc.save();
+			fail("Unexpectedly saved the file without any errors.");
+		} catch (IOException e) {
+			assertEquals("Unable to write to a directory.", e.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		} finally {
+			try {
+				Files.deleteIfExists(path);
+				Files.deleteIfExists(path.getParent());
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}

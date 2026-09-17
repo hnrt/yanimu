@@ -177,26 +177,4 @@ public class Content extends NodeList {
 		return elementList;
 	}
 
-	public void indent(byte[] eol, int indentation, int level) {
-		for (int i = 0; ; i++) {
-			Node node = get(i);
-			if (node.type == NULL) {
-				break;
-			} else if (node instanceof Element element) {
-				if (i == 0 || get(i - 1).type == ELEMENT) {
-					add(i, Node.lineSeparatorAndIndentation(eol, indentation, level));
-					i++;
-				} else if (get(i - 1).isLineSeparatorAndIndentation()) {
-					set(i - 1, Node.lineSeparatorAndIndentation(eol, indentation, level));
-				}
-				element.indent(eol, indentation, level);
-			}
-		}
-		if (size() == 0 || last().type == ELEMENT) {
-			add(Node.lineSeparatorAndIndentation(eol, indentation, level - 1));
-		} else if (last().isLineSeparatorAndIndentation()) {
-			set(lastIndex(), Node.lineSeparatorAndIndentation(eol, indentation, level - 1));
-		}
-	}
-
 }

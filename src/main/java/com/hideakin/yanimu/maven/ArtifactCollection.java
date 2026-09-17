@@ -56,7 +56,6 @@ public class ArtifactCollection<T extends SimpleArtifact> extends LinkedHashMap<
 			//NEVER REACH HERE BUT PASS THROUGH JUST IN CASE
 		}
 		_element.add(artifact.element());
-		_element.indent();
 		return null;
 	}
 

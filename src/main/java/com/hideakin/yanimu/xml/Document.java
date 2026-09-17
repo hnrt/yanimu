@@ -1,28 +1,23 @@
 package com.hideakin.yanimu.xml;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import com.hideakin.yanimu.xml.doctype.DocumentTypeDeclaration;
 import com.hideakin.yanimu.xml.internal.Processor;
 
 public class Document extends NodeList {
 
-	public static final int INDENTATION_DEFAULT = 2;
-
-	public static final String LF = "\n";
-	public static final String CRLF = "\r\n";
-	public static final byte[] LF_SEQUENCE = { 10 };
-	public static final byte[] CRLF_SEQUENCE = { 13, 10 };
-
 	protected Path _path;
 	protected XmlDeclaration _xml;
 	protected DocumentTypeDeclaration _dtd;
 	protected Element _root;
-	protected int _indentation = INDENTATION_DEFAULT;
 
 	public Document() {
 		super(DOCUMENT);
@@ -33,18 +28,36 @@ public class Document extends NodeList {
 		_path = path;
 	}
 
+	/**
+	 * Returns the file path currently set.
+	 * @return the file path currently set.
+	 */
 	public Path path() {
 		return _path;
 	}
 
+	/**
+	 * Sets the file path.
+	 * @param path the file path to assign
+	 */
 	public void setPath(Path path) {
 		_path = path;
 	}
 
+	/**
+	 * Returns the XML declaration.
+	 * @return the XML declaration, or {@code null} if not set
+	 */
 	public XmlDeclaration xml() {
 		return _xml;
 	}
 
+	/**
+	 * Sets the XML declaration of this {@code Document}.
+	 * <p>
+	 * If {@code xml} is {@code null}, the current XML declaration is removed from this {@code Document}.
+	 * @param xml the XML declaration to assign; {@code null} clears the current XML declaration
+	 */
 	public void setXml(XmlDeclaration xml) {
 		if (get(0).type == XML_DECL) {
 			if (xml != null) {
@@ -57,15 +70,24 @@ public class Document extends NodeList {
 			}
 		} else if (xml != null) {
 			add(0, xml);
-			add(1, TerminalNode.of(Node.S, lineSeparator()));
 		}
 		_xml = xml;
 	}
 
+	/**
+	 * Returns the document type declaration.
+	 * @return the document type declaration, or {@code null} if not set
+	 */
 	public DocumentTypeDeclaration dtd() {
 		return _dtd;
 	}
 
+	/**
+	 * Sets the document type declaration of this {@code Document}.
+	 * <p>
+	 * If {@code dtd} is {@code null}, the current document type declaration is removed from this {@code Document}.
+	 * @param dtd the document type declaration to assign; {@code null} clears the current document type declaration
+	 */
 	public void setDtd(DocumentTypeDeclaration dtd) {
 		for (int i = 0; ; i++) {
 			switch (get(i).type) {
@@ -84,7 +106,6 @@ public class Document extends NodeList {
 			case NULL:
 				if (dtd != null) {
 					add(i, dtd);
-					add(i + 1, TerminalNode.of(S, lineSeparator()));
 				}
 				_dtd = dtd;
 				return;
@@ -94,10 +115,20 @@ public class Document extends NodeList {
 		}
 	}
 
+	/**
+	 * Returns the root {@code Element} of this {@code Document}.
+	 * @return the root {@code Element}, or {@code null} if not set
+	 */
 	public Element root() {
 		return _root;
 	}
 
+	/**
+	 * Sets the root {@code Element} of this {@code Document}.
+	 * <p>
+	 * If {@code root} is {@code null}, the current root {@code Element} is removed from this {@code Document}.
+	 * @param root the {@code Element} to assign as the root; {@code null} clears the current root
+	 */
 	public void setRoot(Element root) {
 		for (int i = 0; ; i++) {
 			switch (get(i).type) {
@@ -124,26 +155,57 @@ public class Document extends NodeList {
 		}
 	}
 
+	/**
+	 * Reads the byte sequence from a file specified by the path and parses them as an XML document.
+	 * @throws Exception
+	 */
 	public void load() throws Exception {
-		load(Files.readAllBytes(_path));
+		load(Files.readAllBytes(_path), new ParseResult());
 	}
 
+	/**
+	 * Reads the byte sequence from a file specified by the path and parses them as an XML document.
+	 * @param result the information caught while parsing the document
+	 * @throws Exception
+	 */
 	public void load(ParseResult result) throws Exception {
 		load(Files.readAllBytes(_path), result);
 	}
 
+	/**
+	 * Reads the byte sequence from the specified {@code InputStream} and parses them as an XML document.
+	 * @param in {@code InputStream} to read the byte sequence from
+	 * @throws Exception
+	 */
 	public void load(InputStream in) throws Exception {
-		load(in.readAllBytes());
+		load(in.readAllBytes(), new ParseResult());
 	}
 
+	/**
+	 * Reads the byte sequence from the specified {@code InputStream} and parses them as an XML document.
+	 * @param in {@code InputStream} to read the byte sequence from
+	 * @param result the information caught while parsing the document
+	 * @throws Exception
+	 */
 	public void load(InputStream in, ParseResult result) throws Exception {
 		load(in.readAllBytes(), result);
 	}
 
+	/**
+	 * Parses the specified byte sequence as an XML document.
+	 * @param content the byte sequence to parse
+	 * @throws Exception
+	 */
 	public void load(byte[] content) throws Exception {
 		load(content, new ParseResult());
 	}
 
+	/**
+	 * Parses the specified byte sequence as an XML document.
+	 * @param content the byte sequence to parse
+	 * @param result the information caught while parsing the document
+	 * @throws Exception
+	 */
 	public void load(byte[] content, ParseResult result) throws Exception {
 		_nodeList.clear();
 		_xml = null;
@@ -166,32 +228,40 @@ public class Document extends NodeList {
 		}
 	}
 
-	public int toLineNumber(int offset) {
-		return offset < 0 ? 0 : lineCount(offset) + 1;
-	}
-
-	public int toColumnNumber(int offset) {
-		return offset < 0 ? 0 : columnCount(0, offset) + 1;
-	}
-
-	public int indentation() {
-		return _indentation;
-	}
-
-	public void setIndentation(int spaces) {
-		_indentation = spaces;
+	public void save() throws Exception {
+		if (Files.exists(_path)) {
+			if (Files.isDirectory(_path)) {
+				throw new IOException("Unable to write to a directory.");
+			}
+		} else if (!Files.exists(_path.getParent())) {
+			Files.createDirectories(_path.getParent());
+		}
+		String fileName = _path.getFileName().toString() + "." + UUID.randomUUID().toString();
+		Path path = _path.getParent().resolve(fileName);
+		try {
+			Files.write(path, sequence());
+			Files.move(path, _path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			try {
+				Files.deleteIfExists(path);
+			} catch (Exception g) {
+				g.printStackTrace();
+			}
+		}
 	}
 
 	/**
-	 * This method locates Element instances that match the criteria specified by <i>name</i>.
-	 * @param name the tag name pattern used to locate Element instances.
+	 * Locates {@code Element} instances that match the criteria specified by {@code name}.
+	 * @param name the tag name pattern used to locate {@code Element} instances.
 	 *             The pattern may include multiple tag names separated by slashes
-	 *             to specify an Element hierarchy.
-	 *             If <i>name</i> begins with a slash, the search is performed starting
-	 *             from the root element. Otherwise, the search begins from
-	 *             any descendant elements.
+	 *             to specify an element hierarchy.
+	 *             If {@code name} begins with a slash, the search is performed starting
+	 *             from the root element.
+	 *             Otherwise, the search begins from any descendant elements.
 	 *             An asterisk acts as a wildcard that matches any tag name.
-	 * @return List of Element instances
+	 * @return {@code List} of {@code Element} instances
 	 */
 	public List<Element> getElements(String name) {
 		List<Element> elementList = new ArrayList<>();
@@ -214,61 +284,38 @@ public class Document extends NodeList {
 		return elementList;
 	}
 
+	/**
+	 * Locates the first {@code Element} instance that matches the criteria specified by {@code name}.
+	 * @param name the tag name pattern used to locate {@code Element} instances.
+	 *             The pattern may include multiple tag names separated by slashes
+	 *             to specify an element hierarchy.
+	 *             If {@code name} begins with a slash, the search is performed starting
+	 *             from the root element.
+	 *             Otherwise, the search begins from any descendant elements.
+	 *             An asterisk acts as a wildcard that matches any tag name.
+	 * @return {@code Element} instance
+	 */
 	public Element getElement(String name) {
 		List<Element> elementList = getElements(name);
 		return elementList.size() > 0 ? elementList.get(0) : null;
 	}
 
-	public byte[] lineSeparator() {
-		byte[] s = lineSeparator(_nodeList);
-		return s != null ? s : LF_SEQUENCE;
+	/**
+	 * Returns the line number at the specified offset.
+	 * @param offset to check
+	 * @return the line number
+	 */
+	public int toLineNumber(int offset) {
+		return offset < 0 ? 0 : lineCount(offset) + 1;
 	}
 
-	private static byte[] lineSeparator(List<Node> nodeList) {
-		for (Node node : nodeList) {
-			if (node.type == S || node.type == CHAR_DATA) {
-				byte[] s = node.sequence();
-				if (s.length > 0) {
-					int n = s.length - 1;
-					for (int i = 0; i < n; i++) {
-						if (s[i] == 10) {
-							return LF_SEQUENCE;
-						} else if (s[i] == 13 && s[i + 1] == 10) {
-							return CRLF_SEQUENCE;
-						}
-					}
-					if (s[n] == 10) {
-						return LF_SEQUENCE;
-					}
-				}
-			} else if (node instanceof NodeList nodeListNode) {
-				byte[] s = lineSeparator(nodeListNode._nodeList);
-				if (s != null) {
-					return s;
-				}
-			}
-		}
-		return null;
-	}
-
-	public void indent() {
-		byte[] eol = lineSeparator();
-		Node node;
-		for (int i = 0; (node = get(i)).type != NULL; i++) {
-			switch (node.type) {
-			case ELEMENT:
-				if (i > 0 && get(i - 1).type == S) {
-					set(i - 1, TerminalNode.of(S, eol));
-				} else {
-					add(i, TerminalNode.of(S, eol));
-					i++;
-				}
-				((Element)node).indent(eol, _indentation, 0);
-				break;
-			default:
-				break;
-			}
-		}
+	/**
+	 * Returns the column number at the specified offset.
+	 * @param offset to check
+	 * @return the column number
+	 */
+	public int toColumnNumber(int offset) {
+		return offset < 0 ? 0 : columnCount(0, offset) + 1;
 	}
 
 }

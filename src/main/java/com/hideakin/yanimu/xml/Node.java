@@ -1,7 +1,6 @@
 package com.hideakin.yanimu.xml;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 import static com.hideakin.yanimu.xml.internal.DebugHelper.NODE_TYPES;
 
@@ -127,40 +126,6 @@ public class Node {
 		}
 	}
 
-	/**
-	 * Creates a new CHAR_DATA instance.<br/>
-	 * The text representation of the node begins with a line separator followed by a sequence of space characters.<br/>
-	 * The number of spaces is determined by multiplying the indentation unit by the nesting level.
-	 * @param lineSeparator the byte representation of the line separator (LF (\n) or CRLF (\r\n))
-	 * @param indentation the indentation unit length in bytes
-	 * @param level the nesting level of the node
-	 * @return a newly created CHAR_DATA instance
-	 */
-	public static Node lineSeparatorAndIndentation(byte[] lineSeparator, int indentation, int level) {
-		return lineSeparatorAndIndentation(CHAR_DATA, lineSeparator, indentation, level);
-	}
-
-	/**
-	 * Creates a new terminal node instance.<br/>
-	 * The text representation of the node to be created begins with a line separator followed by a sequence of space characters.<br/>
-	 * The number of spaces is determined by multiplying the indentation unit by the nesting level.
-	 * @param type the node type to be created
-	 * @param lineSeparator the byte representation of the line separator (LF (\n) or CRLF (\r\n))
-	 * @param indentation the indentation unit length in bytes
-	 * @param level the nesting level of the node
-	 * @return a newly created terminal node instance
-	 */
-	public static Node lineSeparatorAndIndentation(int type, byte[] lineSeparator, int indentation, int level) {
-		int n1 = lineSeparator.length;
-		int n2 = indentation * level;
-		int n = n1 + n2;
-		byte[] sequence = Arrays.copyOf(lineSeparator, n);
-		for (int i = n1; i < n; i++) {
-			sequence[i] = SP;
-		}
-		return Node.of(type, sequence);
-	}
-
 	public final int type;
 
 	protected Node(int type) {
@@ -276,39 +241,6 @@ public class Node {
 			}
 		}
 		return count;
-	}
-
-	/**
-	 * Checks if the text of this node satisfies all of the following conditions:<br/>
-	 * <ul>
-	 * <li>The node type is either CHAR_DATA or S (white spaces)</li>
-	 * <li>The text begins with either LF (\n) or CRLF (\r\n).</li>
-	 * <li>The remainder of the text consists only of space characters.</li>
-	 * </ul>
-	 * @return true if the text satisfies all conditions; false otherwise
-	 */
-	public boolean isLineSeparatorAndIndentation() {
-		if (type == CHAR_DATA || type == S) {
-			byte[] bb = sequence();
-			int i;
-			if (bb.length > 0 && bb[0] == LF) {
-				i = 1;
-			} else if (bb.length > 1 && bb[0] == CR && bb[1] == LF) {
-				i = 2;
-			} else {
-				return false;
-			}
-			while (i < bb.length) {
-				if (bb[i] == SP) {
-					i++;
-				} else {
-					return false;
-				}
-			}
-			return true;
-		} else {
-			return false;
-		}
 	}
 
 	public String toDebuggingString() {

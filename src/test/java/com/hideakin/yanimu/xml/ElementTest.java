@@ -7,6 +7,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
+import com.hideakin.yanimu.xml.util.FormatHelper;
+
 import static com.hideakin.yanimu.util.TestHelper.checkDocument;
 import static com.hideakin.yanimu.util.TestHelper.finish;
 import static com.hideakin.yanimu.util.TestHelper.start;
@@ -220,7 +222,7 @@ public class ElementTest {
 			Document sup = new Document();
 			sup.load("<X><hello/></X>".getBytes());
 			doc.root().add(sup.root().remove(0));
-			doc.root().indent();
+			FormatHelper.indent(doc);
 			print("root=%d", doc.root().sequence().length);
 			int end2 = checkDocument("AFTER", doc, content2);
 			print("content.length=%d actual=%d", content2.length, end2);
@@ -246,7 +248,7 @@ public class ElementTest {
 			Document sup = new Document();
 			sup.load("<X><hello>WOW!</hello></X>".getBytes());
 			doc.root().add(sup.root().remove(0));
-			doc.root().indent();
+			FormatHelper.indent(doc);
 			int end2 = checkDocument("AFTER", doc, content2);
 			print("content.length=%d actual=%d", content2.length, end2);
 		} catch (Exception e) {
@@ -274,7 +276,7 @@ public class ElementTest {
 			doc.load(content1);
 			int end1 = checkDocument("BEFORE", doc, content1);
 			print("content.length=%d actual=%d", content1.length, end1);
-			doc.indent();
+			FormatHelper.indent(doc);
 			int end2 = checkDocument("AFTER", doc, content2);
 			print("content.length=%d actual=%d", content2.length, end2);
 		} catch (Exception e) {

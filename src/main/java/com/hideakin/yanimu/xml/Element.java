@@ -537,21 +537,4 @@ public class Element extends NodeList {
 		return elementList.size() > 0 ? elementList.get(0) : null;
 	}
 
-	public void indent() {
-		Document document = document();
-		if (document != null) {
-			byte[] lineSeparator = document.lineSeparator();
-			int indentation = document.indentation();
-			int level = level();
-			indent(lineSeparator, indentation, level);
-		}
-	}
-
-	public void indent(byte[] lineSeparator, int indentation, int level) {
-		if (!empty()) {
-			Content content = (Content)_nodeList.get(1);
-			content.indent(lineSeparator, indentation, level + 1);
-		}
-	}
-
 }
