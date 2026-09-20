@@ -5,6 +5,8 @@ import java.util.Map;
 
 import com.hideakin.yanimu.xml.Node;
 
+import static com.hideakin.yanimu.xml.Character.*;
+
 public class DebugHelper {
 
 	public static final int FLAG_LEXER = 1;
@@ -16,10 +18,10 @@ public class DebugHelper {
 
 	static {
 		Map<Integer, String> nt = new HashMap<>();
-		nt.put(Integer.valueOf(Node.EOF), "EOF");
-		nt.put(Integer.valueOf(Node.NULL), "NULL");
-		nt.put(Integer.valueOf(Node.EQ), "EQ");
-		nt.put(Integer.valueOf(Node.TAG_END), "TAG_END");
+		nt.put(Integer.valueOf(EOF), "EOF");
+		nt.put(Integer.valueOf(NULL), "NULL");
+		nt.put(Integer.valueOf(EQ), "EQ");
+		nt.put(Integer.valueOf(TAG_END), "TAG_END");
 		nt.put(Integer.valueOf(Node.DOCUMENT), "DOCUMENT");
 		nt.put(Integer.valueOf(Node.S), "S");
 		nt.put(Integer.valueOf(Node.NAME), "NAME");

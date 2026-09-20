@@ -1,23 +1,23 @@
 package com.hideakin.yanimu.xml.internal;
 
-import static com.hideakin.yanimu.xml.internal.Lexer.EOF;
+import static com.hideakin.yanimu.xml.Character.*;
 
 public class AnyReader implements Reader {
 
 	protected final byte[] _content;
-	protected final NodeFactory _nodeFactory;
+	protected final CodePointBuffer _buffer;
 	protected int _i; // index of the next byte to read
-	protected int _c; // current UNICODE codepoint
+	protected int _c; // current UNICODE code point
 
-	protected AnyReader(byte[] content, NodeFactory nodeFactory) {
+	protected AnyReader(byte[] content, CodePointBuffer buffer) {
 		_content = content;
-		_nodeFactory = nodeFactory;
+		_buffer = buffer;
 		_i = 0;
 		_c = Character.MAX_CODE_POINT + 1;
 	}
 
 	@Override
-	public int readChar() {
+	public int readCodePoint() {
 		return EOF;
 	}
 
@@ -25,13 +25,13 @@ public class AnyReader implements Reader {
 	public boolean next(int... cc) {
 		int i = _i;
 		int c = _c;
-		int j = _nodeFactory.getLength();
+		int j = _buffer.getLength();
 		int n = cc.length;
 		for (int k = 0; k < n; k++) {
-			if (readChar() != cc[k]) {
+			if (readCodePoint() != cc[k]) {
 				_i = i;
 				_c = c;
-				_nodeFactory.setLength(j);
+				_buffer.setLength(j);
 				return false;
 			}
 		}
@@ -43,12 +43,12 @@ public class AnyReader implements Reader {
 		boolean result = true;
 		int i = _i;
 		int c = _c;
-		int j = _nodeFactory.getLength();
+		int j = _buffer.getLength();
 		int n = cc.length;
-		for (int k = 0; k < n && (result = readChar() == cc[k]); k++) continue;
+		for (int k = 0; k < n && (result = readCodePoint() == cc[k]); k++) continue;
 		_i = i;
 		_c = c;
-		_nodeFactory.setLength(j);
+		_buffer.setLength(j);
 		return result;
 	}
 
@@ -57,8 +57,8 @@ public class AnyReader implements Reader {
 		return _c;
 	}
 
-	protected void storeChar(int c) {
-		_nodeFactory.push(c);
+	protected void storeCodePoint(int c) {
+		_buffer.append(c);
 	}
 
 }

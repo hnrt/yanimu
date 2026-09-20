@@ -10,7 +10,8 @@ import java.util.Map;
 
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.Node;
-import com.hideakin.yanimu.xml.internal.Lexer;
+
+import static com.hideakin.yanimu.xml.Character.*;
 
 public class PropertyManager extends LinkedHashMap<String, String> {
 
@@ -107,7 +108,7 @@ public class PropertyManager extends LinkedHashMap<String, String> {
 					buffer.append((char)'$');
 					continue;
 				}
-				if (Lexer.isNameStartChar(c)) {
+				if (isNameStartChar(c)) {
 					buffer2.setLength(0);
 					buffer2.append((char)c);
 					c = r.read();
@@ -115,7 +116,7 @@ public class PropertyManager extends LinkedHashMap<String, String> {
 					buffer.append("${");
 					continue;
 				}
-				while (Lexer.isNameChar(c)) {
+				while (isNameChar(c)) {
 					buffer2.append((char)c);
 					c = r.read();
 				}

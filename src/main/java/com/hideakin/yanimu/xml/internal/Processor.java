@@ -35,6 +35,7 @@ import com.hideakin.yanimu.xml.doctype.NotationType;
 import com.hideakin.yanimu.xml.ParameterEntityReference;
 
 import static com.hideakin.yanimu.xml.Node.*;
+import static com.hideakin.yanimu.xml.Character.*;
 
 import java.net.URI;
 import java.nio.file.Files;
@@ -1435,6 +1436,7 @@ public class Processor {
 				_lexer = _lexerStack.pop();
 				_n = _lexer.read(preferred);
 				if (sp && _n.type == S) {
+					// a successive whitespace is skipped as it never happens; the first one was already processed
 					if (_lexerStack.isEmpty()) {
 						store(_n);
 					}
@@ -1451,6 +1453,7 @@ public class Processor {
 					_lexer = new Lexer(value, _lexer);
 					_n = _lexer.read(preferred);
 					if (sp && _n.type == S) {
+						// a successive whitespace is skipped as it never happens; the first one was already processed
 						_n = _lexer.read(preferred);
 					}
 				} else if (_entityMap.get(EntityMap.peKey(per.name)) instanceof ExternalParameterEntityDefinition) {

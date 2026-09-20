@@ -1,29 +1,22 @@
 package com.hideakin.yanimu.xml.internal;
 
-import com.hideakin.yanimu.xml.Node;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-public class NodeFactory {
+public class CodePointBuffer {
 
 	private final StringBuilder _buffer = new StringBuilder();
 	private String _snapshot = null;
 
-	public NodeFactory() {
+	public CodePointBuffer() {
 	}
 
-	public Node nodeOf(int type) {
-		byte[] sequence = pop();
-		return Node.of(type, sequence);
-	}
-
-	public void push(int c) {
+	public void append(int c) {
 		_buffer.appendCodePoint(c);
 		_snapshot = null;
 	}
 
-	private byte[] pop() {
+	public byte[] getBytes() {
 		if (_snapshot == null) {
 			_snapshot = _buffer.toString();
 		}

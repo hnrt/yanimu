@@ -2,18 +2,10 @@ package com.hideakin.yanimu.xml;
 
 import java.nio.charset.StandardCharsets;
 
+import static com.hideakin.yanimu.xml.Character.*;
 import static com.hideakin.yanimu.xml.internal.DebugHelper.NODE_TYPES;
 
 public class Node {
-
-	public static final int EOF = -1;
-	public static final int NULL = 0;
-	public static final int HT = 9; // HORIZONTAL TABULATION
-	public static final int LF = 10; // LINE FEED
-	public static final int CR = 13; // CARRIAGE RETURN
-	private static final int SP = 32; // SPACE (private to avoid incorrect use)
-	public static final int EQ = 61;
-	public static final int TAG_END = 62;
 
 	// Character.MAX_CODE_POINT : 0x10FFFF = 1114111
 

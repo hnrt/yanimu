@@ -7,7 +7,8 @@ import com.hideakin.yanimu.xml.doctype.ExternalEntityDefinition;
 import com.hideakin.yanimu.xml.doctype.ExternalParameterEntityDefinition;
 import com.hideakin.yanimu.xml.doctype.InternalEntityDefinition;
 import com.hideakin.yanimu.xml.doctype.InternalParameterEntityDefinition;
-import com.hideakin.yanimu.xml.internal.Lexer;
+
+import static com.hideakin.yanimu.xml.Character.*;
 
 public class EntityMap extends HashMap<String, Object> {
 
@@ -101,24 +102,24 @@ public class EntityMap extends HashMap<String, Object> {
 						if (c == 'x') {
 							buffer.append((char)c);
 							c = reader.read();
-							if (Lexer.isHexadecimal(c)) {
+							if (isHexadecimal(c)) {
 								do {
 									d = d * 16 + (c < 'A' ? c - '0' : c < 'a' ? c - 'A' + 10 : c - 'a' + 10);
 									buffer.append((char)c);
 									c = reader.read();
-								} while (Lexer.isHexadecimal(c));
+								} while (isHexadecimal(c));
 								if (c == ';') {
 									buffer.append((char)c);
 									c = reader.read();
 									successful = true;
 								}
 							}
-						} else if (Lexer.isDigit(c)) {
+						} else if (isDigit(c)) {
 							do {
 								d = d * 10 + c - '0';
 								buffer.append((char)c);
 								c = reader.read();
-							} while (Lexer.isDigit(c));
+							} while (isDigit(c));
 							if (c == ';') {
 								buffer.append((char)c);
 								c = reader.read();
@@ -130,11 +131,11 @@ public class EntityMap extends HashMap<String, Object> {
 							buffer.appendCodePoint(d);
 							replaced++;
 						}
-					} else if (Lexer.isNameStartChar(c)) {
+					} else if (isNameStartChar(c)) {
 						int start = buffer.length();
 						buffer.append((char)c);
 						c = reader.read();
-						while (Lexer.isNameChar(c)) {
+						while (isNameChar(c)) {
 							buffer.append((char)c);
 							c = reader.read();
 						}

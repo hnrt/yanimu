@@ -3,7 +3,8 @@ package com.hideakin.yanimu.xml;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.hideakin.yanimu.xml.internal.Lexer;
+import static com.hideakin.yanimu.xml.Character.NULL;
+import static com.hideakin.yanimu.xml.Character.isWhiteSpace;
 
 public class Element extends NodeList {
 
@@ -420,7 +421,7 @@ public class Element extends NodeList {
 			String text = content.text();
 			for (int i = 0; i < text.length(); i++) {
 				int c = text.charAt(i);
-				if (Lexer.isWhiteSpace(c)) {
+				if (isWhiteSpace(c)) {
 					continue;
 				} else {
 					return false;

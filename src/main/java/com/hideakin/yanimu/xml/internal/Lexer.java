@@ -2,6 +2,7 @@ package com.hideakin.yanimu.xml.internal;
 
 import com.hideakin.yanimu.xml.Node;
 
+import static com.hideakin.yanimu.xml.Character.*;
 import static com.hideakin.yanimu.xml.Node.*;
 
 import java.nio.charset.StandardCharsets;
@@ -10,18 +11,7 @@ import java.util.Map;
 
 public class Lexer {
 
-	public static final int EOF = Node.EOF;
-	public static final int PREMATURE_EOF = Node.PREMATURE_EOF;
-	public static final int ILLEGAL_ENCODING = Node.ILLEGAL_ENCODING;
-
-	public static final int HT = 9;
-	public static final int LF = 10;
-	public static final int CR = 13;
-	public static final int SP = 32;
-
 	public static final Map<String, Integer> RESERVED_WORDS;
-
-	private static final ReaderFactory _readerFactory = new ReaderFactory();
 
 	static {
 		Map<String, Integer> rw = new HashMap<>();
@@ -53,9 +43,9 @@ public class Lexer {
 	}
 
 	private final LexerContext _context;
-	private final NodeFactory _nodeFactory;
+	private final CodePointBuffer _buffer;
 	private Reader _reader;
-	private int _c; // current UNICODE codepoint
+	private int _c; // current UNICODE code point
 
 	public Lexer(byte[] content) {
 		this(content, LexerContext.BASE);
@@ -63,15 +53,15 @@ public class Lexer {
 
 	public Lexer(byte[] content, int context) {
 		_context = LexerContext.of(context);
-		_nodeFactory = new NodeFactory();
-		_reader = _readerFactory.create(content, _nodeFactory);
+		_buffer = new CodePointBuffer();
+		_reader = ReaderFactory.create(content, _buffer);
 		readChar();
 	}
 
 	public Lexer(byte[] content, Lexer parent) {
 		_context = parent._context;
-		_nodeFactory = parent._nodeFactory;
-		_reader = _readerFactory.create(content, _nodeFactory);
+		_buffer = parent._buffer;
+		_reader = ReaderFactory.create(content, _buffer);
 		readChar();
 	}
 
@@ -1131,7 +1121,7 @@ public class Lexer {
 	}
 
 	private int readChar() {
-		_c = _reader.readChar();
+		_c = _reader.readCodePoint();
 		return _c;
 	}
 
@@ -1144,214 +1134,18 @@ public class Lexer {
 	}
 
 	private int lookup() {
-		return _nodeFactory.lookup(RESERVED_WORDS, -1);
+		return _buffer.lookup(RESERVED_WORDS, -1);
 	}
 
 	private Node nodeOf(int type) {
-		return _nodeFactory.nodeOf(type);
+		byte[] sequence = _buffer.getBytes();
+		return Node.of(type, sequence);
 	}
 
 	private Node nodeOf(String regex, int typeIfTrue, int typeOtherwise) {
-		return _nodeFactory.nodeOf(_nodeFactory.matches(regex) ? typeIfTrue : typeOtherwise);
-	}
-
-	public static boolean isWhiteSpace(int c) {
-		return c == SP || c == HT || c == LF || c == CR;
-	}
-
-	public static boolean isNameStartChar(int c) {
-		return isNameStartCharL(c) || isNameStartCharH(c);
-	}
-
-	private static boolean isNameStartCharL(int c) {
-		return isAlphabetic(c)
-				|| c == ':'
-				|| c == '_';
-	}
-
-	private static boolean isNameStartCharH(int c) {
-		return (0xC0 <= c && c <= 0xD6)
-				|| (0xD8 <= c && c <= 0xF6)
-				|| (0xF8 <= c && c <= 0x2FF)
-				|| (0x370 <= c && c <= 0x37D)
-				|| (0x37F <= c && c <= 0x1FFF)
-				|| (0x200C <= c && c <= 0x200D)
-				|| (0x2070 <= c && c <= 0x218F)
-				|| (0x2C00 <= c && c <= 0x2FEF)
-				|| (0x3001 <= c && c <= 0xD7FF)
-				|| (0xF900 <= c && c <= 0xFDCF)
-				|| (0xFDF0 <= c && c <= 0xFFFD)
-				|| (0x10000 <= c && c <= 0xEFFFF);
-	}
-
-	public static boolean isNameChar(int c) {
-		return isNameStartCharL(c)
-				|| isDigit(c)
-				|| c == '-'
-				|| c == '.'
-				|| c == 0xB7
-				|| (0x0300 <= c && c <= 0x036F)
-				|| (0x203F <= c && c <= 0x2040)
-				|| isNameStartCharH(c);
-	}
-
-	public static boolean isChar(int c) {
-		return c == HT
-				|| c == LF
-				|| c == CR
-				|| (0x20 <= c && c <= 0xD7FF)
-				|| (0xE000 <= c && c <= 0xFFFD)
-				|| (0x10000 <= c && c <= 0x10FFFF);
-	}
-
-	public static boolean isPubidChar(int c) {
-		switch (c) {
-		case SP:
-		case CR:
-		case LF:
-		case '-':
-		case '\'':
-		case '(':
-		case ')':
-		case '+':
-		case ',':
-		case '.':
-		case '/':
-		case ':':
-		case '=':
-		case '?':
-		case ';':
-		case '!':
-		case '*':
-		case '#':
-		case '@':
-		case '$':
-		case '_':
-		case '%':
-			return true;
-		default:
-			return isAlphabetic(c) || isDigit(c);
-		}
-	}
-
-	public static boolean isAlphabetic(int c) {
-		return isAlphabeticUppercase(c) || isAlphabeticLowercase(c);
-	}
-
-	public static boolean isAlphabeticUppercase(int c) {
-		switch (c) {
-		case 'A':
-		case 'B':
-		case 'C':
-		case 'D':
-		case 'E':
-		case 'F':
-		case 'G':
-		case 'H':
-		case 'I':
-		case 'J':
-		case 'K':
-		case 'L':
-		case 'M':
-		case 'N':
-		case 'O':
-		case 'P':
-		case 'Q':
-		case 'R':
-		case 'S':
-		case 'T':
-		case 'U':
-		case 'V':
-		case 'W':
-		case 'X':
-		case 'Y':
-		case 'Z':
-			return true;
-		default:
-			return false;
-		}
-	}
-
-	public static boolean isAlphabeticLowercase(int c) {
-		switch (c) {
-		case 'a':
-		case 'b':
-		case 'c':
-		case 'd':
-		case 'e':
-		case 'f':
-		case 'g':
-		case 'h':
-		case 'i':
-		case 'j':
-		case 'k':
-		case 'l':
-		case 'm':
-		case 'n':
-		case 'o':
-		case 'p':
-		case 'q':
-		case 'r':
-		case 's':
-		case 't':
-		case 'u':
-		case 'v':
-		case 'w':
-		case 'x':
-		case 'y':
-		case 'z':
-			return true;
-		default:
-			return false;
-		}
-	}
-
-	public static boolean isDigit(int c) {
-		switch (c) {
-		case '0':
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-			return true;
-		default:
-			return false;
-		}
-	}
-
-	public static boolean isHexadecimal(int c) {
-		switch (c) {
-		case '0':
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-		case 'A':
-		case 'B':
-		case 'C':
-		case 'D':
-		case 'E':
-		case 'F':
-		case 'a':
-		case 'b':
-		case 'c':
-		case 'd':
-		case 'e':
-		case 'f':
-			return true;
-		default:
-			return false;
-		}
+		int type = _buffer.matches(regex) ? typeIfTrue : typeOtherwise;
+		byte[] sequence = _buffer.getBytes();
+		return Node.of(type, sequence);
 	}
 
 }

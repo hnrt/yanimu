@@ -1,13 +1,12 @@
 package com.hideakin.yanimu.xml.internal;
 
-import static com.hideakin.yanimu.xml.Node.EOF;
-import static com.hideakin.yanimu.xml.Node.PREMATURE_EOF;
-import static com.hideakin.yanimu.xml.Node.ILLEGAL_ENCODING;
+import static com.hideakin.yanimu.xml.Character.*;
+import static com.hideakin.yanimu.xml.Node.*;
 
 public class UTF16LEReader extends AnyReader {
 
-	public UTF16LEReader(byte[] content, NodeFactory nodeFactory) {
-		super(content, nodeFactory);
+	public UTF16LEReader(byte[] content, CodePointBuffer buffer) {
+		super(content, buffer);
 		if (2 <= content.length && content[0] == -1 && content[1] == -2) {
 			// FF FE (BOM)
 			_i = 2;
@@ -15,9 +14,9 @@ public class UTF16LEReader extends AnyReader {
 	}
 
 	@Override
-	public int readChar() {
+	public int readCodePoint() {
 		if (Character.MIN_CODE_POINT <= _c && _c <= Character.MAX_CODE_POINT) {
-			storeChar(_c);
+			storeCodePoint(_c);
 		}
 		int w1 = readWord();
 		if (w1 < Character.MIN_HIGH_SURROGATE) {

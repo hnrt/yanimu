@@ -2,6 +2,8 @@ package com.hideakin.yanimu.xml;
 
 import java.util.List;
 
+import static com.hideakin.yanimu.xml.Character.*;
+
 public class XmlDeclaration extends NodeList {
 
 	public static final String DEFAULT_VERSION = "1.0";

@@ -4,6 +4,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.hideakin.yanimu.xml.Character.*;
+
 public class StartTag extends Tag {
 
 	public static StartTag of(String name) {
