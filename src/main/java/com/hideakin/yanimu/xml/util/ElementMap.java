@@ -1,23 +1,24 @@
-package com.hideakin.yanimu.maven;
+package com.hideakin.yanimu.xml.util;
 
 import java.util.LinkedHashMap;
 
 import com.hideakin.yanimu.xml.Element;
 
-public class PomMap extends LinkedHashMap<String, Element> {
+public class ElementMap extends LinkedHashMap<String, Element> {
 
 	private static final long serialVersionUID = -5825270790321631347L;
 
-	private final Element _element;
+	protected final Element _element;
 
-	protected PomMap(String tagName) {
+	protected ElementMap(String tagName) {
 		super();
 		_element = new Element(tagName);
 	}
 
-	protected PomMap(Element element) {
+	protected ElementMap(Element element) {
 		super();
 		_element = element;
+		initialize();
 	}
 
 	protected void initialize() {
@@ -44,35 +45,45 @@ public class PomMap extends LinkedHashMap<String, Element> {
 		return _element;
 	}
 
-	protected String getString(String key, String defaultValue) {
+	protected String getString(String key, String fallback) {
 		Element child = super.get(key);
-		return child != null ? child.innerText() : defaultValue;
+		return child != null ? child.innerText() : fallback;
 	}
 
 	protected void setString(String key, String value) {
 		Element child = super.get(key);
 		if (child != null) {
-			child.setInnerText(value);
-		} else {
+			if (value != null) {
+				child.setInnerText(value);
+			} else {
+				super.remove(key);
+				_element.remove(child);
+			}
+		} else if (value != null) {
 			child = new Element(key, value);
 			super.put(key, child);
 			_element.add(child);
 		}
 	}
 
-	protected Boolean getBoolean(String key, Boolean defaultValue) {
+	protected Boolean getBoolean(String key, Boolean fallback) {
 		Element child = super.get(key);
 		String value = child != null ? child.innerText() : null;
 		return "true".equals(value) ? Boolean.valueOf(true) :
 			"false".equals(value) ? Boolean.valueOf(false) :
-			defaultValue;
+			fallback;
 	}
 
-	protected void setBoolean(String key, boolean value) {
+	protected void setBoolean(String key, Boolean value) {
 		Element child = super.get(key);
 		if (child != null) {
-			child.setInnerText(value ? "true" : "false");
-		} else {
+			if (value != null) {
+				child.setInnerText(value ? "true" : "false");
+			} else {
+				super.remove(key);
+				_element.remove(child);
+			}
+		} else if (value != null) {
 			child = new Element(key, value ? "true" : "false");
 			super.put(key, child);
 			_element.add(child);

@@ -1,8 +1,9 @@
 package com.hideakin.yanimu.maven;
 
 import com.hideakin.yanimu.xml.Element;
+import com.hideakin.yanimu.xml.util.ElementMap;
 
-public class SimpleArtifact extends PomMap implements Artifact {
+public class SimpleArtifact extends ElementMap implements Artifact {
 
 	private static final long serialVersionUID = 2059870372450308123L;
 
@@ -16,7 +17,6 @@ public class SimpleArtifact extends PomMap implements Artifact {
 
 	protected SimpleArtifact(Element element) {
 		super(element);
-		super.initialize();
 	}
 
 	@Override

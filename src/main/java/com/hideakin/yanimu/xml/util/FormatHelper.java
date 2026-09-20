@@ -158,4 +158,22 @@ public class FormatHelper {
 		return sequence;
 	}
 
+	/**
+	 * Converts the specified text into a value of boolean.
+	 * @param text to be converted
+	 * @param fallback a return value on error
+	 * @return a value of boolean converted from the text
+	 */
+	public static boolean toBoolean(String text, boolean fallback) {
+		if (text == null) {
+			return fallback;
+		} else if ("true".equals(text)) {
+			return true;
+		} else if ("false".equals(text)) {
+			return false;
+		} else {
+			return fallback;
+		}
+	}
+
 }

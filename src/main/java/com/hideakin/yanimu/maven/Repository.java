@@ -1,8 +1,9 @@
 package com.hideakin.yanimu.maven;
 
 import com.hideakin.yanimu.xml.Element;
+import com.hideakin.yanimu.xml.util.ElementMap;
 
-public class Repository extends PomMap {
+public class Repository extends ElementMap {
 
 	private static final long serialVersionUID = 5935771515093326870L;
 
@@ -12,7 +13,6 @@ public class Repository extends PomMap {
 
 	public Repository(Element element) {
 		super(element);
-		super.initialize();
 	}
 
 	public String name() {

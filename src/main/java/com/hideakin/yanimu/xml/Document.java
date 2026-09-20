@@ -228,6 +228,10 @@ public class Document extends NodeList {
 				_dtd = dtd;
 			}
 		}
+		onLoaded();
+	}
+
+	protected void onLoaded() {
 	}
 
 	public void save() throws Exception {

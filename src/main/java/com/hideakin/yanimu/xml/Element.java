@@ -448,6 +448,21 @@ public class Element extends NodeList {
 	}
 
 	/**
+	 * This method returns the inner text string of this element.
+	 * @param fallback the return value on error
+	 * @return Inner text string of this element
+	 */
+	public String innerText(String fallback) {
+		if (_nodeList.size() > 1) {
+			Content content = (Content)_nodeList.get(1);
+			String text = content.text();
+			return text.length() > 0 ? text : fallback;
+		} else {
+			return fallback;
+		}
+	}
+
+	/**
 	 * This method sets the given string to the inner text string of this element.
 	 * @param value to be set
 	 */

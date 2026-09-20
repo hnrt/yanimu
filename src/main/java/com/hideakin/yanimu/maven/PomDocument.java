@@ -121,44 +121,8 @@ public class PomDocument extends Document implements Artifact {
 	}
 
 	@Override
-	public void load() throws Exception {
-		super.load();
-		initialize();
-	}
-
-	@Override
-	public void load(ParseResult result) throws Exception {
-		super.load(result);
-		initialize();
-	}
-
-	@Override
-	public void load(InputStream in) throws Exception {
-		super.load(in);
-		initialize();
-	}
-
-	@Override
-	public void load(InputStream in, ParseResult result) throws Exception {
-		super.load(in, result);
-		initialize();
-	}
-
-	@Override
-	public void load(byte[] content) throws Exception {
-		super.load(content);
-		initialize();
-	}
-
-	@Override
-	public void load(byte[] content, ParseResult result) throws Exception {
-		super.load(content, result);
-		initialize();
-	}
-
-	private void initialize() {
-		Element root = super.root();
-		if (root == null) {
+	protected void onLoaded() {
+		if (_root == null) {
 			return;
 		}
 		Map<String, Consumer<Element>> map = new HashMap<>();
@@ -166,19 +130,19 @@ public class PomDocument extends Document implements Artifact {
 		map.put("groupId", e -> _groupId = e.innerText());
 		map.put("artifactId", e -> _artifactId = e.innerText());
 		map.put("version", e -> _version = e.innerText());
-		for (Element e : root.getElements("/*")) {
+		for (Element e : _root.getElements("/*")) {
 			Consumer<Element> c = map.get(e.name);
 			if (c != null) {
 				c.accept(e);
 			}
 		}
-		_propertyManager.load(root, super.path());
-		_repositories.load(root.getElement("/repositories"), root.getElements("/repositories/repository"));
-		_pluginRepositories.load(root.getElement("/pluginRepositories"), root.getElements("/pluginRepositories/pluginRepository"));
-		_pluginManagement.load(super._root.getElement("/build/pluginManagement/plugins"), _propertyManager);
-		_plugins.load(super._root.getElement("/build/plugins"), _propertyManager);
-		_dependencyManagement.load(root.getElement("/dependencyManagement/dependencies"), _repositories, _propertyManager);
-		_dependencies.load(root.getElement("/dependencies"), _propertyManager);
+		_propertyManager.load(_root, super.path());
+		_repositories.load(_root.getElement("/repositories"), _root.getElements("/repositories/repository"));
+		_pluginRepositories.load(_root.getElement("/pluginRepositories"), _root.getElements("/pluginRepositories/pluginRepository"));
+		_pluginManagement.load(_root.getElement("/build/pluginManagement/plugins"), _propertyManager);
+		_plugins.load(_root.getElement("/build/plugins"), _propertyManager);
+		_dependencyManagement.load(_root.getElement("/dependencyManagement/dependencies"), _repositories, _propertyManager);
+		_dependencies.load(_root.getElement("/dependencies"), _propertyManager);
 	}
 
 	public void load(RepositoryCollection repositories) throws Exception {

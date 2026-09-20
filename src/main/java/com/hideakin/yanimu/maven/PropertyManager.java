@@ -17,38 +17,44 @@ public class PropertyManager extends LinkedHashMap<String, String> {
 
 	private static final long serialVersionUID = 3445726735357959153L;
 
-	private Element _root;
+	private Element _parent;
 	private Element _properties;
 
 	public PropertyManager() {
 		super();
 	}
 
-	public void load(Element root, Path path) {
-		_root = root;
+	public void load(Element parent) {
+		load(parent, Path.of(""));
+	}
+
+	public void load(Element parent, Path path) {
+		_parent = parent;
 		super.clear();
-		super.put("project.packaging", "jar");
-		super.put("project.basedir", path.toAbsolutePath().getParent().toString());
-		super.put("project.build.directory", "target/");
-		super.put("project.build.outputDirectory", "target/classes");
-		super.put("project.build.testOutputDirectory", "target/test-classes");
-		super.put("project.build.sourceDirectory", "src/main/java");
-		super.put("project.build.testSourceDirectory", "src/test/java");
-		super.put("project.build.resources", "src/main/resources");
-		super.put("project.build.testResources", "src/test/resources");
-		super.put("project.build.finalName", "${project.artifactId}-${project.version}");
-		super.put("settings.localRepository", "${user.home}/.m2/repository");
-		//super.put("maven.version", "0.0.0");
-		//super.put("settings.interactiveMode", "true");
-		//super.put("settings.offline", "false");
-		for (Node child : root.children()) {
-			if (child instanceof Element childElement) {
-				if (!childElement.hasElement()) {
-					super.put(root.name + "." + childElement.name, childElement.innerText());
+		if ("project".equals(parent.name)) {
+			super.put("project.packaging", "jar");
+			super.put("project.basedir", path.toAbsolutePath().getParent().toString());
+			super.put("project.build.directory", "target/");
+			super.put("project.build.outputDirectory", "target/classes");
+			super.put("project.build.testOutputDirectory", "target/test-classes");
+			super.put("project.build.sourceDirectory", "src/main/java");
+			super.put("project.build.testSourceDirectory", "src/test/java");
+			super.put("project.build.resources", "src/main/resources");
+			super.put("project.build.testResources", "src/test/resources");
+			super.put("project.build.finalName", "${project.artifactId}-${project.version}");
+			super.put("settings.localRepository", "${user.home}/.m2/repository");
+			//super.put("maven.version", "0.0.0");
+			//super.put("settings.interactiveMode", "true");
+			//super.put("settings.offline", "false");
+			for (Node child : parent.children()) {
+				if (child instanceof Element childElement) {
+					if (!childElement.hasElement()) {
+						super.put(parent.name + "." + childElement.name, childElement.innerText());
+					}
 				}
 			}
 		}
-		_properties = root.getElement("/properties");
+		_properties = parent.getElement("/properties");
 		if (_properties != null) {
 			for (Element element : _properties.getElements("/*")) {
 				super.put(element.name, element.innerText());
@@ -78,7 +84,7 @@ public class PropertyManager extends LinkedHashMap<String, String> {
 		} else {
 			Element element = new Element(key, value);
 			_properties = new Element("properties");
-			_root.add(_properties);
+			_parent.add(_properties);
 			_properties.add(element);
 		}
 		return old;

@@ -1,4 +1,4 @@
-package com.hideakin.yanimu.maven;
+package com.hideakin.yanimu.maven.settings;
 
 import java.util.LinkedHashMap;
 import java.util.function.Function;
@@ -6,13 +6,13 @@ import java.util.function.Function;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.Node;
 
-public class ArtifactCollection<T extends SimpleArtifact> extends LinkedHashMap<String, T> {
+public class SettingCollection<T extends SimpleSetting> extends LinkedHashMap<String, T> {
 
-	private static final long serialVersionUID = -6223550311914671971L;
+	private static final long serialVersionUID = 1184146726733155804L;
 
 	protected Element _element;
 
-	protected ArtifactCollection() {
+	protected SettingCollection() {
 		super();
 	}
 
@@ -20,44 +20,41 @@ public class ArtifactCollection<T extends SimpleArtifact> extends LinkedHashMap<
 		return _element;
 	}
 
-	public void load(Element element, String name, PropertyManager propertyManager, Function<Element, T> creator) {
+	public void load(Element element, String name, Function<Element, T> creator) {
 		super.clear();
 		_element = element;
 		if (_element != null) {
 			String pattern = "/" + name;
 			for (Element child : _element.getElements(pattern)) {
-				T artifact = creator.apply(child);
-				String key = propertyManager.translate(artifact.ga());
-				if (super.containsKey(key)) {
-					continue;
+				T setting = creator.apply(child);
+				if (setting.id() != null && !super.containsKey(setting.id())) {
+					super.put(setting.id(), setting);
 				}
-				super.put(key, artifact); 
 			}
 		}
 	}
 
-	public T get(String groupId, String artifactId) {
-		String key = SimpleArtifact.ga(groupId, artifactId);
-		return super.get(key);
+	public T put(T setting) {
+		return this.put(setting.id(), setting);
 	}
 
 	@Override
-	public T put(String key, T artifact) {
+	public T put(String key, T setting) {
 		if (key != null) {
-			T existing = super.put(key, artifact);
+			T existing = super.put(key, setting);
 			if (existing != null) {
 				for (int i = 0; i < _element.childCount(); i++) {
 					Node child = _element.child(i);
 					if (child.type == Node.ELEMENT && (Element)child == existing.element()) {
 						_element.remove(i);
-						_element.add(i, artifact.element());
+						_element.add(i, setting.element());
 						return existing;
 					}
 				}
 				//NEVER REACH HERE BUT PASS THROUGH JUST IN CASE
 			}
 		}
-		_element.add(artifact.element());
+		_element.add(setting.element());
 		return null;
 	}
 
