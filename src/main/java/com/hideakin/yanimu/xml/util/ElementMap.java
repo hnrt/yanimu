@@ -90,4 +90,34 @@ public class ElementMap extends LinkedHashMap<String, Element> {
 		}
 	}
 
+	protected Integer getInteger(String key, Integer fallback) {
+		Element child = super.get(key);
+		if (child != null) {
+			try {
+				int value = Integer.parseInt(child.innerText());
+				return Integer.valueOf(value);
+			} catch (NumberFormatException e) {
+				return fallback;
+			}
+		} else {
+			return fallback;
+		}
+	}
+
+	protected void setInteger(String key, Integer value) {
+		Element child = super.get(key);
+		if (child != null) {
+			if (value != null) {
+				child.setInnerText(value.toString());
+			} else {
+				super.remove(key);
+				_element.remove(child);
+			}
+		} else if (value != null) {
+			child = new Element(key, value.toString());
+			super.put(key, child);
+			_element.add(child);
+		}
+	}
+
 }

@@ -15,13 +15,15 @@ public class SettingsDocument extends Document {
 	public static final Path GLOBAL_PATH = Path.of(MavenHelper.getMavenHome("maven"), "conf", "settings.xml");
 	public static final Path USER_PATH = Path.of(System.getProperty("user.home"), ".m2", "settings.xml");
 
+	public static final String DEFAULT_LOCAL_REPOSITORY = "${user.home}/.m2/repository";
+
 	public static SettingsDocument of(Path path) {
 		return new SettingsDocument(path);
 	}
 
-	private String _localRepository;
-	private boolean _interactiveMode;
-	private boolean _offline;
+	private String _localRepository = DEFAULT_LOCAL_REPOSITORY;
+	private boolean _interactiveMode = true;
+	private boolean _offline = false;
 	private final List<String> _pluginGroups = new ArrayList<>();
 	private final ServerCollection _servers = new ServerCollection();
 	private final MirrorCollection _mirrors = new MirrorCollection();
@@ -74,9 +76,25 @@ public class SettingsDocument extends Document {
 		if (_root == null) {
 			return;
 		}
-		_localRepository = _root.getElement("/localRepository").innerText(Path.of(System.getProperty("user.home"), ".m2", "repository").toString());
-		_interactiveMode = FormatHelper.toBoolean(_root.getElement("/interactiveMode").innerText("true"), true);
-		_offline = FormatHelper.toBoolean(_root.getElement("/offline").innerText("false"), false);
+		Element e;
+		e = _root.getElement("/localRepository");
+		if (e != null) {
+			_localRepository = e.innerText(DEFAULT_LOCAL_REPOSITORY);
+		} else {
+			_localRepository = DEFAULT_LOCAL_REPOSITORY;
+		}
+		e = _root.getElement("/interactiveMode");
+		if (e != null) {
+			_interactiveMode = FormatHelper.toBoolean(e.innerText("true"), true);
+		} else {
+			_interactiveMode = true;
+		}
+		e = _root.getElement("/offline");
+		if (e != null) {
+			_offline = FormatHelper.toBoolean(e.innerText("false"), false);
+		} else {
+			_offline = false;
+		}
 		for (Element element : _root.getElements("/pluginGroups/pluginGroup")) {
 			String g = element.innerText();
 			if (g != null) {

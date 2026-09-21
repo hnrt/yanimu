@@ -34,8 +34,8 @@ public class Proxy extends SimpleSetting {
 		return getString("host", null);
 	}
 
-	public String port() {
-		return getString("port", null);
+	public Integer port() {
+		return getInteger("port", null);
 	}
 
 	public String username() {
@@ -62,8 +62,8 @@ public class Proxy extends SimpleSetting {
 		setString("host", value);
 	}
 
-	public void setPort(String value) {
-		setString("port", value);
+	public void setPort(Integer value) {
+		setInteger("port", value);
 	}
 
 	public void setUsername(String value) {

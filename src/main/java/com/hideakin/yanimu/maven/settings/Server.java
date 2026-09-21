@@ -34,6 +34,10 @@ public class Server extends SimpleSetting {
 		return getString("privateKey", null);
 	}
 
+	public String passphrase() {
+		return getString("passphrase", null);
+	}
+
 	public String filePermissions() {
 		return getString("filePermissions", null);
 	}
@@ -52,6 +56,10 @@ public class Server extends SimpleSetting {
 
 	public void setPrivateKey(String value) {
 		setString("privateKey", value);
+	}
+
+	public void setPassphrase(String value) {
+		setString("passphrase", value);
 	}
 
 	public void setFilePermissions(String value) {
