@@ -3,7 +3,6 @@ package com.hideakin.yanimu.xml;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.hideakin.yanimu.xml.Character.NULL;
 import static com.hideakin.yanimu.xml.Character.isWhiteSpace;
 
 public class Element extends NodeList {

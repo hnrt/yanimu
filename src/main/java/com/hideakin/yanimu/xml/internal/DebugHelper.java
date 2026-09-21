@@ -19,7 +19,7 @@ public class DebugHelper {
 	static {
 		Map<Integer, String> nt = new HashMap<>();
 		nt.put(Integer.valueOf(EOF), "EOF");
-		nt.put(Integer.valueOf(NULL), "NULL");
+		nt.put(Integer.valueOf(Node.NULL), "NULL");
 		nt.put(Integer.valueOf(EQ), "EQ");
 		nt.put(Integer.valueOf(TAG_END), "TAG_END");
 		nt.put(Integer.valueOf(Node.DOCUMENT), "DOCUMENT");

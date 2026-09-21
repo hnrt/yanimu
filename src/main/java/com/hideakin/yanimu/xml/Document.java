@@ -12,8 +12,6 @@ import java.util.UUID;
 import com.hideakin.yanimu.xml.doctype.DocumentTypeDeclaration;
 import com.hideakin.yanimu.xml.internal.Processor;
 
-import static com.hideakin.yanimu.xml.Character.NULL;
-
 public class Document extends NodeList {
 
 	protected Path _path;

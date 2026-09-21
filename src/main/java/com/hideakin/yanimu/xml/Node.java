@@ -7,6 +7,8 @@ import static com.hideakin.yanimu.xml.internal.DebugHelper.NODE_TYPES;
 
 public class Node {
 
+	public static final int NULL = 0;
+
 	// Character.MAX_CODE_POINT : 0x10FFFF = 1114111
 
 	public static final int DOCUMENT = 2000100;

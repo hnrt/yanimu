@@ -3,7 +3,6 @@ package com.hideakin.yanimu.xml;
 public class Character {
 
 	public static final int EOF = -1;
-	public static final int NULL = 0;
 	public static final int HT = 9; // HORIZONTAL TABULATION
 	public static final int LF = 10; // LINE FEED
 	public static final int CR = 13; // CARRIAGE RETURN

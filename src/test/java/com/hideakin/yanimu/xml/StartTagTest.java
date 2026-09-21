@@ -3,7 +3,6 @@ package com.hideakin.yanimu.xml;
 import static com.hideakin.yanimu.util.TestHelper.finish;
 import static com.hideakin.yanimu.util.TestHelper.print;
 import static com.hideakin.yanimu.util.TestHelper.start;
-import static com.hideakin.yanimu.xml.Character.NULL;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -465,7 +464,7 @@ public class StartTagTest {
 			Node node = st.removeAttribute(2);
 			print("AFTER   %s", st.toDebuggingString());
 			print("REMOVED %s", node.toDebuggingString());
-			assertEquals(NULL, node.type);
+			assertEquals(Node.NULL, node.type);
 			assertEquals("<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"/>", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -520,7 +519,7 @@ public class StartTagTest {
 			Node node = st.removeAttribute("xyz");
 			print("AFTER   %s", st.toDebuggingString());
 			print("REMOVED %s", node.toDebuggingString());
-			assertEquals(NULL, node.type);
+			assertEquals(Node.NULL, node.type);
 			assertEquals("<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"/>", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
