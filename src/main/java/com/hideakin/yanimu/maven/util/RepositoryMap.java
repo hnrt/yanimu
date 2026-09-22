@@ -1,17 +1,17 @@
-package com.hideakin.yanimu.maven;
+package com.hideakin.yanimu.maven.util;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.hideakin.yanimu.xml.Element;
 
-public class RepositoryCollection extends LinkedHashMap<String, Repository> {
+public class RepositoryMap extends LinkedHashMap<String, Repository> {
 
-	private static final long serialVersionUID = -5121318124641504158L;
+	private static final long serialVersionUID = 3246679621341023499L;
 
 	private Element _element;
 
-	public RepositoryCollection() {
+	public RepositoryMap() {
 		super();
 	}
 

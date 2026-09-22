@@ -1,10 +1,10 @@
-package com.hideakin.yanimu.maven.settings;
+package com.hideakin.yanimu.maven.settings.util;
 
 import com.hideakin.yanimu.xml.Element;
 
 public class Server extends SimpleSetting {
 
-	private static final long serialVersionUID = 4462833099566632042L;
+	private static final long serialVersionUID = -9171778413574774310L;
 
 	public static Server of() {
 		return new Server();

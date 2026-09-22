@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
+import com.hideakin.yanimu.maven.util.Dependency;
 import com.hideakin.yanimu.model.SemanticVersion;
 import com.hideakin.yanimu.xml.Node;
 

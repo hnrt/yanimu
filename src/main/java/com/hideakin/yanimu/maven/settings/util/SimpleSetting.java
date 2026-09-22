@@ -1,11 +1,11 @@
-package com.hideakin.yanimu.maven.settings;
+package com.hideakin.yanimu.maven.settings.util;
 
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.util.ElementMap;
 
 public class SimpleSetting extends ElementMap {
 
-	private static final long serialVersionUID = 8553744112686815293L;
+	private static final long serialVersionUID = -6776173812698013537L;
 
 	protected SimpleSetting(String tagName) {
 		super(tagName);

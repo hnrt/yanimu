@@ -1,4 +1,4 @@
-package com.hideakin.yanimu.maven;
+package com.hideakin.yanimu.maven.util;
 
 public class Property {
 

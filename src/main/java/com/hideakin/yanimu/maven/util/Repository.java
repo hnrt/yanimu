@@ -1,11 +1,11 @@
-package com.hideakin.yanimu.maven;
+package com.hideakin.yanimu.maven.util;
 
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.util.ElementMap;
 
 public class Repository extends ElementMap {
 
-	private static final long serialVersionUID = 5935771515093326870L;
+	private static final long serialVersionUID = 8725704003604242762L;
 
 	public Repository() {
 		super("repository");

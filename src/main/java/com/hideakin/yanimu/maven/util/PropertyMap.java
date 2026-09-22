@@ -1,4 +1,4 @@
-package com.hideakin.yanimu.maven;
+package com.hideakin.yanimu.maven.util;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -8,61 +8,64 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.hideakin.yanimu.xml.Document;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.Node;
 
 import static com.hideakin.yanimu.xml.Character.*;
 
-public class PropertyManager extends LinkedHashMap<String, String> {
+public class PropertyMap extends LinkedHashMap<String, String> {
 
-	private static final long serialVersionUID = 3445726735357959153L;
+	private static final long serialVersionUID = 4507031764576908115L;
 
-	private Element _parent;
 	private Element _properties;
 
-	public PropertyManager() {
+	public PropertyMap() {
 		super();
 	}
 
-	public void load(Element parent) {
-		load(parent, Path.of(""));
-	}
-
-	public void load(Element parent, Path path) {
-		_parent = parent;
+	public void load(Element properties) {
 		super.clear();
-		if ("project".equals(parent.name)) {
-			super.put("project.packaging", "jar");
-			super.put("project.basedir", path.toAbsolutePath().getParent().toString());
-			super.put("project.build.directory", "target/");
-			super.put("project.build.outputDirectory", "target/classes");
-			super.put("project.build.testOutputDirectory", "target/test-classes");
-			super.put("project.build.sourceDirectory", "src/main/java");
-			super.put("project.build.testSourceDirectory", "src/test/java");
-			super.put("project.build.resources", "src/main/resources");
-			super.put("project.build.testResources", "src/test/resources");
-			super.put("project.build.finalName", "${project.artifactId}-${project.version}");
-			super.put("settings.localRepository", "${user.home}/.m2/repository");
-			//super.put("maven.version", "0.0.0");
-			//super.put("settings.interactiveMode", "true");
-			//super.put("settings.offline", "false");
-			for (Node child : parent.children()) {
-				if (child instanceof Element childElement) {
-					if (!childElement.hasElement()) {
-						super.put(parent.name + "." + childElement.name, childElement.innerText());
+		_properties = properties;
+		if (_properties != null) {
+			Element parent = _properties.parent(); 
+			if (parent != null && "project".equals(parent.name)) {
+				super.put("project.packaging", "jar");
+				Document document = _properties.document();
+				if (document != null) {
+					Path path = document.path();
+					if (path != null) {
+						String basedir =  path.toAbsolutePath().getParent().toString();
+						super.put("project.basedir", basedir);
+					}
+				}
+				super.put("project.build.directory", "target/");
+				super.put("project.build.outputDirectory", "target/classes");
+				super.put("project.build.testOutputDirectory", "target/test-classes");
+				super.put("project.build.sourceDirectory", "src/main/java");
+				super.put("project.build.testSourceDirectory", "src/test/java");
+				super.put("project.build.resources", "src/main/resources");
+				super.put("project.build.testResources", "src/test/resources");
+				super.put("project.build.finalName", "${project.artifactId}-${project.version}");
+				super.put("settings.localRepository", "${user.home}/.m2/repository");
+				//super.put("maven.version", "0.0.0");
+				//super.put("settings.interactiveMode", "true");
+				//super.put("settings.offline", "false");
+				for (Node child : parent.children()) {
+					if (child instanceof Element childElement) {
+						if (!childElement.hasElement()) {
+							super.put(parent.name + "." + childElement.name, childElement.innerText());
+						}
 					}
 				}
 			}
-		}
-		_properties = parent.getElement("/properties");
-		if (_properties != null) {
 			for (Element element : _properties.getElements("/*")) {
 				super.put(element.name, element.innerText());
 			}
 		}
 	}
 
-	public List<Property> getList() {
+	public List<Property> list() {
 		List<Property> list = new ArrayList<>();
 		for (Map.Entry<String, String> entry : super.entrySet()) {
 			list.add(new Property(entry.getKey(), entry.getValue()));
@@ -84,7 +87,6 @@ public class PropertyManager extends LinkedHashMap<String, String> {
 		} else {
 			Element element = new Element(key, value);
 			_properties = new Element("properties");
-			_parent.add(_properties);
 			_properties.add(element);
 		}
 		return old;

@@ -1,10 +1,10 @@
-package com.hideakin.yanimu.maven.settings;
+package com.hideakin.yanimu.maven.settings.util;
 
 import com.hideakin.yanimu.xml.Element;
 
 public class Proxy extends SimpleSetting {
 
-	private static final long serialVersionUID = -3650691622879500029L;
+	private static final long serialVersionUID = 3722021328886169135L;
 
 	public static Proxy of() {
 		return new Proxy();

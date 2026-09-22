@@ -4,8 +4,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.hideakin.yanimu.maven.MavenHelper;
-import com.hideakin.yanimu.maven.PropertyManager;
+import com.hideakin.yanimu.maven.settings.util.MirrorMap;
+import com.hideakin.yanimu.maven.settings.util.ProfileMap;
+import com.hideakin.yanimu.maven.settings.util.ProxyMap;
+import com.hideakin.yanimu.maven.settings.util.ServerMap;
+import com.hideakin.yanimu.maven.util.MavenHelper;
 import com.hideakin.yanimu.xml.Document;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.util.FormatHelper;
@@ -25,10 +28,10 @@ public class SettingsDocument extends Document {
 	private boolean _interactiveMode = true;
 	private boolean _offline = false;
 	private final List<String> _pluginGroups = new ArrayList<>();
-	private final ServerCollection _servers = new ServerCollection();
-	private final MirrorCollection _mirrors = new MirrorCollection();
-	private final ProxyCollection _proxies = new ProxyCollection();
-	private final ProfileCollection _profiles = new ProfileCollection();
+	private final ServerMap _servers = new ServerMap();
+	private final MirrorMap _mirrors = new MirrorMap();
+	private final ProxyMap _proxies = new ProxyMap();
+	private final ProfileMap _profiles = new ProfileMap();
 	private final List<String> _activeProfiles = new ArrayList<>();
 	
 	private SettingsDocument(Path path) {
@@ -51,19 +54,19 @@ public class SettingsDocument extends Document {
 		return List.copyOf(_pluginGroups);
 	}
 
-	public ServerCollection servers() {
+	public ServerMap servers() {
 		return _servers;
 	}
 
-	public MirrorCollection mirrors() {
+	public MirrorMap mirrors() {
 		return _mirrors;
 	}
 
-	public ProxyCollection proxies() {
+	public ProxyMap proxies() {
 		return _proxies;
 	}
 
-	public ProfileCollection profiles() {
+	public ProfileMap profiles() {
 		return _profiles;
 	}
 
@@ -101,8 +104,8 @@ public class SettingsDocument extends Document {
 				_pluginGroups.add(g);
 			}
 		}
-		addIfNotExist(_pluginGroups, "org.apache.maven.plugins");
-		addIfNotExist(_pluginGroups, "org.codehaus.mojo");
+		MavenHelper.addIfNotExist(_pluginGroups, "org.apache.maven.plugins");
+		MavenHelper.addIfNotExist(_pluginGroups, "org.codehaus.mojo");
 		_servers.load(_root.getElement("/servers"));
 		_mirrors.load(_root.getElement("/mirrors"));
 		_proxies.load(_root.getElement("/proxies"));
@@ -113,17 +116,6 @@ public class SettingsDocument extends Document {
 				_activeProfiles.add(p);
 			}
 		}
-	}
-
-	private static void addIfNotExist(List<String> list, String value) {
-		if (!list.contains(value)) {
-			list.add(value);
-		}
-	}
-
-	public static String translate(String text) {
-		PropertyManager pm = new PropertyManager();
-		return pm.translate(text);
 	}
 
 }

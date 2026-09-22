@@ -1,4 +1,4 @@
-package com.hideakin.yanimu.maven;
+package com.hideakin.yanimu.maven.util;
 
 import java.util.LinkedHashMap;
 import java.util.function.Function;
@@ -6,13 +6,13 @@ import java.util.function.Function;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.Node;
 
-public class ArtifactCollection<T extends SimpleArtifact> extends LinkedHashMap<String, T> {
+public class ArtifactMap<T extends SimpleArtifact> extends LinkedHashMap<String, T> {
 
-	private static final long serialVersionUID = -6223550311914671971L;
+	private static final long serialVersionUID = -8944849038660471980L;
 
 	protected Element _element;
 
-	protected ArtifactCollection() {
+	protected ArtifactMap() {
 		super();
 	}
 
@@ -20,14 +20,14 @@ public class ArtifactCollection<T extends SimpleArtifact> extends LinkedHashMap<
 		return _element;
 	}
 
-	public void load(Element element, String name, PropertyManager propertyManager, Function<Element, T> creator) {
+	public void load(Element element, String name, Function<Element, T> creator) {
 		super.clear();
 		_element = element;
 		if (_element != null) {
 			String pattern = "/" + name;
 			for (Element child : _element.getElements(pattern)) {
 				T artifact = creator.apply(child);
-				String key = propertyManager.translate(artifact.ga());
+				String key = artifact.ga();
 				if (super.containsKey(key)) {
 					continue;
 				}
@@ -46,11 +46,10 @@ public class ArtifactCollection<T extends SimpleArtifact> extends LinkedHashMap<
 		if (key != null) {
 			T existing = super.put(key, artifact);
 			if (existing != null) {
-				for (int i = 0; i < _element.childCount(); i++) {
-					Node child = _element.child(i);
-					if (child.type == Node.ELEMENT && (Element)child == existing.element()) {
-						_element.remove(i);
-						_element.add(i, artifact.element());
+				for (int i = 0; i < _element.size(); i++) {
+					Node node = _element.get(i);
+					if (node.type == Node.ELEMENT && (Element)node == existing.element()) {
+						_element.set(i, artifact.element());
 						return existing;
 					}
 				}

@@ -1,8 +1,9 @@
-package com.hideakin.yanimu.maven;
+package com.hideakin.yanimu.maven.util;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 public class MavenHelper {
 
@@ -35,6 +36,13 @@ public class MavenHelper {
 			return fallback;
 		}
 		return value;
+	}
+
+	public static List<String> addIfNotExist(List<String> list, String value) {
+		if (!list.contains(value)) {
+			list.add(value);
+		}
+		return list;
 	}
 
 }

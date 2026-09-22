@@ -1,6 +1,5 @@
-package com.hideakin.yanimu.maven.settings;
+package com.hideakin.yanimu.maven.settings.util;
 
-import com.hideakin.yanimu.maven.Property;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.util.ElementMap;
 
@@ -16,24 +15,6 @@ public class Activation extends ElementMap {
 		super(element);
 	}
 
-	public String jdk() {
-		return getString("jdk", null);
-	}
-
-	public String os() {
-		return getString("os", null);
-	}
-
-	public Property property() {
-		Element name = super.get("property/name");
-		Element value = super.get("property/value");
-		if (name != null && value != null) {
-			return new Property(name.innerText(), value.innerText());
-		} else {
-			return null;
-		}
-	}
-
 	public ActivationFile file() {
 		Element exists = super.get("file/exists");
 		Element missing = super.get("file/missing");
@@ -42,38 +23,6 @@ public class Activation extends ElementMap {
 						exists != null ? exists.innerText() : null,
 						missing != null ? missing.innerText() : null)
 				: null;
-	}
-
-	public void setJdk(String value) {
-		setString("jdk", value);
-	}
-
-	public void setOs(String value) {
-		setString("os", value);
-	}
-
-	public void setProperty(Property property) {
-		Element name = super.get("property/name");
-		Element value = super.get("property/value");
-		if (name != null && value != null) {
-			name.setInnerText(property.key);
-			value.setInnerText(property.value);
-		} else if (name != null) {
-			name.setInnerText(property.key);
-			value = new Element("value", property.value);
-			name.parent().add(value);
-		} else if (value != null) {
-			value.setInnerText(property.value);
-			name = new Element("name", property.key);
-			value.parent().add(name);
-		} else {
-			name = new Element("name", property.key);
-			value = new Element("value", property.value);
-			Element element = new Element("property");
-			element.add(name);
-			element.add(value);
-			_element.add(element);
-		}
 	}
 
 	public void setFile(ActivationFile file) {

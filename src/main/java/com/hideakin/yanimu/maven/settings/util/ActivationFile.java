@@ -1,4 +1,4 @@
-package com.hideakin.yanimu.maven.settings;
+package com.hideakin.yanimu.maven.settings.util;
 
 public class ActivationFile {
 

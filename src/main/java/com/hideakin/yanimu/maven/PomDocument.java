@@ -16,6 +16,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import com.hideakin.yanimu.maven.util.Artifact;
+import com.hideakin.yanimu.maven.util.DependencyMap;
+import com.hideakin.yanimu.maven.util.LocalRepository;
+import com.hideakin.yanimu.maven.util.PluginMap;
+import com.hideakin.yanimu.maven.util.Property;
+import com.hideakin.yanimu.maven.util.PropertyMap;
+import com.hideakin.yanimu.maven.util.RemoteRepository;
+import com.hideakin.yanimu.maven.util.Repository;
+import com.hideakin.yanimu.maven.util.RepositoryMap;
+import com.hideakin.yanimu.maven.util.SimpleArtifact;
 import com.hideakin.yanimu.xml.Document;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.ParseResult;
@@ -35,13 +45,13 @@ public class PomDocument extends Document implements Artifact {
 	private String _groupId;
 	private String _artifactId;
 	private String _version;
-	private final PropertyManager _propertyManager = new PropertyManager();
-	private final PluginCollection _pluginManagement = new PluginCollection();
-	private final PluginCollection _plugins = new PluginCollection();
-	private final DependencyCollection _dependencyManagement = new DependencyCollection();
-	private final DependencyCollection _dependencies = new DependencyCollection();
-	private final RepositoryCollection _repositories = new RepositoryCollection();
-	private final RepositoryCollection _pluginRepositories = new RepositoryCollection();
+	private final PropertyMap _properties = new PropertyMap();
+	private final PluginMap _pluginManagement = new PluginMap();
+	private final PluginMap _plugins = new PluginMap();
+	private final DependencyMap _dependencyManagement = new DependencyMap();
+	private final DependencyMap _dependencies = new DependencyMap();
+	private final RepositoryMap _repositories = new RepositoryMap();
+	private final RepositoryMap _pluginRepositories = new RepositoryMap();
 
 	private PomDocument(Path path) {
 		super(path);
@@ -80,43 +90,43 @@ public class PomDocument extends Document implements Artifact {
 		return SimpleArtifact.ga(g, a);
 	}
 
-	public List<Property> properties() {
-		return _propertyManager.getList();
+	public PropertyMap properties() {
+		return _properties;
 	}
 
 	public String property(String key) {
-		return _propertyManager.get(key);
+		return _properties.get(key);
 	}
 
 	public void setProperty(String key, String value) {
-		_propertyManager.put(key, value);
+		_properties.put(key, value);
 	}
 
 	public String translate(String text) {
-		return _propertyManager.translate(text);
+		return _properties.translate(text);
 	}
 
-	public PluginCollection pluginManagement() {
+	public PluginMap pluginManagement() {
 		return _pluginManagement;
 	}
 
-	public PluginCollection plugins() {
+	public PluginMap plugins() {
 		return _plugins;
 	}
 
-	public DependencyCollection dependencyManagement() {
+	public DependencyMap dependencyManagement() {
 		return _dependencyManagement;
 	}
 
-	public DependencyCollection dependencies() {
+	public DependencyMap dependencies() {
 		return _dependencies;
 	}
 	
-	public RepositoryCollection repositories() {
+	public RepositoryMap repositories() {
 		return _repositories;
 	}
 	
-	public RepositoryCollection pluginRepositories() {
+	public RepositoryMap pluginRepositories() {
 		return _pluginRepositories;
 	}
 
@@ -136,16 +146,16 @@ public class PomDocument extends Document implements Artifact {
 				c.accept(e);
 			}
 		}
-		_propertyManager.load(_root, super.path());
+		_properties.load(_root.getElement("/properties"));
 		_repositories.load(_root.getElement("/repositories"), _root.getElements("/repositories/repository"));
 		_pluginRepositories.load(_root.getElement("/pluginRepositories"), _root.getElements("/pluginRepositories/pluginRepository"));
-		_pluginManagement.load(_root.getElement("/build/pluginManagement/plugins"), _propertyManager);
-		_plugins.load(_root.getElement("/build/plugins"), _propertyManager);
-		_dependencyManagement.load(_root.getElement("/dependencyManagement/dependencies"), _repositories, _propertyManager);
-		_dependencies.load(_root.getElement("/dependencies"), _propertyManager);
+		_pluginManagement.load(_root.getElement("/build/pluginManagement/plugins"));
+		_plugins.load(_root.getElement("/build/plugins"));
+		_dependencyManagement.load(_root.getElement("/dependencyManagement/dependencies"), _repositories, x -> _properties.translate(x));
+		_dependencies.load(_root.getElement("/dependencies"));
 	}
 
-	public void load(RepositoryCollection repositories) throws Exception {
+	public void load(RepositoryMap repositories) throws Exception {
 		for (Repository repository : repositories.values()) {
 			try {
 				load(repository.url());

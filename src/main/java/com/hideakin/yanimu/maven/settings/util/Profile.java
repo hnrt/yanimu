@@ -1,16 +1,13 @@
-package com.hideakin.yanimu.maven.settings;
+package com.hideakin.yanimu.maven.settings.util;
 
-import java.util.List;
-
-import com.hideakin.yanimu.maven.Property;
-import com.hideakin.yanimu.maven.PropertyManager;
-import com.hideakin.yanimu.maven.RepositoryCollection;
+import com.hideakin.yanimu.maven.util.PropertyMap;
+import com.hideakin.yanimu.maven.util.RepositoryMap;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.Node;
 
 public class Profile extends SimpleSetting {
 
-	private static final long serialVersionUID = -5214590429768494027L;
+	private static final long serialVersionUID = -6197013045378235602L;
 
 	public static Profile of() {
 		return new Profile();
@@ -21,26 +18,32 @@ public class Profile extends SimpleSetting {
 	}
 
 	private Element _activation;
-	private final PropertyManager _propertyManager = new PropertyManager();
-	private final RepositoryCollection _repositories = new RepositoryCollection();
-	private final RepositoryCollection _pluginRepositories = new RepositoryCollection();
+	private final PropertyMap _properties;
+	private final RepositoryMap _repositories;
+	private final RepositoryMap _pluginRepositories;
 
 	public Profile() {
 		super("profile");
+		_properties = new PropertyMap();
+		_repositories = new RepositoryMap();
+		_pluginRepositories = new RepositoryMap();
 	}
 
 	public Profile(Element element) {
 		super(element);
+		_properties = new PropertyMap();
+		_repositories = new RepositoryMap();
+		_pluginRepositories = new RepositoryMap();
+		initialize();
 	}
 
-	@Override
-	protected void initialize() {
+	private void initialize() {
 		Element id = _element.getElement("id");
 		if (id != null) {
 			super.put("id", id);
 		}
 		_activation = _element.getElement("activation");
-		_propertyManager.load(_element);
+		_properties.load(_element.getElement("/properties"));
 		_repositories.load(_element.getElement("/repositories"), _element.getElements("/repositories/repository"));
 		_pluginRepositories.load(_element.getElement("/pluginRepositories"), _element.getElements("/pluginRepositories/pluginRepository"));
 	}
@@ -74,27 +77,27 @@ public class Profile extends SimpleSetting {
 		}
 	}
 
-	public List<Property> properties() {
-		return _propertyManager.getList();
+	public PropertyMap properties() {
+		return _properties;
 	}
 
 	public String property(String key) {
-		return _propertyManager.get(key);
+		return _properties.get(key);
 	}
 
 	public void setProperty(String key, String value) {
-		_propertyManager.put(key, value);
+		_properties.put(key, value);
 	}
 
 	public String translate(String text) {
-		return _propertyManager.translate(text);
+		return _properties.translate(text);
 	}
 	
-	public RepositoryCollection repositories() {
+	public RepositoryMap repositories() {
 		return _repositories;
 	}
 	
-	public RepositoryCollection pluginRepositories() {
+	public RepositoryMap pluginRepositories() {
 		return _pluginRepositories;
 	}
 

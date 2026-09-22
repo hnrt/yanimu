@@ -1,10 +1,10 @@
-package com.hideakin.yanimu.maven.settings;
+package com.hideakin.yanimu.maven.settings.util;
 
 import com.hideakin.yanimu.xml.Element;
 
 public class Mirror extends SimpleSetting {
 
-	private static final long serialVersionUID = 5939532917931958570L;
+	private static final long serialVersionUID = 5176804571557187265L;
 
 	public static Mirror of() {
 		return new Mirror();

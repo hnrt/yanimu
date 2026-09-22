@@ -21,7 +21,7 @@ public class ElementMap extends LinkedHashMap<String, Element> {
 		initialize();
 	}
 
-	protected void initialize() {
+	private void initialize() {
 		for (Element child : _element.getElements("/*")) {
 			if (child.hasElement()) {
 				initialize(child, child.name + "/");
@@ -31,7 +31,7 @@ public class ElementMap extends LinkedHashMap<String, Element> {
 		}
 	}
 
-	protected void initialize(Element element, String leader) {
+	private void initialize(Element element, String leader) {
 		for (Element child : element.getElements("/*")) {
 			if (child.hasElement()) {
 				initialize(child, leader + child.name + "/");

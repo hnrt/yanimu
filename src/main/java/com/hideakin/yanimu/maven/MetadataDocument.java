@@ -6,6 +6,10 @@ import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.hideakin.yanimu.maven.util.LocalRepository;
+import com.hideakin.yanimu.maven.util.RemoteRepository;
+import com.hideakin.yanimu.maven.util.Repository;
+import com.hideakin.yanimu.maven.util.RepositoryMap;
 import com.hideakin.yanimu.xml.Document;
 import com.hideakin.yanimu.xml.Element;
 
@@ -101,11 +105,11 @@ public class MetadataDocument extends Document {
 		_lastUpdated = elements.size() > 0 ? elements.get(0).innerText() : null;
 	}
 
-	public void load(RepositoryCollection repositories) throws Exception {
+	public void load(RepositoryMap repositories) throws Exception {
 		load(repositories, DEFAULT_GRACE_PERIOD);
 	}
 
-	public void load(RepositoryCollection repositories, long gracePeriod) throws Exception {
+	public void load(RepositoryMap repositories, long gracePeriod) throws Exception {
 		List<MetadataDocument> list = new ArrayList<>();
 		for (Repository repository : repositories.values()) {
 			String baseUrl = repository.url();

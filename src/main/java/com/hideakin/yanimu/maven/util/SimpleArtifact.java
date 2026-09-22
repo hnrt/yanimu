@@ -1,11 +1,11 @@
-package com.hideakin.yanimu.maven;
+package com.hideakin.yanimu.maven.util;
 
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.util.ElementMap;
 
 public class SimpleArtifact extends ElementMap implements Artifact {
 
-	private static final long serialVersionUID = 2059870372450308123L;
+	private static final long serialVersionUID = -4152162891592679336L;
 
 	public static String ga(String g, String a) {
 		return (g != null ? g : "") + ":" + (a != null ? a : "");
