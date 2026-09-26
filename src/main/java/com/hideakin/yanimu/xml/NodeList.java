@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A non-terminal node containing the sequence of terminal/non-terminal nodes.
+ * A mutable node containing a sequence of mutable/immutable nodes.
  */
 public class NodeList extends Node {
 
@@ -189,7 +189,7 @@ public class NodeList extends Node {
 		_nodeList.add(index, node);
 	}
 
-	public void removeAll() {
+	public void clear() {
 		_nodeList.clear();
 	}
 

@@ -1,6 +1,7 @@
 package com.hideakin.yanimu.xml.internal;
 
 import com.hideakin.yanimu.xml.Attribute;
+import com.hideakin.yanimu.xml.AttributeTag;
 import com.hideakin.yanimu.xml.Content;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.EmptyElementTag;
@@ -989,7 +990,7 @@ public class Processor {
 
 	private void parseElement(Element parent) throws Exception {
 		push();
-		StartTag tag = parseStartTag();
+		AttributeTag tag = parseStartTag();
 		Element element = new Element(tag.name, parent);
 		if (tag.type == STAG) {
 			parseContent(element);
@@ -999,8 +1000,8 @@ public class Processor {
 		store(element);
 	}
 
-	private StartTag parseStartTag() throws Exception {
-		StartTag tag;
+	private AttributeTag parseStartTag() throws Exception {
+		AttributeTag tag;
 		if (_n.type == STAG_START) {
 			push();
 			read();

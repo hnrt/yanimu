@@ -42,7 +42,7 @@ public class NodeTest {
 	void test001() {
 		Node node = Node.of(Node.CHAR_DATA, "abc".getBytes());
 		assertEquals(Node.CHAR_DATA, node.type);
-		assertEquals(true, node instanceof TerminalNode);
+		assertEquals(true, node instanceof ImmutableNode);
 		assertEquals("abc", new String(node.sequence()));
 	}
 
@@ -50,7 +50,7 @@ public class NodeTest {
 	void test002() {
 		Node node = Node.of(Node.S, " ".getBytes());
 		assertEquals(Node.S, node.type);
-		assertEquals(true, node instanceof TerminalNode);
+		assertEquals(true, node instanceof ImmutableNode);
 		assertEquals(" ", new String(node.sequence()));
 	}
 
@@ -143,7 +143,7 @@ public class NodeTest {
 	void test101() {
 		Node node = Node.of(Node.CHAR_DATA, FormatHelper.lineSeparatorAndIndentation(FormatHelper.LF_SEQUENCE, 2, 3));
 		assertEquals(Node.CHAR_DATA, node.type);
-		assertEquals(true, node instanceof TerminalNode);
+		assertEquals(true, node instanceof ImmutableNode);
 		assertEquals("\n      ", node.toString());
 	}
 
@@ -151,7 +151,7 @@ public class NodeTest {
 	void test102() {
 		Node node = Node.of(Node.S, FormatHelper.lineSeparatorAndIndentation(FormatHelper.CRLF_SEQUENCE, 3, 3));
 		assertEquals(Node.S, node.type);
-		assertEquals(true, node instanceof TerminalNode);
+		assertEquals(true, node instanceof ImmutableNode);
 		assertEquals("\r\n         ", node.toString());
 	}
 

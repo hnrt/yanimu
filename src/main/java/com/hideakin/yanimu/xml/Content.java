@@ -39,13 +39,13 @@ public class Content extends NodeList {
 	}
 
 	@Override
-	public void removeAll() {
+	public void clear() {
 		for (Node node : _nodeList) {
 			if (node instanceof Element element) {
 				element.setParent(null);
 			}
 		}
-		super.removeAll();
+		super.clear();
 	}
 
 	@Override
@@ -99,7 +99,7 @@ public class Content extends NodeList {
 	}
 
 	public void setText(String value) {
-		removeAll();
+		clear();
 		int h = 0;
 		int i = 0;
 		int n = value.length();
@@ -108,14 +108,14 @@ public class Content extends NodeList {
 			switch (c) {
 			case '<':
 				if (h < i) {
-					add(TerminalNode.of(CHAR_DATA, value.substring(h, i)));
+					add(ImmutableNode.of(CHAR_DATA, value.substring(h, i)));
 				}
 				add(EntityRef.of("lt", "<"));
 				h = ++i;
 				break;
 			case '&':
 				if (h < i) {
-					add(TerminalNode.of(CHAR_DATA, value.substring(h, i)));
+					add(ImmutableNode.of(CHAR_DATA, value.substring(h, i)));
 				}
 				add(EntityRef.of("amp", "&"));
 				h = ++i;
@@ -123,7 +123,7 @@ public class Content extends NodeList {
 			case ']':
 				if (i + 2 < n && value.charAt(i + 1) == ']' && value.charAt(i + 2) == '>') {
 					if (h < i) {
-						add(TerminalNode.of(CHAR_DATA, value.substring(h, i)));
+						add(ImmutableNode.of(CHAR_DATA, value.substring(h, i)));
 					}
 					add(CharRef.of(']'));
 					add(CharRef.of(']'));
@@ -140,9 +140,9 @@ public class Content extends NodeList {
 			}
 		}
 		if (h == 0) {
-			add(TerminalNode.of(CHAR_DATA, value));
+			add(ImmutableNode.of(CHAR_DATA, value));
 		} else if (h < n) {
-			add(TerminalNode.of(CHAR_DATA, value.substring(h, n)));
+			add(ImmutableNode.of(CHAR_DATA, value.substring(h, n)));
 		}
 	}
 

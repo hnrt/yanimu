@@ -17,12 +17,12 @@ public class XmlDeclaration extends NodeList {
 
 	public XmlDeclaration() {
 		super(XML_DECL, List.of(
-				TerminalNode.of(XML_START, "<?xml"),
-				TerminalNode.of(S, " "),
-				TerminalNode.of(NAME, "version"),
-				TerminalNode.of(EQ, "="),
+				ImmutableNode.of(XML_START, "<?xml"),
+				ImmutableNode.of(S, " "),
+				ImmutableNode.of(NAME, "version"),
+				ImmutableNode.of(EQ, "="),
 				QuotedString.of(ATT_VALUE, "\"" + DEFAULT_VERSION + "\""),
-				TerminalNode.of(XML_END, "?>")));
+				ImmutableNode.of(XML_END, "?>")));
 		this.version = DEFAULT_VERSION;
 		this.encoding = null;
 		this.standalone = null;
@@ -30,16 +30,16 @@ public class XmlDeclaration extends NodeList {
 
 	public XmlDeclaration(String encoding) {
 		super(XML_DECL, List.of(
-				TerminalNode.of(XML_START, "<?xml"),
-				TerminalNode.of(S, " "),
-				TerminalNode.of(NAME, "version"),
-				TerminalNode.of(EQ, "="),
+				ImmutableNode.of(XML_START, "<?xml"),
+				ImmutableNode.of(S, " "),
+				ImmutableNode.of(NAME, "version"),
+				ImmutableNode.of(EQ, "="),
 				QuotedString.of(ATT_VALUE, "\"" + DEFAULT_VERSION + "\""),
-				TerminalNode.of(S, " "),
-				TerminalNode.of(NAME, "encoding"),
-				TerminalNode.of(EQ, "="),
+				ImmutableNode.of(S, " "),
+				ImmutableNode.of(NAME, "encoding"),
+				ImmutableNode.of(EQ, "="),
 				QuotedString.of(ATT_VALUE, "\"" + encoding + "\""),
-				TerminalNode.of(XML_END, "?>")));
+				ImmutableNode.of(XML_END, "?>")));
 		this.version = DEFAULT_VERSION;
 		this.encoding = encoding;
 		this.standalone = null;
@@ -47,16 +47,16 @@ public class XmlDeclaration extends NodeList {
 
 	public XmlDeclaration(String version, String encoding) {
 		super(XML_DECL, List.of(
-				TerminalNode.of(XML_START, "<?xml"),
-				TerminalNode.of(S, " "),
-				TerminalNode.of(NAME, "version"),
-				TerminalNode.of(EQ, "="),
+				ImmutableNode.of(XML_START, "<?xml"),
+				ImmutableNode.of(S, " "),
+				ImmutableNode.of(NAME, "version"),
+				ImmutableNode.of(EQ, "="),
 				QuotedString.of(ATT_VALUE, "\"" + version + "\""),
-				TerminalNode.of(S, " "),
-				TerminalNode.of(NAME, "encoding"),
-				TerminalNode.of(EQ, "="),
+				ImmutableNode.of(S, " "),
+				ImmutableNode.of(NAME, "encoding"),
+				ImmutableNode.of(EQ, "="),
 				QuotedString.of(ATT_VALUE, "\"" + encoding + "\""),
-				TerminalNode.of(XML_END, "?>")));
+				ImmutableNode.of(XML_END, "?>")));
 		this.version = version;
 		this.encoding = encoding;
 		this.standalone = null;
@@ -64,20 +64,20 @@ public class XmlDeclaration extends NodeList {
 
 	public XmlDeclaration(String version, String encoding, String standalone) {
 		super(XML_DECL, List.of(
-				TerminalNode.of(XML_START, "<?xml"),
-				TerminalNode.of(S, " "),
-				TerminalNode.of(NAME, "version"),
-				TerminalNode.of(EQ, "="),
+				ImmutableNode.of(XML_START, "<?xml"),
+				ImmutableNode.of(S, " "),
+				ImmutableNode.of(NAME, "version"),
+				ImmutableNode.of(EQ, "="),
 				QuotedString.of(ATT_VALUE, "\"" + version + "\""),
-				TerminalNode.of(S, " "),
-				TerminalNode.of(NAME, "encoding"),
-				TerminalNode.of(EQ, "="),
+				ImmutableNode.of(S, " "),
+				ImmutableNode.of(NAME, "encoding"),
+				ImmutableNode.of(EQ, "="),
 				QuotedString.of(ATT_VALUE, "\"" + encoding + "\""),
-				TerminalNode.of(S, " "),
-				TerminalNode.of(NAME, "standalone"),
-				TerminalNode.of(EQ, "="),
+				ImmutableNode.of(S, " "),
+				ImmutableNode.of(NAME, "standalone"),
+				ImmutableNode.of(EQ, "="),
 				QuotedString.of(ATT_VALUE, "\"" + standalone + "\""),
-				TerminalNode.of(XML_END, "?>")));
+				ImmutableNode.of(XML_END, "?>")));
 		this.version = version;
 		this.encoding = encoding;
 		this.standalone = standalone;
@@ -89,7 +89,7 @@ public class XmlDeclaration extends NodeList {
 		this.encoding = encoding;
 		this.standalone = standalone;
 		if (get(0).type == PI_START && get(1).type == NAME) {
-			set(0, TerminalNode.of(XML_START, "<?xml"));
+			set(0, ImmutableNode.of(XML_START, "<?xml"));
 			remove(1);
 		}
 	}

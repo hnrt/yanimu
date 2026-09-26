@@ -16,16 +16,16 @@ import org.junit.jupiter.api.TestInfo;
 
 import com.hideakin.yanimu.xml.util.DebugHelper;
 
-public class StartTagTest {
+public class AttributeTagTest {
 
 	@BeforeAll
 	static void initAll() {
-		start(StartTagTest.class);
+		start(AttributeTagTest.class);
 	}
 
 	@AfterAll
 	static void tearDownAll() {
-		finish(StartTagTest.class);
+		finish(AttributeTagTest.class);
 	}
 
 	@BeforeEach
@@ -44,7 +44,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.addAttribute("abc", "xyz");
 			print("AFTER  %s", DebugHelper.toString(st));
@@ -61,7 +61,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.addAttribute("abc", "xyz");
 			print("AFTER  %s", DebugHelper.toString(st));
@@ -78,7 +78,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.addAttribute("abc1", "xyz1");
 			st.addAttribute("abc2", "xyz2");
@@ -97,7 +97,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.addAttribute("abc1", "xyz1");
 			st.addAttribute("abc2", "xyz2");
@@ -116,7 +116,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.addAttribute(0, "abc1", "xyz1");
 			st.addAttribute(1, "abc1.5", "xyz1.5");
@@ -148,7 +148,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			assertEquals(0, st.attributeCount());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -162,7 +162,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			assertEquals(0, st.attributeCount());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -176,7 +176,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			assertEquals(1, st.attributeCount());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -190,7 +190,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			assertEquals(1, st.attributeCount());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -204,7 +204,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			assertEquals(2, st.attributeCount());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -218,7 +218,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			assertEquals(2, st.attributeCount());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -232,7 +232,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			assertEquals(3, st.attributeCount());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -246,7 +246,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			assertEquals(3, st.attributeCount());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -260,7 +260,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.setAttribute(0, "abc1", "xyz1");
 			st.setAttribute(1, "abc1.5", "xyz1.5");
@@ -284,7 +284,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.setAttribute("abc2", "xyz22");
 			print("AFTER  %s", DebugHelper.toString(st));
@@ -307,7 +307,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.setAttribute("abc8.1", "xyzzy8.1");
 			print("AFTER  %s", DebugHelper.toString(st));
@@ -330,7 +330,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.setAttribute("abc9", "xyzzy9");
 			print("AFTER  %s", DebugHelper.toString(st));
@@ -357,7 +357,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.removeAllAttributes();
 			print("AFTER  %s", DebugHelper.toString(st));
@@ -374,7 +374,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.removeAllAttributes();
 			print("AFTER  %s", DebugHelper.toString(st));
@@ -391,7 +391,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.removeAllAttributes();
 			print("AFTER  %s", DebugHelper.toString(st));
@@ -408,7 +408,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.removeAllAttributes();
 			print("AFTER  %s", DebugHelper.toString(st));
@@ -425,7 +425,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE  %s", DebugHelper.toString(st));
 			Node node = st.removeAttribute(0);
 			print("AFTER   %s", DebugHelper.toString(st));
@@ -443,7 +443,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			Node node = st.removeAttribute(1);
 			print("AFTER  %s", DebugHelper.toString(st));
@@ -461,7 +461,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE  %s", DebugHelper.toString(st));
 			Node node = st.removeAttribute(2);
 			print("AFTER   %s", DebugHelper.toString(st));
@@ -480,7 +480,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE  %s", DebugHelper.toString(st));
 			Node node = st.removeAttribute("abc2");
 			print("AFTER   %s", DebugHelper.toString(st));
@@ -498,7 +498,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE  %s", DebugHelper.toString(st));
 			Node node = st.removeAttribute("abc8.1");
 			print("AFTER   %s", DebugHelper.toString(st));
@@ -516,7 +516,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE  %s", DebugHelper.toString(st));
 			Node node = st.removeAttribute("xyz");
 			print("AFTER   %s", DebugHelper.toString(st));
@@ -535,7 +535,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.addAttribute("abc", "x\"y\"z");
 			print("AFTER  %s", DebugHelper.toString(st));
@@ -552,7 +552,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.addAttribute("abc", "x\'y\'z");
 			print("AFTER  %s", DebugHelper.toString(st));
@@ -569,7 +569,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.addAttribute("abc", "\"xy\'z\"");
 			print("AFTER  %s", DebugHelper.toString(st));
@@ -586,7 +586,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.setAttribute(0, "abc", "\"xy\'z\"");
 			print("AFTER  %s", DebugHelper.toString(st));
@@ -603,7 +603,7 @@ public class StartTagTest {
 		Document doc = new Document();
 		try {
 			doc.load(source.getBytes());
-			StartTag st = doc.root().startTag();
+			AttributeTag st = doc.root().startTag();
 			print("BEFORE %s", DebugHelper.toString(st));
 			st.setAttribute(0, "abc", "The quick brown \"fox\" jumps over the \'lazy\' dog.");
 			print("AFTER  %s", DebugHelper.toString(st));

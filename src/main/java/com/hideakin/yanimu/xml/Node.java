@@ -90,10 +90,10 @@ public class Node {
 	public static final int MALFORMED_ENTITYREF = 3006800;
 	public static final int MALFORMED_PEREFERENCE = 3006900;
 
-	public static final Node NULL_NODE = TerminalNode.of(NULL, new byte[0]);
+	public static final Node NULL_NODE = ImmutableNode.of(NULL, new byte[0]);
 
 	/**
-	 * Creates a new terminal node instance.
+	 * Creates a new immutable node instance.
 	 * <p>
 	 * The concrete class to be instantiated is determined by the specified node type.
 	 * @param type the node type that determines the concrete terminal node class
@@ -118,7 +118,37 @@ public class Node {
 		case PEREFERENCE:
 			return ParameterEntityReference.of(sequence);
 		default:
-			return TerminalNode.of(type, sequence);
+			return ImmutableNode.of(type, sequence);
+		}
+	}
+
+	/**
+	 * Creates a new immutable node instance.
+	 * <p>
+	 * The concrete class to be instantiated is determined by the specified node type.
+	 * @param type the node type that determines the concrete terminal node class
+	 * @param sequence the String representation of the node
+	 * @return a newly created terminal node instance
+	 */
+	public static Node of(int type, String sequence) {
+		switch (type) {
+		case ENTITY_VALUE:
+		case ATT_VALUE:
+		case SYSTEM_LITERAL:
+		case PUBID_LITERAL:
+			return QuotedString.of(type, sequence);
+		case COMMENT:
+			return Comment.of(sequence);
+		case CD_SECT:
+			return CDATASection.of(sequence);
+		case CHAR_REF:
+			return CharRef.of(sequence);
+		case ENTITY_REF:
+			return EntityRef.of(sequence);
+		case PEREFERENCE:
+			return ParameterEntityReference.of(sequence);
+		default:
+			return ImmutableNode.of(type, sequence);
 		}
 	}
 

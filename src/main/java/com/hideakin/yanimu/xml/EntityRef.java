@@ -1,18 +1,15 @@
 package com.hideakin.yanimu.xml;
 
-import java.nio.charset.StandardCharsets;
-
-public class EntityRef extends TerminalNode {
+public class EntityRef extends ImmutableNode {
 
 	public static final String START = "&";
 	public static final String END = ";";
 
-	private static final int START_LENGTH = START.length();
-	private static final int START_END_LENGTH = START.length() + END.length();
+	public static final byte[] START_BYTES = START.getBytes();
+	public static final byte[] END_BYTES = END.getBytes();
 
 	public static EntityRef of(String name, String translated) {
-		String processed = START + name + END;
-		byte[] sequence = processed.getBytes(StandardCharsets.UTF_8);
+		String sequence = START + name + END;
 		return new EntityRef(sequence, translated);
 	}
 
@@ -20,22 +17,7 @@ public class EntityRef extends TerminalNode {
 		return new EntityRef(sequence);
 	}
 
-	public static EntityRef of(String source) {
-		byte[] sequence;
-		if (source.startsWith(START)) {
-			if (source.endsWith(END)) {
-				sequence = source.getBytes(StandardCharsets.UTF_8);
-			} else {
-				String processed = source + END;
-				sequence = processed.getBytes(StandardCharsets.UTF_8);
-			}
-		} else if (source.endsWith(END)) {
-			String processed = START + source;
-			sequence = processed.getBytes(StandardCharsets.UTF_8);
-		} else {
-			String processed = START + source + END;
-			sequence = processed.getBytes(StandardCharsets.UTF_8);
-		}
+	public static EntityRef of(String sequence) {
 		return new EntityRef(sequence);
 	}
 
@@ -43,14 +25,26 @@ public class EntityRef extends TerminalNode {
 	public final String translated;
 
 	private EntityRef(byte[] sequence) {
-		super(ENTITY_REF, sequence);
-		name = new String(sequence, START_LENGTH, sequence.length - START_END_LENGTH, StandardCharsets.UTF_8);
-		translated = new String(sequence, StandardCharsets.UTF_8);
+		super(ENTITY_REF, sequence, START_BYTES, END_BYTES);
+		name = super.innerText(START_BYTES.length, END_BYTES.length);
+		translated = super.toString();
 	}
 
 	private EntityRef(byte[] sequence, String translated) {
-		super(ENTITY_REF, sequence);
-		name = new String(sequence, START_LENGTH, sequence.length - START_END_LENGTH, StandardCharsets.UTF_8);
+		super(ENTITY_REF, sequence, START_BYTES, END_BYTES);
+		name = super.innerText(START_BYTES.length, END_BYTES.length);
+		this.translated = translated;
+	}
+
+	private EntityRef(String sequence) {
+		super(ENTITY_REF, sequence, START, END);
+		name = super.innerText(START_BYTES.length, END_BYTES.length);
+		translated = super.toString();
+	}
+
+	private EntityRef(String sequence, String translated) {
+		super(ENTITY_REF, sequence, START, END);
+		name = super.innerText(START_BYTES.length, END_BYTES.length);
 		this.translated = translated;
 	}
 

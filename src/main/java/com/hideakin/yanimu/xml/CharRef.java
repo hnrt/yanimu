@@ -2,7 +2,7 @@ package com.hideakin.yanimu.xml;
 
 import java.nio.charset.StandardCharsets;
 
-public class CharRef extends TerminalNode {
+public class CharRef extends ImmutableNode {
 
 	public static final String START = "&#";
 	public static final String START_HEX = "&#x";

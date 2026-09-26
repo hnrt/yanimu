@@ -216,7 +216,7 @@ public class Element extends NodeList {
 
 	@Override
 	public void add(Node node) {
-		StartTag stag = (StartTag)_nodeList.get(0);
+		AttributeTag stag = (AttributeTag)_nodeList.get(0);
 		if (stag.type == EETAG) {
 			_nodeList.clear();
 			_nodeList.add(stag.toStartTag());
@@ -232,7 +232,7 @@ public class Element extends NodeList {
 
 	@Override
 	public void add(int index, Node node) {
-		StartTag stag = (StartTag)_nodeList.get(0);
+		AttributeTag stag = (AttributeTag)_nodeList.get(0);
 		if (stag.type == EETAG) {
 			_nodeList.clear();
 			_nodeList.add(stag.toStartTag());
@@ -247,10 +247,10 @@ public class Element extends NodeList {
 	}
 
 	@Override
-	public void removeAll() {
+	public void clear() {
 		if (_nodeList.size() > 1) {
 			Content content = (Content)_nodeList.get(1);
-			content.removeAll();
+			content.clear();
 		}
 	}
 
@@ -302,8 +302,8 @@ public class Element extends NodeList {
 	 * This method returns the start tag node of this element.
 	 * @return Start tag node
 	 */
-	public StartTag startTag() {
-		return (StartTag)_nodeList.get(0);
+	public AttributeTag startTag() {
+		return (AttributeTag)_nodeList.get(0);
 	}
 
 	/**
@@ -426,7 +426,7 @@ public class Element extends NodeList {
 					return false;
 				}
 			}
-			StartTag stag = (StartTag)_nodeList.get(0);
+			AttributeTag stag = (AttributeTag)_nodeList.get(0);
 			_nodeList.clear();
 			_nodeList.add(stag.toEmptyElementTag());
 			return true;
@@ -467,7 +467,7 @@ public class Element extends NodeList {
 	 */
 	public void setInnerText(String value) {
 		if (_nodeList.size() == 1) {
-			StartTag stag = startTag().toStartTag();
+			AttributeTag stag = startTag().toStartTag();
 			_nodeList.clear();
 			_nodeList.add(stag);
 			_nodeList.add(Content.of());

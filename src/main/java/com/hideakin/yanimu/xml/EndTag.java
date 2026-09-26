@@ -16,10 +16,10 @@ public class EndTag extends Tag {
 	private static final byte[] END_SEQUENCE = {'>'};
 
 	private EndTag(String name) {
-		super(ETAG,
-				List.of(TerminalNode.of(ETAG_START, START_SEQUENCE),
-						TerminalNode.of(NAME, name),
-						TerminalNode.of(ETAG_END, END_SEQUENCE)));
+		super(ETAG, List.of(
+				ImmutableNode.of(ETAG_START, START_SEQUENCE),
+				ImmutableNode.of(NAME, name),
+				ImmutableNode.of(ETAG_END, END_SEQUENCE)));
 	}
 
 	private EndTag(List<Node> nodeList) {

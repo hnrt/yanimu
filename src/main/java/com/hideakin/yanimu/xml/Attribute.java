@@ -2,7 +2,7 @@ package com.hideakin.yanimu.xml;
 
 import java.util.List;
 
-public class Attribute extends NodeList {
+public class Attribute extends ImmutableNodeList {
 
 	public final String key;
 	public final String value;
