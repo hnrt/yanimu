@@ -7,7 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
-import com.hideakin.yanimu.xml.internal.DebugHelper;
+import com.hideakin.yanimu.xml.util.DebugHelper;
 
 import static com.hideakin.yanimu.util.TestHelper.checkDocument;
 import static com.hideakin.yanimu.util.TestHelper.start;

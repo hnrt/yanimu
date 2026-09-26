@@ -32,6 +32,7 @@ import com.hideakin.yanimu.xml.doctype.InternalEntityDefinition;
 import com.hideakin.yanimu.xml.doctype.InternalParameterEntityDefinition;
 import com.hideakin.yanimu.xml.doctype.NotationDeclaration;
 import com.hideakin.yanimu.xml.doctype.NotationType;
+import com.hideakin.yanimu.xml.util.DebugHelper;
 import com.hideakin.yanimu.xml.ParameterEntityReference;
 
 import static com.hideakin.yanimu.xml.Node.*;
@@ -310,9 +311,9 @@ public class Processor {
 		if (extid != null) {
 			processExternalDocument(name, extid);
 		}
-		if (_n.type == '[') {
+		if (_n.type == MARKUP_DECL_START) {
 			read();
-			while (_n.type != ']') {
+			while (_n.type != MARKUP_DECL_END) {
 				switch (_n.type) {
 				case ELEMENT_DECL_START:
 					ElementTypeDeclaration etd = parseElementDecl();

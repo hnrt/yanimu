@@ -3,7 +3,6 @@ package com.hideakin.yanimu.xml;
 import java.nio.charset.StandardCharsets;
 
 import static com.hideakin.yanimu.xml.Character.*;
-import static com.hideakin.yanimu.xml.internal.DebugHelper.NODE_TYPES;
 
 public class Node {
 
@@ -32,6 +31,8 @@ public class Node {
 	public static final int XML_END = 2002302;
 	public static final int DOCTYPE_DECL = 2002800;
 	public static final int DOCTYPE_DECL_START = 2002801;
+	public static final int MARKUP_DECL_START = 2002802;
+	public static final int MARKUP_DECL_END = 2002803;
 	public static final int ELEMENT = 2003900;
 	public static final int STAG = 2004000;
 	public static final int STAG_START = 2004001;
@@ -89,10 +90,11 @@ public class Node {
 	public static final int MALFORMED_ENTITYREF = 3006800;
 	public static final int MALFORMED_PEREFERENCE = 3006900;
 
-	public static final Node NullNode = TerminalNode.of(NULL, new byte[0]);
+	public static final Node NULL_NODE = TerminalNode.of(NULL, new byte[0]);
 
 	/**
-	 * Creates a new terminal node instance.<br/>
+	 * Creates a new terminal node instance.
+	 * <p>
 	 * The concrete class to be instantiated is determined by the specified node type.
 	 * @param type the node type that determines the concrete terminal node class
 	 * @param sequence the UTF-8 encoded text representation of the node
@@ -137,7 +139,7 @@ public class Node {
 	 * @return array of byte
 	 */
 	public byte[] sequence() {
-		throw new RuntimeException("Node::sequence: NO IMPLEMENTATION!");
+		throw new RuntimeException(getClass().getSimpleName() + "::sequence: NO IMPLEMENTATION!");
 	}
 
 	/**
@@ -145,11 +147,12 @@ public class Node {
 	 * @return number of bytes
 	 */
 	public int length() {
-		throw new RuntimeException("Node::length: NO IMPLEMENTATION!");
+		throw new RuntimeException(getClass().getSimpleName() + "::length: NO IMPLEMENTATION!");
 	}
 
 	/**
-	 * Returns 0 if the specified node is equal to this node.<br/>
+	 * Returns 0 if the specified node is equal to this node.
+	 * <p>
 	 * Otherwise, this method returns -1.
 	 * @param target the node to check
 	 * @return 0 if the node is equal to this one, or -1 if not
@@ -174,7 +177,7 @@ public class Node {
 	}
 
 	/**
-	 * Returns the number of LF (\n) occurrences found within the first {@code offset} bytes of this node.
+	 * Returns the number of LF occurrences found within the first {@code offset} bytes of this node.
 	 * @param offset the number of bytes to examine
 	 * @return the number of LF occurrences
 	 */
@@ -193,8 +196,10 @@ public class Node {
 	}
 
 	/**
-	 * Returns the column position at the end of the text of this node.<br/>
-	 * A column position is defined as the number of bytes after the last LF (\n) occurrence.<br/>
+	 * Returns the column position at the end of the text of this node.
+	 * <p>
+	 * A column position is defined as the number of bytes after the last LF occurrence.
+	 * <p>
 	 * The calculation starts from the specified initial column position.
 	 * @param initialCount the column position at the beginning of this node's text
 	 * @return the column position at the end of the text
@@ -213,8 +218,10 @@ public class Node {
 	}
 
 	/**
-	 * Returns the column position at the specified byte offset within the text of this node.<br/>
-	 * A column position is defined as the number of bytes after the last LF (\n) occurrence.<br/>
+	 * Returns the column position at the specified byte offset within the text of this node.
+	 * <p>
+	 * A column position is defined as the number of bytes after the last LF occurrence.
+	 * <p>
 	 * The calculation starts from the specified initial column position.
 	 * @param initialCount the column position at the beginning of this node's text
 	 * @param offset the number of bytes to examine
@@ -237,48 +244,18 @@ public class Node {
 		return count;
 	}
 
-	public String toDebuggingString() {
-		StringBuilder buffer = new StringBuilder();
-		String label = NODE_TYPES.get(Integer.valueOf(type));
-		if (label == null) {
-			if (type <= Character.MAX_CODE_POINT) {
-				label = String.format("'%c'", type);
-			} else {
-				label = String.format("%d", type);
+	/**
+	 * Returns true if the type of this node is one of the specified types.
+	 * @param nodeTypes the list of the types to compare
+	 * @return true if the node type is one of the specified types, or false if not
+	 */
+	public boolean isOneOf(int...nodeTypes) {
+		for (int i = 0; i < nodeTypes.length; i++) {
+			if (type == nodeTypes[i]) {
+				return true;
 			}
 		}
-		buffer.append(label);
-		buffer.append(" ");
-		if (type == Node.S) {
-			byte[] bb = sequence();
-			switch (bb[0]) {
-			case HT: buffer.append("HT"); break;
-			case CR: buffer.append("CR"); break;
-			case LF: buffer.append("LF"); break;
-			case SP: buffer.append("SP"); break;
-			default: buffer.append("?"); break;
-			}
-			for (int i = 1; i < bb.length; i++) {
-				switch (bb[i]) {
-				case HT: buffer.append(" HT"); break;
-				case CR: buffer.append(" CR"); break;
-				case LF: buffer.append(" LF"); break;
-				case SP: buffer.append(" SP"); break;
-				default: buffer.append(" ?"); break;
-				}
-			}
-		} else if (this instanceof Element element) {
-			buffer.append(element.startTag().toString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("\t", "\\\\t"));
-			if (!element.isEmptyElement()) {
-				if (element.size() > 0) {
-					buffer.append("...");
-				}
-				buffer.append(element.endTag().toString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("\t", "\\\\t"));
-			}
-		} else  {
-			buffer.append(toString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("\t", "\\\\t"));
-		}
-		return buffer.toString();
+		return false;
 	}
 
 }

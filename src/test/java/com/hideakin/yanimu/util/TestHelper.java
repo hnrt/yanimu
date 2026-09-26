@@ -20,6 +20,7 @@ import com.hideakin.yanimu.xml.doctype.ExternalParameterEntityDefinition;
 import com.hideakin.yanimu.xml.doctype.InternalEntityDefinition;
 import com.hideakin.yanimu.xml.doctype.InternalParameterEntityDefinition;
 import com.hideakin.yanimu.xml.doctype.NotationDeclaration;
+import com.hideakin.yanimu.xml.util.DebugHelper;
 
 public class TestHelper {
 
@@ -72,12 +73,12 @@ public class TestHelper {
 	}
 
 	public static int checkDocument(String header, Document doc, byte[] expected) {
-		List<Node> nodeList = doc.nodeList();
+		List<Node> nodeList = doc.copy();
 		int start = 0;
 		for (int i = 0; i < nodeList.size(); i++) {
 			Node node = nodeList.get(i);
 			int end = start + node.sequence().length;
-			print("%s[%d] %d %d %s", header, i, start, end, node.toDebuggingString());
+			print("%s[%d] %d %d %s", header, i, start, end, DebugHelper.toString(node));
 			if (node.type == Node.ELEMENT) {
 				assertEquals(end, printElement(String.format("%s[%d]", header, i), (Element)node, start));
 			} else if (node.type == Node.DOCTYPE_DECL) {
@@ -92,35 +93,35 @@ public class TestHelper {
 	private static int printElement(String header, Element element, int start) {
 		if (element.isEmptyElement()) {
 			int end = start + element.startTag().sequence().length;
-			print("%s %d %d %s", header, start, end, element.startTag().toDebuggingString());
+			print("%s %d %d %s", header, start, end, DebugHelper.toString(element.startTag()));
 			start = end;
 		} else {
 			int end = start + element.startTag().sequence().length;
-			print("%s %d %d %s", header, start, end, element.startTag().toDebuggingString());
+			print("%s %d %d %s", header, start, end, DebugHelper.toString(element.startTag()));
 			start = end;
 			List<Node> children = element.children();
 			for (int i = 0; i < children.size(); i++) {
 				Node node = children.get(i);
 				end = start + node.sequence().length;
-				print("%s[%d] %d %d %s", header, i, start, end, node.toDebuggingString());
+				print("%s[%d] %d %d %s", header, i, start, end, DebugHelper.toString(node));
 				if (node.type == Node.ELEMENT) {
 					assertEquals(end, printElement(String.format("%s[%d]", header, i), (Element)node, start));
 				}
 				start = end;
 			}
 			end = start + element.endTag().sequence().length;
-			print("%s %d %d %s", header, start, end, element.endTag().toDebuggingString());
+			print("%s %d %d %s", header, start, end, DebugHelper.toString(element.endTag()));
 			start = end;
 		}
 		return start;
 	}
 
 	private static int printDocumentTypeDeclaration(String header, DocumentTypeDeclaration dtd, int start) {
-		List<Node> nodeList = dtd.nodeList();
+		List<Node> nodeList = dtd.copy();
 		for (int i = 0; i < nodeList.size(); i++) {
 			Node node = nodeList.get(i);
 			int end = start + node.sequence().length;
-			print("%s[%d] %d %d %s", header, i, start, end, node.toDebuggingString());
+			print("%s[%d] %d %d %s", header, i, start, end, DebugHelper.toString(node));
 			start = end;
 		}
 		for (int i = 0; i < dtd.declarations.length; i++) {

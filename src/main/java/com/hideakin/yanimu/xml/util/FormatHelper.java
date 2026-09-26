@@ -30,7 +30,7 @@ public class FormatHelper {
 	}
 
 	public static void countLineSeparators(NodeList nonTerminalNode, LineSeparatorCounter counter) {
-		for (Node node : nonTerminalNode.nodeList()) {
+		for (Node node : nonTerminalNode.copy()) {
 			if (node.type == S || node.type == CHAR_DATA) {
 				byte[] s = node.sequence();
 				if (s.length > 0) {
@@ -78,32 +78,75 @@ public class FormatHelper {
 	}
 
 	public static void indent(NodeList nonTerminalNode, byte[] lineSeparator, int unitWidth, int level) {
-		if (nonTerminalNode.type == ELEMENT && ((Element)nonTerminalNode).empty()) {
-			return;
-		}
-		for (int i = 0; i < nonTerminalNode.size(); i++) {
-			Node node = nonTerminalNode.get(i);
-			if (node instanceof NodeList) {
-				if ((i == 0 && level > 0) || nonTerminalNode.get(i - 1) instanceof NodeList) {
-					nonTerminalNode.add(i,
-							level == 0
-							? Node.of(S, lineSeparator)
-							: Node.of(CHAR_DATA, lineSeparatorAndIndentation(lineSeparator, unitWidth, level)));
-					i++;
-				} else if (isLineSeparatorAndIndentation(nonTerminalNode.get(i - 1))) {
-					nonTerminalNode.set(i - 1,
-							level == 0
-							? Node.of(S, lineSeparator)
-							: Node.of(CHAR_DATA, lineSeparatorAndIndentation(lineSeparator, unitWidth, level)));
-				}
-				indent((NodeList)node, lineSeparator, unitWidth, level + 1);
-			}
-		}
 		if (nonTerminalNode.type == ELEMENT) {
-			if (nonTerminalNode.size() == 0 || nonTerminalNode.last().type == ELEMENT) {
+			Element element = (Element)nonTerminalNode;
+			if (element.empty()) {
+				return;
+			}
+			Node previous = element.startTag();
+			for (int i = 0; i < nonTerminalNode.size(); i++) {
+				Node node = nonTerminalNode.get(i);
+				if (node.isOneOf(ELEMENT, Node.PI, Node.COMMENT)) {
+					if (previous.isOneOf(ELEMENT, Node.PI, Node.COMMENT, Node.STAG)) {
+						nonTerminalNode.add(i, Node.of(CHAR_DATA, lineSeparatorAndIndentation(lineSeparator, unitWidth, level)));
+						i++;
+					} else if (isLineSeparatorAndIndentation(previous)) {
+						nonTerminalNode.set(i - 1, Node.of(CHAR_DATA, lineSeparatorAndIndentation(lineSeparator, unitWidth, level)));
+					}
+					if (node.type == ELEMENT) {
+						indent((NodeList)node, lineSeparator, unitWidth, level + 1);
+					}
+				}
+				previous = node;
+			}
+			if (previous.isOneOf(ELEMENT, Node.PI, Node.COMMENT, Node.STAG)) {
 				nonTerminalNode.add(Node.of(CHAR_DATA, lineSeparatorAndIndentation(lineSeparator, unitWidth, level - 1)));
-			} else if (isLineSeparatorAndIndentation(nonTerminalNode.last())) {
+			} else if (isLineSeparatorAndIndentation(previous)) {
 				nonTerminalNode.set(nonTerminalNode.lastIndex(), Node.of(CHAR_DATA, lineSeparatorAndIndentation(lineSeparator, unitWidth, level - 1)));
+			}
+		} else if (nonTerminalNode.type == Node.DOCUMENT) {
+			Node previous = Node.NULL_NODE;
+			for (int i = 0; i < nonTerminalNode.size(); i++) {
+				Node node = nonTerminalNode.get(i);
+				if (node.isOneOf(ELEMENT, Node.DOCTYPE_DECL, Node.PI, Node.COMMENT)) {
+					if (previous.isOneOf(Node.XML_DECL, ELEMENT, Node.DOCTYPE_DECL, Node.PI, Node.COMMENT)) {
+						nonTerminalNode.add(i, Node.of(S, lineSeparator));
+						i++;
+					} else if (isLineSeparatorAndIndentation(previous)) {
+						nonTerminalNode.set(i - 1, Node.of(S, lineSeparator));
+					}
+					if (node.type == ELEMENT || node.type == Node.DOCTYPE_DECL) {
+						indent((NodeList)node, lineSeparator, unitWidth, level + 1);
+					}
+				}
+				previous = node;
+			}
+		} else if (nonTerminalNode.type == Node.DOCTYPE_DECL) {
+			for (int i = 0; i < nonTerminalNode.size(); i++) {
+				Node node = nonTerminalNode.get(i);
+				if (node.type == Node.MARKUP_DECL_START) {
+					Node previous = node;
+					for (i++; i < nonTerminalNode.size(); i++) {
+						node = nonTerminalNode.get(i);
+						if (node.isOneOf(Node.ELEMENT_DECL, Node.ATTLIST_DECL, Node.ENTITY_DECL, Node.NOTATION_DECL, Node.PI, Node.COMMENT)) {
+							if (previous.isOneOf(Node.ELEMENT_DECL, Node.ATTLIST_DECL, Node.ENTITY_DECL, Node.NOTATION_DECL, Node.PI, Node.COMMENT)) {
+								nonTerminalNode.add(i, Node.of(S, lineSeparatorAndIndentation(lineSeparator, unitWidth, level)));
+								i++;
+							} else if (isLineSeparatorAndIndentation(previous)) {
+								nonTerminalNode.set(i - 1, Node.of(S, lineSeparatorAndIndentation(lineSeparator, unitWidth, level)));
+							}
+						} else if (node.type == Node.MARKUP_DECL_END) {
+							if (previous.isOneOf(Node.ELEMENT_DECL, Node.ATTLIST_DECL, Node.ENTITY_DECL, Node.NOTATION_DECL, Node.PI, Node.COMMENT)) {
+								nonTerminalNode.add(Node.of(S, lineSeparatorAndIndentation(lineSeparator, unitWidth, level - 1)));
+							} else if (isLineSeparatorAndIndentation(previous)) {
+								nonTerminalNode.set(nonTerminalNode.lastIndex(), Node.of(S, lineSeparatorAndIndentation(lineSeparator, unitWidth, level - 1)));
+							}
+							break;
+						}
+						previous = node;
+					}
+					break;
+				}
 			}
 		}
 	}

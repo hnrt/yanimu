@@ -3,6 +3,9 @@ package com.hideakin.yanimu.xml;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A non-terminal node containing the sequence of terminal/non-terminal nodes.
+ */
 public class NodeList extends Node {
 
 	protected final List<Node> _nodeList = new ArrayList<>();
@@ -43,57 +46,145 @@ public class NodeList extends Node {
 		return length;
 	}
 
-	public List<Node> nodeList() {
+	/**
+	 * Returns an unmodifiable List containing the nodes in this node list, in its iteration order.
+	 * @return an unmodifiable List
+	 */
+	public List<Node> copy() {
 		return List.copyOf(_nodeList);
 	}
 
+	/**
+	 * Returns the number of nodes in this node list.
+	 * @return the number of nodes
+	 */
 	public int size() {
 		return _nodeList.size();
 	}
 
+	/**
+	 * Return the first node (index 0) in this node list.
+	 * If this list contains no nodes, {@code NULL_NODE} is returned.
+	 * @return the first node, or {@code NULL_NODE} if there are no nodes
+	 */
 	public Node first() {
 		int size = _nodeList.size();
-		return size > 0 ? _nodeList.get(0) : NullNode;
+		return size > 0 ? _nodeList.get(0) : NULL_NODE;
 	}
 
+	/**
+	 * Returns the second node (index 1) in this node list.
+	 * If this list contains fewer than two nodes, {@code NULL_NODE} is returned.
+	 * @return the second node, or {@code NULL_NODE} if no second node exists
+	 */
 	public Node second() {
 		int size = _nodeList.size();
-		return size > 1 ? _nodeList.get(1) : NullNode;
+		return size > 1 ? _nodeList.get(1) : NULL_NODE;
 	}
 
+	/**
+	 * Return the last node in this node list.
+	 * If this list contains no nodes, {@code NULL_NODE} is returned.
+	 * @return the last node, or {@code NULL_NODE} if there are no nodes
+	 */
 	public Node last() {
 		int size = _nodeList.size();
-		return size > 0 ? _nodeList.get(size - 1) : NullNode;
+		return size > 0 ? _nodeList.get(size - 1) : NULL_NODE;
 	}
 
+	/**
+	 * Return the index of the last node in this node list.
+	 * If this list contains no nodes, -1 is returned.
+	 * @return the index of the last node, or -1 if it doesn't exist
+	 */
 	public int lastIndex() {
 		return _nodeList.size() - 1;
 	}
 
+	/**
+	 * Returns the node at the specified index in this node list.
+	 * @param index the index of the node to return
+	 * @return the node at the specified index
+	 * @throws IndexOutOfBoundsException if the index is out of range (less than 0 or greater than or equal to the size)
+	 */
 	public Node get(int index) {
 		int size = _nodeList.size();
-		return 0 <= index && index < size ? _nodeList.get(index) : NullNode;
+		if (index < 0 || size <= index) {
+			throw new IndexOutOfBoundsException(getClass().getSimpleName() + "::get: Index out of range.");
+		}
+		return _nodeList.get(index);
 	}
 
+	/**
+	 * Returns the node at the specified index in this node list.
+	 * <p>
+	 * If the index is out of range (less than 0 or greater than or equal to the size),
+	 * the specified fallback is returned.
+	 * @param index the index of the node to return
+	 * @param fallback the value to return if the index is out of range
+	 * @return the node at the specified index, or {@code fallback} if the index is out of range
+	 */
+	public Node get(int index, Node fallback) {
+		int size = _nodeList.size();
+		if (index < 0 || size <= index) {
+			return fallback;
+		}
+		return _nodeList.get(index);
+	}
+
+	/**
+	 * Replaces the node at the specified index in this node list with the specified node.
+	 * @param index the index of the node to replace
+	 * @param node the node with which the node at the specified index is to be replaced
+	 * @throws IndexOutOfBoundsException if the index is out of range (less than 0 or greater than or equal to the size)
+	 * @throws NullPointerException if null is specified for the node
+	 * @throws IllegalArgumentException if a NULL-node is specified
+	 */
 	public void set(int index, Node node) {
 		int size = _nodeList.size();
-		if (0 <= index && index < size) {
-			_nodeList.set(index, node);
-		} else {
-			throw new RuntimeException("NodeList::set: Index out of range.");
+		if (index < 0 || size <= index) {
+			throw new IndexOutOfBoundsException(getClass().getSimpleName() + "::set: Index out of range.");
+		} else if (node == null) {
+			throw new NullPointerException(getClass().getSimpleName() + "::set: null was specified.");
+		} else if (node.type == NULL) {
+			throw new IllegalArgumentException(getClass().getSimpleName() + "::set: NULL-node was specified.");
 		}
+		_nodeList.set(index, node);
 	}
 
+	/**
+	 * Appends the specified node to the end of this node list.
+	 * @param node the node to be appended to this node list
+	 * @throws NullPointerException if null is specified for the node
+	 * @throws IllegalArgumentException if a NULL-node is specified
+	 */
 	public void add(Node node) {
+		if (node == null) {
+			throw new NullPointerException(getClass().getSimpleName() + "::add: null was specified.");
+		} else if (node.type == NULL) {
+			throw new IllegalArgumentException(getClass().getSimpleName() + "::add: NULL-node was specified.");
+		}
 		_nodeList.add(node);
 	}
 
+	/**
+	 * Inserts the specified node at the specified index in this node list.
+	 * Shifts the node currently at that position (if any)
+	 * and any subsequent nodes to the right (adds one to their indices).
+	 * @param index the index at which the node is to be inserted
+	 * @param node the node to be inserted
+	 * @throws IndexOutOfBoundsException if the index is out of range (less than 0 or greater than the size)
+	 * @throws NullPointerException if null is specified for the node
+	 * @throws IllegalArgumentException if a NULL-node is specified
+	 */
 	public void add(int index, Node node) {
 		int size = _nodeList.size();
-		if (index < 0) {
-			index = 0;
-		} else if (index > size) {
-			index = size;
+		if (index < 0 || size < index) {
+			throw new IndexOutOfBoundsException(getClass().getSimpleName() + "::add: Index out of range.");
+		} else if (node == null) {
+			throw new NullPointerException(getClass().getSimpleName() + "::add: null was specified.");
+		} else if (node.type == NULL) {
+			throw new IllegalArgumentException(getClass().getSimpleName() + "::add: NULL-node was specified.");
 		}
 		_nodeList.add(index, node);
 	}
@@ -107,7 +198,7 @@ public class NodeList extends Node {
 		if (0 <= index && index < size) {
 			return _nodeList.remove(index);
 		} else {
-			return NullNode;
+			return NULL_NODE;
 		}
 	}
 
@@ -118,7 +209,7 @@ public class NodeList extends Node {
 				return _nodeList.remove(index);
 			}
 		}
-		return NullNode;
+		return NULL_NODE;
 	}
 
 	public Node remove(Node node, int start, int end) {
@@ -126,7 +217,7 @@ public class NodeList extends Node {
 			start = 0;
 		}
 		if (end < start) {
-			return NullNode;
+			return NULL_NODE;
 		}
 		int size = _nodeList.size();
 		if (end > size) {
@@ -137,11 +228,12 @@ public class NodeList extends Node {
 				return _nodeList.remove(index);
 			}
 		}
-		return NullNode;
+		return NULL_NODE;
 	}
 
 	/**
-	 * Returns the offset of the specified node from the first node in this list.<br/>
+	 * Returns the offset of the specified node from the first node in this list.
+	 * <p>
 	 * If the node is not found, this method returns -1.
 	 * @param target the node to search for
 	 * @return the offset of the node, or -1 if not found

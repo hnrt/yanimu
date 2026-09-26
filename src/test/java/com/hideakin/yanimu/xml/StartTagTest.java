@@ -14,6 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
+import com.hideakin.yanimu.xml.util.DebugHelper;
+
 public class StartTagTest {
 
 	@BeforeAll
@@ -43,9 +45,9 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.addAttribute("abc", "xyz");
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting abc=\"xyz\"/>", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -60,9 +62,9 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.addAttribute("abc", "xyz");
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting abc=\"xyz\"\r\n/>", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -77,11 +79,11 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.addAttribute("abc1", "xyz1");
 			st.addAttribute("abc2", "xyz2");
 			st.addAttribute("abc3", "xyz3");
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting abc1=\"xyz1\" abc2=\"xyz2\" abc3=\"xyz3\">", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -96,11 +98,11 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.addAttribute("abc1", "xyz1");
 			st.addAttribute("abc2", "xyz2");
 			st.addAttribute("abc3", "xyz3");
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting  abc0=\"xyz0\" abc1=\"xyz1\" abc2=\"xyz2\" abc3=\"xyz3\"   />", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -115,12 +117,12 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.addAttribute(0, "abc1", "xyz1");
 			st.addAttribute(1, "abc1.5", "xyz1.5");
 			st.addAttribute(3, "abc8", "xyz8");
 			st.addAttribute(5, "abc9", "xyz9");
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting abc1=\"xyz1\" abc1.5=\"xyz1.5\"\r\nabc2=\"xyz2\" abc8=\"xyz8\" abc8.1=\"xyz8.1\" abc9=\"xyz9\"   />", st.toString());
 			assertEquals("xyz1", st.attribute(0));
 			assertEquals("xyz1.5", st.attribute(1));
@@ -259,10 +261,10 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.setAttribute(0, "abc1", "xyz1");
 			st.setAttribute(1, "abc1.5", "xyz1.5");
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting\r\nabc1=\"xyz1\" abc1.5=\"xyz1.5\"/>", st.toString());
 			assertEquals("xyz1", st.attribute(0));
 			assertEquals("xyz1.5", st.attribute(1));
@@ -283,9 +285,9 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.setAttribute("abc2", "xyz22");
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting\r\nabc2 = \"xyz22\" abc8.1=\"xyz8.1\"/>", st.toString());
 			assertEquals("xyz22", st.attribute(0));
 			assertEquals("xyz8.1", st.attribute(1));
@@ -306,9 +308,9 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.setAttribute("abc8.1", "xyzzy8.1");
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting\r\nabc2 = \"xyz2\" abc8.1=\"xyzzy8.1\"/>", st.toString());
 			assertEquals("xyz2", st.attribute(0));
 			assertEquals("xyzzy8.1", st.attribute(1));
@@ -329,9 +331,9 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.setAttribute("abc9", "xyzzy9");
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting\r\nabc2 = \"xyz2\" abc8.1=\"xyz8.1\" abc9=\"xyzzy9\"/>", st.toString());
 			assertEquals("xyz2", st.attribute(0));
 			assertEquals("xyz8.1", st.attribute(1));
@@ -356,9 +358,9 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.removeAllAttributes();
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting/>", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -373,9 +375,9 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.removeAllAttributes();
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting  >", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -390,9 +392,9 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.removeAllAttributes();
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting  />", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -407,9 +409,9 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.removeAllAttributes();
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting>", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -424,10 +426,10 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE  %s", st.toDebuggingString());
+			print("BEFORE  %s", DebugHelper.toString(st));
 			Node node = st.removeAttribute(0);
-			print("AFTER   %s", st.toDebuggingString());
-			print("REMOVED %s", node.toDebuggingString());
+			print("AFTER   %s", DebugHelper.toString(st));
+			print("REMOVED %s", DebugHelper.toString(node));
 			assertEquals("<greeting abc8.1=\"xyz8.1\"/>", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -442,10 +444,10 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			Node node = st.removeAttribute(1);
-			print("AFTER  %s", st.toDebuggingString());
-			print("REMOVED %s", node.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
+			print("REMOVED %s", DebugHelper.toString(node));
 			assertEquals("<greeting\r\nabc2=\"xyz2\"/>", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -460,10 +462,10 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE  %s", st.toDebuggingString());
+			print("BEFORE  %s", DebugHelper.toString(st));
 			Node node = st.removeAttribute(2);
-			print("AFTER   %s", st.toDebuggingString());
-			print("REMOVED %s", node.toDebuggingString());
+			print("AFTER   %s", DebugHelper.toString(st));
+			print("REMOVED %s", DebugHelper.toString(node));
 			assertEquals(Node.NULL, node.type);
 			assertEquals("<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"/>", st.toString());
 		} catch (Exception e) {
@@ -479,10 +481,10 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE  %s", st.toDebuggingString());
+			print("BEFORE  %s", DebugHelper.toString(st));
 			Node node = st.removeAttribute("abc2");
-			print("AFTER   %s", st.toDebuggingString());
-			print("REMOVED %s", node.toDebuggingString());
+			print("AFTER   %s", DebugHelper.toString(st));
+			print("REMOVED %s", DebugHelper.toString(node));
 			assertEquals("<greeting abc8.1=\"xyz8.1\"/>", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -497,10 +499,10 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE  %s", st.toDebuggingString());
+			print("BEFORE  %s", DebugHelper.toString(st));
 			Node node = st.removeAttribute("abc8.1");
-			print("AFTER   %s", st.toDebuggingString());
-			print("REMOVED %s", node.toDebuggingString());
+			print("AFTER   %s", DebugHelper.toString(st));
+			print("REMOVED %s", DebugHelper.toString(node));
 			assertEquals("<greeting\r\nabc2 = \"xyz2\"/>", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -515,10 +517,10 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE  %s", st.toDebuggingString());
+			print("BEFORE  %s", DebugHelper.toString(st));
 			Node node = st.removeAttribute("xyz");
-			print("AFTER   %s", st.toDebuggingString());
-			print("REMOVED %s", node.toDebuggingString());
+			print("AFTER   %s", DebugHelper.toString(st));
+			print("REMOVED %s", DebugHelper.toString(node));
 			assertEquals(Node.NULL, node.type);
 			assertEquals("<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"/>", st.toString());
 		} catch (Exception e) {
@@ -534,9 +536,9 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.addAttribute("abc", "x\"y\"z");
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting abc=\'x\"y\"z\'/>", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -551,9 +553,9 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.addAttribute("abc", "x\'y\'z");
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting abc=\"x\'y\'z\"/>", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -568,9 +570,9 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.addAttribute("abc", "\"xy\'z\"");
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting abc=\'\"xy&apos;z\"\'/>", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -585,9 +587,9 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.setAttribute(0, "abc", "\"xy\'z\"");
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting abc=\"&quot;xy\'z&quot;\" />", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -602,9 +604,9 @@ public class StartTagTest {
 		try {
 			doc.load(source.getBytes());
 			StartTag st = doc.root().startTag();
-			print("BEFORE %s", st.toDebuggingString());
+			print("BEFORE %s", DebugHelper.toString(st));
 			st.setAttribute(0, "abc", "The quick brown \"fox\" jumps over the \'lazy\' dog.");
-			print("AFTER  %s", st.toDebuggingString());
+			print("AFTER  %s", DebugHelper.toString(st));
 			assertEquals("<greeting abc=\"The quick brown &quot;fox&quot; jumps over the \'lazy\' dog.\"/>", st.toString());
 		} catch (Exception e) {
 			e.printStackTrace();

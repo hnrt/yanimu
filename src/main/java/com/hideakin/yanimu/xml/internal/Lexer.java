@@ -333,10 +333,11 @@ public class Lexer {
 				popContext();
 				return nodeOf(TAG_END);
 			case '[':
-			case ']':
-				int c = _c;
 				readChar();
-				return nodeOf(c);
+				return nodeOf(MARKUP_DECL_START);
+			case ']':
+				readChar();
+				return nodeOf(MARKUP_DECL_END);
 			case '%':
 				readChar();
 				if (isNameStartChar(_c)) {

@@ -119,10 +119,10 @@ public class Element extends NodeList {
 	 * @return the list of child nodes
 	 */
 	@Override
-	public List<Node> nodeList() {
+	public List<Node> copy() {
 		if (_nodeList.size() > 1) {
 			Content content = (Content)_nodeList.get(1);
-			return content.nodeList();
+			return content.copy();
 		} else {
 			return List.of();
 		}
@@ -153,7 +153,7 @@ public class Element extends NodeList {
 			Content content = (Content)_nodeList.get(1);
 			return content.first();
 		} else {
-			return NullNode;
+			return NULL_NODE;
 		}
 	}
 
@@ -168,7 +168,7 @@ public class Element extends NodeList {
 			Content content = (Content)_nodeList.get(1);
 			return content.last();
 		} else {
-			return NullNode;
+			return NULL_NODE;
 		}
 	}
 
@@ -197,7 +197,7 @@ public class Element extends NodeList {
 			Content content = (Content)_nodeList.get(1);
 			return content.get(index);
 		} else {
-			return NullNode;
+			return NULL_NODE;
 		}
 	}
 
@@ -263,7 +263,7 @@ public class Element extends NodeList {
 				return removed;
 			}
 		}
-		return NullNode;
+		return NULL_NODE;
 	}
 
 	@Override
@@ -275,7 +275,7 @@ public class Element extends NodeList {
 				return removed;
 			}
 		}
-		return NullNode;
+		return NULL_NODE;
 	}
 
 	@Override
@@ -287,7 +287,7 @@ public class Element extends NodeList {
 				return removed;
 			}
 		}
-		return NullNode;
+		return NULL_NODE;
 	}
 
 	/**
@@ -386,7 +386,7 @@ public class Element extends NodeList {
 	public List<Node> children() {
 		if (_nodeList.size() > 1) {
 			Content content = (Content)_nodeList.get(1);
-			return content.nodeList();
+			return content.copy();
 		} else {
 			return List.of();
 		}
@@ -402,7 +402,7 @@ public class Element extends NodeList {
 			Content content = (Content)_nodeList.get(1);
 			return content.get(index);
 		} else {
-			return NullNode;
+			return NULL_NODE;
 		}
 	}
 

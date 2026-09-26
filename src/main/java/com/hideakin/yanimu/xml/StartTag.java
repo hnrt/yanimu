@@ -313,7 +313,7 @@ public class StartTag extends Tag {
 				if (node.type == ATTRIBUTE) {
 					if (++attrIndex == index) {
 						Attribute attributeOld = (Attribute)node;
-						List<Node> nodeListNew = new ArrayList<>(attributeOld.nodeList());
+						List<Node> nodeListNew = new ArrayList<>(attributeOld.copy());
 						Node keyNode = Node.of(NAME, key.getBytes(StandardCharsets.UTF_8));
 						int quoteCharacter = attributeOld.last().sequence()[0];
 						Node valueNode = Node.of(ATT_VALUE, attributeValue(value, quoteCharacter));
@@ -363,7 +363,7 @@ public class StartTag extends Tag {
 				if (node.type == ATTRIBUTE) {
 					Attribute a = (Attribute)node;
 					if (a.key.equals(key)) {
-						List<Node> nodeListNew = new ArrayList<>(a.nodeList());
+						List<Node> nodeListNew = new ArrayList<>(a.copy());
 						Node keyNode = Node.of(NAME, key.getBytes(StandardCharsets.UTF_8));
 						int quoteCharacter = a.last().sequence()[0];
 						Node valueNode = Node.of(ATT_VALUE, attributeValue(value, quoteCharacter));
@@ -556,7 +556,7 @@ public class StartTag extends Tag {
 		} else {
 			throw new RuntimeException(this.getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
 		}
-		return NullNode;
+		return NULL_NODE;
 	}
 
 	/**
@@ -598,7 +598,7 @@ public class StartTag extends Tag {
 		} else {
 			throw new RuntimeException(this.getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
 		}
-		return NullNode;
+		return NULL_NODE;
 	}
 
 	/**

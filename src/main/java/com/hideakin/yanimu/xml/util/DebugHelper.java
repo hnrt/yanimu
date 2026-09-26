@@ -1,9 +1,12 @@
-package com.hideakin.yanimu.xml.internal;
+package com.hideakin.yanimu.xml.util;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import com.hideakin.yanimu.xml.Character;
+import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.Node;
+import com.hideakin.yanimu.xml.internal.LexerContext;
 
 import static com.hideakin.yanimu.xml.Character.*;
 
@@ -116,16 +119,60 @@ public class DebugHelper {
 		LEXER_CONTEXTS = Map.copyOf(lc);
 	}
 
+	public static String toString(Node node) {
+		StringBuilder buffer = new StringBuilder();
+		String label = NODE_TYPES.get(Integer.valueOf(node.type));
+		if (label == null) {
+			if (node.type <= Character.MAX_CODE_POINT) {
+				label = "'%c'".formatted(node.type);
+			} else {
+				label = "%d".formatted(node.type);
+			}
+		}
+		buffer.append(label);
+		buffer.append(" ");
+		if (node.type == Node.S) {
+			byte[] bb = node.sequence();
+			switch (bb[0]) {
+			case HT: buffer.append("HT"); break;
+			case CR: buffer.append("CR"); break;
+			case LF: buffer.append("LF"); break;
+			case SP: buffer.append("SP"); break;
+			default: buffer.append("?"); break;
+			}
+			for (int i = 1; i < bb.length; i++) {
+				switch (bb[i]) {
+				case HT: buffer.append(" HT"); break;
+				case CR: buffer.append(" CR"); break;
+				case LF: buffer.append(" LF"); break;
+				case SP: buffer.append(" SP"); break;
+				default: buffer.append(" ?"); break;
+				}
+			}
+		} else if (node instanceof Element element) {
+			buffer.append(element.startTag().toString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("\t", "\\\\t"));
+			if (!element.isEmptyElement()) {
+				if (element.size() > 0) {
+					buffer.append("...");
+				}
+				buffer.append(element.endTag().toString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("\t", "\\\\t"));
+			}
+		} else  {
+			buffer.append(node.toString().replaceAll("\r", "\\\\r").replaceAll("\n", "\\\\n").replaceAll("\t", "\\\\t"));
+		}
+		return buffer.toString();
+	}
+
 	public static void printForLexer(Node node) {
 		if ((enabled & FLAG_LEXER) == 0) return;
-		System.out.printf("# NODE %s\n", node.toDebuggingString());
+		System.out.printf("# NODE %s\n", toString(node));
 	}
 
 	public static void printLexerContext(int ctx) {
 		if ((enabled & FLAG_LEXER) == 0) return;
 		String label = LEXER_CONTEXTS.get(Integer.valueOf(ctx));
 		if (label == null) {
-			label = String.format("%d", ctx);
+			label = "%d".formatted(ctx);
 		}
 		System.out.printf("# LCTX %s\n", label);
 	}
