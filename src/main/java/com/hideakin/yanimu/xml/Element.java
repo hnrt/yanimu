@@ -71,8 +71,8 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This method returns its parent element.
-	 * @return parent element or null if it is not set.
+	 * Returns the parent Element.
+	 * @return the parent Element or null if not set.
 	 */
 	public Element parent() {
 		if (_parent instanceof Element element) {
@@ -187,7 +187,9 @@ public class Element extends NodeList {
 
 	/**
 	 * Returns the child node at the specified index in this Element.
-	 * @return the child node, or {@code NULL_NODE} if this Element has no children
+	 * @param index the index of the child node to return
+	 * @return the child node
+	 * @throws IndexOutOfBoundsException if the index is out of range (less than 0 or greater than or equal to the size)
 	 */
 	@Override
 	public Node get(int index) {
@@ -195,10 +197,34 @@ public class Element extends NodeList {
 			Content content = (Content)_nodeList.get(1);
 			return content.get(index);
 		} else {
-			return NULL_NODE;
+			throw new IndexOutOfBoundsException(getClass().getSimpleName() + "::get: Index out of range.");
 		}
 	}
 
+	/**
+	 * Returns the child node at the specified index in this Element.
+	 * <p>
+	 * If the index is out of range (less than 0 or greater than or equal to the size),
+	 * the specified fallback is returned.
+	 * @param index the index of the child node to return
+	 * @param fallback the value to return if the index is out of range
+	 * @return the child node at the specified index, or {@code fallback} if the index is out of range
+	 */
+	@Override
+	public Node get(int index, Node fallback) {
+		if (_nodeList.size() > 1) {
+			Content content = (Content)_nodeList.get(1);
+			return content.get(index, fallback);
+		} else {
+			return fallback;
+		}
+	}
+
+	/**
+	 * Replaces the child node at the specified index in this Element with the specified node.
+	 * @param index the index at which the node is to be replaced
+	 * @param node the node with which the child node is to be replaced
+	 */
 	@Override
 	public void set(int index, Node node) {
 		if (_nodeList.size() > 1) {
@@ -212,14 +238,20 @@ public class Element extends NodeList {
 		}
 	}
 
+	/**
+	 * Appends the specified node to the end of the child list in this Element.
+	 * @param node the node to be appended to this Element
+	 * @throws NullPointerException if null is specified for the node
+	 * @throws IllegalArgumentException if a NULL-node is specified
+	 */
 	@Override
 	public void add(Node node) {
-		AttributeTag stag = (AttributeTag)_nodeList.get(0);
-		if (stag.type == EETAG) {
+		AttributeTag tag = (AttributeTag)_nodeList.get(0);
+		if (tag.type == EETAG) {
 			_nodeList.clear();
-			_nodeList.add(stag.toStartTag());
+			_nodeList.add(tag.toStartTag());
 			_nodeList.add(Content.of());
-			_nodeList.add(EndTag.of(stag.name));
+			_nodeList.add(EndTag.of(tag.name));
 		}
 		Content content = (Content)_nodeList.get(1);
 		content.add(node);
@@ -228,12 +260,22 @@ public class Element extends NodeList {
 		}
 	}
 
+	/**
+	 * Inserts the specified node at the specified index in the child list in this Element.
+	 * Shifts the node currently at that position (if any)
+	 * and any subsequent nodes to the right (adds one to their indices).
+	 * @param index the index at which the node is to be inserted
+	 * @param node the node to be inserted
+	 * @throws IndexOutOfBoundsException if the index is out of range (less than 0 or greater than the size)
+	 * @throws NullPointerException if null is specified for the node
+	 * @throws IllegalArgumentException if a NULL-node is specified
+	 */
 	@Override
 	public void add(int index, Node node) {
-		AttributeTag stag = (AttributeTag)_nodeList.get(0);
-		if (stag.type == EETAG) {
+		AttributeTag tag = (AttributeTag)_nodeList.get(0);
+		if (tag.type == EETAG) {
 			_nodeList.clear();
-			_nodeList.add(stag.toStartTag());
+			_nodeList.add(tag.toStartTag());
 			_nodeList.add(Content.of());
 			_nodeList.add(EndTag.of(name));
 		}
@@ -244,6 +286,10 @@ public class Element extends NodeList {
 		}
 	}
 
+	/**
+	 * Removes all of the child nodes from this Element.
+	 * There will be no children after this call returns.
+	 */
 	@Override
 	public void clear() {
 		if (_nodeList.size() > 1) {
@@ -252,38 +298,38 @@ public class Element extends NodeList {
 		}
 	}
 
+	/**
+	 * Removes the child node at the specified index in this Element.
+	 * Shifts any subsequent nodes to the left (subtracts one from their indices).
+	 * Returns the node that was removed from the child list.
+	 * @param index the index of the child node to be removed
+	 * @return the child node previously at the specified index
+	 * @throws IndexOutOfBoundsException if the index is out of range (less than 0 or greater than or equal to the size)
+	 */
 	@Override
 	public Node remove(int index) {
 		if (_nodeList.size() > 1) {
 			Content content = (Content)_nodeList.get(1);
-			Node removed = content.remove(index);
-			if (removed.type != NULL) {
-				return removed;
-			}
+			return content.remove(index);
+		} else {
+			throw new IndexOutOfBoundsException(getClass().getSimpleName() + "::remove: An empty element has no children.");
 		}
-		return NULL_NODE;
 	}
 
+	/**
+	 * Removes the first occurrence of the specified node from this Element, if it is present.
+	 * Shifts any subsequent nodes to the left (subtracts one from their indices).
+	 * Returns the node that was removed from the child list.
+	 * <p>
+	 * If the child list in this Element does not contain the node, it is unchanged and {@code NULL_NODE} is returned.
+	 * @param node the node to be removed
+	 * @return the node that was removed from the list, or {@code NULL_NODE} if not found
+	 */
 	@Override
 	public Node remove(Node node) {
 		if (_nodeList.size() > 1) {
 			Content content = (Content)_nodeList.get(1);
-			Node removed = content.remove(node);
-			if (removed.type != NULL) {
-				return removed;
-			}
-		}
-		return NULL_NODE;
-	}
-
-	@Override
-	public Node remove(Node node, int start, int end) {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			Node removed = content.remove(node, start, end);
-			if (removed.type != NULL) {
-				return removed;
-			}
+			return content.remove(node);
 		}
 		return NULL_NODE;
 	}
@@ -312,101 +358,135 @@ public class Element extends NodeList {
 		return _nodeList.size() == 3 ? (EndTag)_nodeList.get(2) : null;
 	}
 
+	/**
+	 * See {@link AttributeTag#attributeCount}.
+	 */
 	public int attributeCount() {
 		return startTag().attributeCount();
 	}
 
+	/**
+	 * See {@link AttributeTag#attribute(int)}.
+	 */
 	public String attribute(int index) {
 		return startTag().attribute(index);
 	}
 
+	/**
+	 * See {@link AttributeTag#attribute(int,String)}.
+	 */
 	public String attribute(int index, String defaultValue) {
 		return startTag().attribute(index, defaultValue);
 	}
 
+	/**
+	 * See {@link AttributeTag#attribute(String)}.
+	 */
 	public String attribute(String key) {
 		return startTag().attribute(key);
 	}
 
+	/**
+	 * See {@link AttributeTag#attribute(String,String)}.
+	 */
 	public String attribute(String key, String defaultValue) {
 		return startTag().attribute(key, defaultValue);
 	}
 
+	/**
+	 * See {@link AttributeTag#attributeList}.
+	 */
+	public List<Attribute> attributeList() {
+		return startTag().attributeList();
+	}
+
+	/**
+	 * See {@link AttributeTag#attributeKeys}.
+	 */
 	public List<String> attributeKeys() {
 		return startTag().attributeKeys();
 	}
 
+	/**
+	 * See {@link AttributeTag#attributeValues}.
+	 */
+	public List<String> attributeValues() {
+		return startTag().attributeValues();
+	}
+
+	/**
+	 * See {@link AttributeTag#setAttribute(int,String,String)}.
+	 */
 	public void setAttribute(int index, String key, String value) {
 		startTag().setAttribute(index, key, value);
 	}
 
+	/**
+	 * See {@link AttributeTag#setAttribute(String,String)}.
+	 */
 	public void setAttribute(String key, String value) {
 		startTag().setAttribute(key, value);
 	}
 
+	/**
+	 * See {@link AttributeTag#addAttribute(String,String)}.
+	 */
 	public void addAttribute(String key, String value) {
 		startTag().addAttribute(key, value);
 	}
 
+	/**
+	 * See {@link AttributeTag#addAttribute(int,String,String)}.
+	 */
 	public void addAttribute(int index, String key, String value) {
 		startTag().addAttribute(index, key, value);
 	}
 
+	/**
+	 * See {@link AttributeTag#removeAllAttributes}.
+	 */
 	public void removeAllAttributes() {
 		startTag().removeAllAttributes();
 	}
 
+	/**
+	 * See {@link AttributeTag#removeAttribute(int)}.
+	 */
 	public Node removeAttribute(int index) {
 		return startTag().removeAttribute(index);
 	}
 
+	/**
+	 * See {@link AttributeTag#removeAttribute(String)}.
+	 */
 	public Node removeAttribute(String key) {
 		return startTag().removeAttribute(key);
 	}
 
 	/**
-	 * This is equivalent to {@code size} method of the content in this Element.
-	 * @return number of nodes in the content
+	 * This is equivalent to {@link Element#size}.
 	 */
 	public int childCount() {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			return content.size();
-		} else {
-			return 0;
-		}
+		return size();
 	}
 
 	/**
-	 * This is equivalent to the {@code copy} method of the content in this Element.
-	 * @return List of nodes
+	 * This is equivalent to {@link Element#copy}.
 	 */
 	public List<Node> children() {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			return content.copy();
-		} else {
-			return List.of();
-		}
+		return copy();
 	}
 
 	/**
-	 * This is equivalent to get method.
-	 * @param index of the node to be returned
-	 * @return node in the content
+	 * This is equivalent to {@link Element#get}.
 	 */
 	public Node child(int index) {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			return content.get(index);
-		} else {
-			return NULL_NODE;
-		}
+		return get(index);
 	}
 
 	/**
-	 * This method attempts to change itself to an empty element if possible.
-	 * @return True if this element is an empty element as a result or false if not.
+	 * Attempts to change this Element to an empty element if no children is contained.
+	 * @return true if this Element is an empty element as a result or false if not.
 	 */
 	public boolean empty() {
 		if (isEmptyElement()) {
@@ -424,16 +504,16 @@ public class Element extends NodeList {
 					return false;
 				}
 			}
-			AttributeTag stag = (AttributeTag)_nodeList.get(0);
+			AttributeTag tag = (AttributeTag)_nodeList.get(0);
 			_nodeList.clear();
-			_nodeList.add(stag.toEmptyElementTag());
+			_nodeList.add(tag.toEmptyElementTag());
 			return true;
 		}
 	}
 
 	/**
-	 * This method returns the inner text string of this element.
-	 * @return Inner text string of this element
+	 * Returns the inner text String of this Element.
+	 * @return the inner text string of this Element, or null if this Element is an empty element
 	 */
 	public String innerText() {
 		if (_nodeList.size() > 1) {
@@ -445,9 +525,10 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This method returns the inner text string of this element.
+	 * Returns the inner text String of this Element.
 	 * @param fallback the return value on error
-	 * @return Inner text string of this element
+	 * @return the inner text String of this Element,
+	 * or {@code fallback} if this Element is an empty element or the inner text is empty
 	 */
 	public String innerText(String fallback) {
 		if (_nodeList.size() > 1) {
@@ -460,14 +541,14 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This method sets the given string to the inner text string of this element.
+	 * Sets the given String to the inner text String of this Element.
 	 * @param value to be set
 	 */
 	public void setInnerText(String value) {
 		if (_nodeList.size() == 1) {
-			AttributeTag stag = startTag().toStartTag();
+			AttributeTag tag = startTag().toStartTag();
 			_nodeList.clear();
-			_nodeList.add(stag);
+			_nodeList.add(tag);
 			_nodeList.add(Content.of());
 			_nodeList.add(EndTag.of(name));
 		}
@@ -476,10 +557,11 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This method returns the nesting level of this element.
-	 * For example, the nesting level of the root element is zero.
-	 * The nesting level of the child elements of the root element is one.
-	 * @return The nesting level of this element
+	 * Returns the nesting level of this Element.
+	 * <p>
+	 * For example, the nesting level of the root Element is 0.
+	 * The nesting level of a root's child Element is 1.
+	 * @return the nesting level of this Element
 	 */
 	public int level() {
 		int n = 0;
@@ -492,8 +574,8 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This method checks if this element has one or more child elements.
-	 * @return true if this element has one or more child elements or<br/>false if not
+	 * Checks if this Element has one or more child elements.
+	 * @return true if this Element has one or more child elements or false otherwise
 	 */
 	public boolean hasElement() {
 		if (_nodeList.size() > 1) {

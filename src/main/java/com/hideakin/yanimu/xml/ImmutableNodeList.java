@@ -19,38 +19,39 @@ public class ImmutableNodeList extends NodeList {
 		super(type, nodeList);
 	}
 
+	@Deprecated
 	@Override
 	public void set(int index, Node node) {
 		throw new UnsupportedOperationException(getClass().getSimpleName() + "::set: FORBIDDEN!");
 	}
 
+	@Deprecated
 	@Override
 	public void add(Node node) {
 		throw new UnsupportedOperationException(getClass().getSimpleName() + "::add: FORBIDDEN!");
 	}
 
+	@Deprecated
 	@Override
 	public void add(int index, Node node) {
 		throw new UnsupportedOperationException(getClass().getSimpleName() + "::add: FORBIDDEN!");
 	}
 
+	@Deprecated
 	@Override
 	public void clear() {
 		throw new UnsupportedOperationException(getClass().getSimpleName() + "::clear: FORBIDDEN!");
 	}
 
+	@Deprecated
 	@Override
 	public Node remove(int index) {
 		throw new UnsupportedOperationException(getClass().getSimpleName() + "::remove: FORBIDDEN!");
 	}
 
+	@Deprecated
 	@Override
 	public Node remove(Node node) {
-		throw new UnsupportedOperationException(getClass().getSimpleName() + "::remove: FORBIDDEN!");
-	}
-
-	@Override
-	public Node remove(Node node, int start, int end) {
 		throw new UnsupportedOperationException(getClass().getSimpleName() + "::remove: FORBIDDEN!");
 	}
 

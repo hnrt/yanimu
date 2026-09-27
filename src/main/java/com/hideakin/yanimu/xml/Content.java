@@ -75,15 +75,6 @@ public class Content extends NodeList {
 		return node;
 	}
 
-	@Override
-	public Node remove(Node node, int start, int end) {
-		node = super.remove(node, start, end);
-		if (node instanceof Element element) {
-			element.setParent(null);
-		}
-		return node;
-	}
-
 	public String text() {
 		StringBuilder buffer = new StringBuilder();
 		for (Node node : _nodeList) {

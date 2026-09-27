@@ -533,7 +533,7 @@ public class AttributeTag extends Tag {
 	/**
 	 * Removes the attribute at the specified index.
 	 * @param index of the attribute to be removed
-	 * @return the removed attribute node, or NullNode if the specified index is invalid
+	 * @return the removed attribute node, or {@code NULL_NODE} if the specified index is invalid
 	 */
 	public Node removeAttribute(int index) {
 		int size = _nodeList.size();
@@ -575,7 +575,7 @@ public class AttributeTag extends Tag {
 	/**
 	 * Removes the attribute associated with the specified key.
 	 * @param key of the attribute to be removed
-	 * @return the removed attribute node, or NullNode if the specified index is invalid
+	 * @return the removed attribute node, or {@code NULL_NODE} if the specified index is invalid
 	 */
 	public Node removeAttribute(String key) {
 		int size = _nodeList.size();

@@ -189,46 +189,47 @@ public class NodeList extends Node {
 		_nodeList.add(index, node);
 	}
 
+	/**
+	 * Removes all of the nodes from this list.
+	 * <p>
+	 * The list will be empty after this call returns.
+	 */
 	public void clear() {
 		_nodeList.clear();
 	}
 
+	/**
+	 * Removes the node at the specified index in this list.
+	 * Shifts any subsequent nodes to the left (subtracts one from their indices).
+	 * Returns the node that was removed from the list.
+	 * @param index the index of the node to be removed
+	 * @return the node previously at the specified index
+	 * @throws IndexOutOfBoundsException if the index is out of range (less than 0 or greater than or equal to the size)
+	 */
 	public Node remove(int index) {
 		int size = _nodeList.size();
 		if (0 <= index && index < size) {
 			return _nodeList.remove(index);
 		} else {
-			return NULL_NODE;
+			throw new IndexOutOfBoundsException(getClass().getSimpleName() + "::remove: Index out of range.");
 		}
 	}
 
+	/**
+	 * Removes the first occurrence of the specified node from this list, if it is present.
+	 * Shifts any subsequent nodes to the left (subtracts one from their indices).
+	 * Returns the node that was removed from the list.
+	 * <p>
+	 * If this list does not contain the node, it is unchanged and {@code NULL_NODE} is returned.
+	 * @param node the node to be removed
+	 * @return the node that was removed from the list, or {@code NULL_NODE} if not found
+	 */
 	public Node remove(Node node) {
-		int size = _nodeList.size();
-		for (int index = 0; index < size; index++) {
-			if (_nodeList.get(index) == node) {
-				return _nodeList.remove(index);
-			}
-		}
-		return NULL_NODE;
-	}
-
-	public Node remove(Node node, int start, int end) {
-		if (start < 0) {
-			start = 0;
-		}
-		if (end < start) {
+		if (_nodeList.remove(node)) {
+			return node;
+		} else {
 			return NULL_NODE;
 		}
-		int size = _nodeList.size();
-		if (end > size) {
-			end = size;
-		}
-		for (int index = start; index < end; index++) {
-			if (_nodeList.get(index) == node) {
-				return _nodeList.remove(index);
-			}
-		}
-		return NULL_NODE;
 	}
 
 	/**
@@ -302,10 +303,31 @@ public class NodeList extends Node {
 		return count;
 	}
 
+	/**
+	 * Returns the index of the first occurrence of the specified node in this list.
+	 * <p>
+	 * The search is performed from the index of 0 to the end of the list.
+	 * <p>
+	 * If this list doesn't contain the specified node, -1 is returned.
+	 * @param target the node to search for
+	 * @return the index of the node, or -1 if not found
+	 */
 	public int find(Node target) {
 		return doFind(target, 0, _nodeList.size());
 	}
 
+	/**
+	 * Returns the index of the first occurrence of the specified node in the search.
+	 * <p>
+	 * The search is performed from the index of {@code start} to the end of the list.
+	 * <p>
+	 * If {@code start} is less than 0, 0 is used as the start of search instead.
+	 * <p>
+	 * If the specified node is not found, -1 is returned.
+	 * @param target the node to search for
+	 * @param start the index of the node to start the search
+	 * @return the index of the node, or -1 if not found
+	 */
 	public int find(Node target, int start) {
 		if (start < 0) {
 			start = 0;
@@ -313,6 +335,21 @@ public class NodeList extends Node {
 		return doFind(target, start, _nodeList.size());
 	}
 
+	/**
+	 * Returns the index of the first occurrence of the specified node in the search.
+	 * <p>
+	 * The search is performed from the index of {@code start} to {@code end} - 1.
+	 * <p>
+	 * If {@code start} is less than 0, 0 is used as the start of search instead.
+	 * <p>
+	 * If {@code end} is greater than the size of this list, the size is used as the end of search instead.
+	 * <p>
+	 * If the specified node is not found, -1 is returned.
+	 * @param target the node to search for
+	 * @param start the index of the node to start the search from
+	 * @param end the index to end the search at (the node at this index is not checked)
+	 * @return the index of the node, or -1 if not found
+	 */
 	public int find(Node target, int start, int end) {
 		if (start < 0) {
 			start = 0;
