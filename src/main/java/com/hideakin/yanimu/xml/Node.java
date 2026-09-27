@@ -90,6 +90,9 @@ public class Node {
 	public static final int MALFORMED_ENTITYREF = 3006800;
 	public static final int MALFORMED_PEREFERENCE = 3006900;
 
+	/**
+	 * A sentinel to avoid null pointer exceptions.
+	 */
 	public static final Node NULL_NODE = ImmutableNode.of(NULL, new byte[0]);
 
 	/**
@@ -107,6 +110,8 @@ public class Node {
 		case SYSTEM_LITERAL:
 		case PUBID_LITERAL:
 			return QuotedString.of(type, sequence);
+		case CHAR_DATA:
+			return CharData.of(sequence);
 		case COMMENT:
 			return Comment.of(sequence);
 		case CD_SECT:
@@ -137,6 +142,8 @@ public class Node {
 		case SYSTEM_LITERAL:
 		case PUBID_LITERAL:
 			return QuotedString.of(type, sequence);
+		case CHAR_DATA:
+			return CharData.of(sequence);
 		case COMMENT:
 			return Comment.of(sequence);
 		case CD_SECT:

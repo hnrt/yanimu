@@ -167,6 +167,10 @@ public class Content extends NodeList {
 		}
 	}
 
+	/**
+	 * Checks whether this Content contains at least one Element.
+	 * @return true if at least one Element is present, false otherwise
+	 */
 	public boolean hasElement() {
 		for (Node node : _nodeList) {
 			if (node.type == ELEMENT) {
@@ -176,6 +180,12 @@ public class Content extends NodeList {
 		return false;
 	}
 
+	/**
+	 * Locates the Element nodes that have the specified name in this Content node.
+	 * If {@code name} is an asterisk, all Element nodes are returned.
+	 * @param name the tag name of the Element to search for
+	 * @return the List of Element nodes that match the specified name
+	 */
 	public List<Element> getElements(String name) {
 		List<Element> elementList = new ArrayList<>();
 		boolean anyMatch = name.equals("*");
