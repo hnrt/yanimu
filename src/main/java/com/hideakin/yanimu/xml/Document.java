@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.UUID;
 
 import com.hideakin.yanimu.xml.doctype.DocumentTypeDeclaration;
+import com.hideakin.yanimu.xml.doctype.EntityDeclaration;
+import com.hideakin.yanimu.xml.doctype.InternalEntityDefinition;
 import com.hideakin.yanimu.xml.internal.Processor;
 
 public class Document extends NodeList {
@@ -17,15 +19,18 @@ public class Document extends NodeList {
 	protected Path _path;
 	protected XmlDeclaration _xml;
 	protected DocumentTypeDeclaration _dtd;
+	protected EntityMap _entities;
 	protected Element _root;
 
 	public Document() {
 		super(DOCUMENT);
+		_entities = new EntityMap();
 	}
 
 	public Document(Path path) {
 		super(DOCUMENT);
 		_path = path;
+		_entities = new EntityMap();
 	}
 
 	/**
@@ -89,7 +94,7 @@ public class Document extends NodeList {
 	 * @param dtd the document type declaration to assign; {@code null} clears the current document type declaration
 	 */
 	public void setDtd(DocumentTypeDeclaration dtd) {
-		for (int i = 0; ; i++) {
+		for (int i = 0; i < size(); i++) {
 			switch (get(i).type) {
 			case DOCTYPE_DECL:
 				if (dtd != null) {
@@ -101,18 +106,38 @@ public class Document extends NodeList {
 					}
 				}
 				_dtd = dtd;
+				_entities = populateEntityMap();
 				return;
 			case ELEMENT:
-			case NULL:
 				if (dtd != null) {
 					add(i, dtd);
 				}
 				_dtd = dtd;
+				_entities = populateEntityMap();
 				return;
 			default:
 				break;
 			}
 		}
+		if (dtd != null) {
+			add(dtd);
+		}
+		_dtd = dtd;
+		_entities = populateEntityMap();
+	}
+
+	private EntityMap populateEntityMap() {
+		EntityMap entityMap = new EntityMap();
+		if (_dtd != null) {
+			for (Object obj : _dtd.declarations) {
+				if (obj instanceof EntityDeclaration entity) {
+					if (entity.definition instanceof InternalEntityDefinition ied) {
+						entityMap.put(ied.key, ied);
+					}
+				}
+			}
+		}
+		return entityMap;
 	}
 
 	/**
@@ -130,7 +155,7 @@ public class Document extends NodeList {
 	 * @param root the {@code Element} to assign as the root; {@code null} clears the current root
 	 */
 	public void setRoot(Element root) {
-		for (int i = 0; ; i++) {
+		for (int i = 0; i < size(); i++) {
 			switch (get(i).type) {
 			case ELEMENT:
 				if (root != null) {
@@ -143,16 +168,14 @@ public class Document extends NodeList {
 				}
 				_root = root;
 				return;
-			case NULL:
-				if (root != null) {
-					add(i, root);
-				}
-				_root = root;
-				return;
 			default:
 				break;
 			}
 		}
+		if (root != null) {
+			add(root);
+		}
+		_root = root;
 	}
 
 	/**
@@ -210,8 +233,9 @@ public class Document extends NodeList {
 		_nodeList.clear();
 		_xml = null;
 		_dtd = null;
+		_entities = new EntityMap();
 		_root = null;
-		Processor processor = new Processor(content, result);
+		Processor processor = new Processor(content, _entities, result);
 		List<Node> nodeList = processor.parse();
 		_nodeList.addAll(nodeList);
 		if (first() instanceof XmlDeclaration xml) {
@@ -320,6 +344,14 @@ public class Document extends NodeList {
 	 */
 	public int toColumnNumber(int offset) {
 		return offset < 0 ? 0 : columnCount(0, offset) + 1;
+	}
+
+	public String translate(String source) {
+		if (_entities != null) {
+			return _entities.translate(source);
+		} else {
+			return source;
+		}
 	}
 
 }

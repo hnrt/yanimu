@@ -105,7 +105,7 @@ public class NodeTest {
 
 	@Test
 	void test009() {
-		Node node = Node.of(Node.CD_SECT, (CDATASection.START + "hello" + CDATASection.END).getBytes());
+		Node node = Node.of(Node.CD_SECT, (CDATASection.OPEN_DELIMITER_STRING + "hello" + CDATASection.CLOSE_DELIMITER_STRING).getBytes());
 		assertEquals(Node.CD_SECT, node.type);
 		assertEquals(true, node instanceof CDATASection);
 		assertEquals("hello", ((CDATASection)node).innerText());

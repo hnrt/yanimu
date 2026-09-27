@@ -33,11 +33,9 @@ public class Element extends NodeList {
 	 * @param innerText the textual content to be set in this element
 	 */
 	public Element(String name, String innerText) {
-		super(ELEMENT, List.of(StartTag.of(name), Content.of(), EndTag.of(name)));
+		super(ELEMENT, List.of(StartTag.of(name), Content.of(innerText), EndTag.of(name)));
 		this.name = name;
 		_parent = null;
-		Content content = (Content)_nodeList.get(1);
-		content.setText(innerText);
 	}
 
 	/**
@@ -68,7 +66,7 @@ public class Element extends NodeList {
 			 (nodeList.size() == 3 && nodeList.get(0).type == STAG && nodeList.get(1).type == CONTENT && nodeList.get(2).type == ETAG))) {
 			_nodeList.addAll(nodeList);
 		} else {
-			throw new RuntimeException("Element::set: INCORRECT USE!");
+			throw new RuntimeException(getClass().getSimpleName() + "::set: INCORRECT USE!");
 		}
 	}
 
@@ -115,8 +113,8 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * Returns the list of child nodes contained in this Element.
-	 * @return the list of child nodes
+	 * Returns an unmodifiable List containing the child nodes in this Element, in its iteration order.
+	 * @return an unmodifiable List of the child nodes
 	 */
 	@Override
 	public List<Node> copy() {
@@ -129,8 +127,8 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * Returns the number of the child nodes contained in this Element.
-	 * @return the number of children
+	 * Returns the number of the child nodes in this Element.
+	 * @return the number of the child nodes
 	 */
 	@Override
 	public int size() {
@@ -145,7 +143,7 @@ public class Element extends NodeList {
 	/**
 	 * Returns the first child node in this Element.
 	 * @return the first child node,
-	 * or {@code NullNode} if this Element has no children
+	 * or {@code NULL_NODE} if this Element has no children
 	 */
 	@Override
 	public Node first() {
@@ -160,7 +158,7 @@ public class Element extends NodeList {
 	/**
 	 * Returns the last child node in this Element.
 	 * @return the last child node,
-	 * or {@code NullNode} if this Element has no children
+	 * or {@code NULL_NODE} if this Element has no children
 	 */
 	@Override
 	public Node last() {
@@ -188,8 +186,8 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * Returns the child node at the specified index in the content of this Element.
-	 * @return the child node, or {@code NullNode} if this Element has no children
+	 * Returns the child node at the specified index in this Element.
+	 * @return the child node, or {@code NULL_NODE} if this Element has no children
 	 */
 	@Override
 	public Node get(int index) {
@@ -291,15 +289,15 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This method checks if this element is an empty element.
-	 * @return True if this element is an empty element or false if it is not.
+	 * Checks if this element is an empty element.
+	 * @return true if this is it, or false if not.
 	 */
 	public boolean isEmptyElement() {
 		return _nodeList.size() == 1;
 	}
 
 	/**
-	 * This method returns the start tag node of this element.
+	 * Returns the start tag node in this element.
 	 * @return Start tag node
 	 */
 	public AttributeTag startTag() {
@@ -307,7 +305,7 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This method returns the end tag node of this element.
+	 * Returns the end tag node in this element.
 	 * @return End tag node
 	 */
 	public EndTag endTag() {
@@ -367,7 +365,7 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This is equivalent to size method.
+	 * This is equivalent to {@code size} method of the content in this Element.
 	 * @return number of nodes in the content
 	 */
 	public int childCount() {
@@ -380,7 +378,7 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This is equivalent to nodeList method.
+	 * This is equivalent to the {@code copy} method of the content in this Element.
 	 * @return List of nodes
 	 */
 	public List<Node> children() {
@@ -507,15 +505,14 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * This method locates Element instances that match the criteria specified by <i>name</i>.
-	 * @param name the tag name pattern used to locate Element instances.
-	 *             The pattern may include multiple tag names separated by slashes
-	 *             to specify an Element hierarchy.
-	 *             If <i>name</i> begins with a slash, the search is performed starting
-	 *             from the direct children. Otherwise, the search begins from any
-	 *             descendant elements.
+	 * Locates Element nodes that match the criteria specified by {@code name}.
+	 * If no Element nodes are located, an empty list is returned.
+	 * @param name the tag name pattern used to locate Element nodes.
+	 *             The pattern may include multiple tag names separated by slashes to specify an Element hierarchy.
+	 *             If {@code name} begins with a slash, the search is performed starting from the direct children.
+	 *             Otherwise, the search begins from any descendant elements.
 	 *             An asterisk acts as a wildcard that matches any tag name.
-	 * @return List of Element instances
+	 * @return List of Element nodes
 	 */
 	public List<Element> getElements(String name) {
 		if (name != null && name.length() > 0) {
@@ -547,6 +544,17 @@ public class Element extends NodeList {
 		}
 	}
 
+	/**
+	 * Locates Element nodes that match the criteria specified by {@code name}
+	 * and returns the first located one if one or more nodes are found.
+	 * If no Element nodes are found, null is returned.
+	 * @param name the tag name pattern used to locate Element nodes.
+	 *             The pattern may include multiple tag names separated by slashes to specify an Element hierarchy.
+	 *             If {@code name} begins with a slash, the search is performed starting from the direct children.
+	 *             Otherwise, the search begins from any descendant elements.
+	 *             An asterisk acts as a wildcard that matches any tag name.
+	 * @return the first located node, or null if not found
+	 */
 	public Element getElement(String name) {
 		List<Element> elementList = getElements(name);
 		return elementList.size() > 0 ? elementList.get(0) : null;

@@ -73,10 +73,10 @@ public class Processor {
 		_markupDeclarationList = new ArrayList<>();
 	}
 
-	public Processor(byte[] content, ParseResult result) {
+	public Processor(byte[] content, EntityMap entityMap, ParseResult result) {
 		_content = content;
 		_result = ParseResultWriter.of(result);
-		_entityMap = new EntityMap();
+		_entityMap = entityMap;
 		_markupDeclarationList = new ArrayList<>();
 	}
 

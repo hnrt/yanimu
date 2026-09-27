@@ -17,6 +17,10 @@ public class Content extends NodeList {
 		return new Content(nodeList);
 	}
 
+	public static Content of(String text) {
+		return new Content(text);
+	}
+
 	private Content() {
 		super(CONTENT);
 	}
@@ -27,6 +31,11 @@ public class Content extends NodeList {
 
 	private Content(List<Node> nodeList) {
 		super(CONTENT, nodeList);
+	}
+
+	private Content(String text) {
+		super(CONTENT);
+		setText(text);
 	}
 
 	@Override
@@ -98,51 +107,63 @@ public class Content extends NodeList {
 		return buffer.toString();
 	}
 
-	public void setText(String value) {
-		clear();
-		int h = 0;
-		int i = 0;
-		int n = value.length();
-		while (i < n) {
-			char c = value.charAt(i);
+	public void setText(String source) {
+		for (int i = 0; i < source.length(); i++) {
+			char c = source.charAt(i);
 			switch (c) {
 			case '<':
-				if (h < i) {
-					add(ImmutableNode.of(CHAR_DATA, value.substring(h, i)));
-				}
-				add(EntityRef.of("lt", "<"));
-				h = ++i;
-				break;
 			case '&':
-				if (h < i) {
-					add(ImmutableNode.of(CHAR_DATA, value.substring(h, i)));
-				}
-				add(EntityRef.of("amp", "&"));
-				h = ++i;
-				break;
+				setText(source, i);
+				return;
 			case ']':
-				if (i + 2 < n && value.charAt(i + 1) == ']' && value.charAt(i + 2) == '>') {
-					if (h < i) {
-						add(ImmutableNode.of(CHAR_DATA, value.substring(h, i)));
-					}
-					add(CharRef.of(']'));
-					add(CharRef.of(']'));
-					add(EntityRef.of("gt", ">"));
-					i += 3;
-					h = i;
-				} else {
-					++i;
+				if (i + 2 < source.length() && source.charAt(i + 1) == ']' && source.charAt(i + 2) == '>') {
+					setText(source, i);
+					return;
 				}
-				break;
+				//FALLTHROUGH
 			default:
-				++i;
 				break;
 			}
 		}
-		if (h == 0) {
-			add(ImmutableNode.of(CHAR_DATA, value));
-		} else if (h < n) {
-			add(ImmutableNode.of(CHAR_DATA, value.substring(h, n)));
+		clear();
+		add(CharData.of(source, CharData.IMMEDIATE));
+	}
+
+	private void setText(String source, int first) {
+		clear();
+		int h = 0;
+		for (int i = first; i < source.length(); i++) {
+			char c = source.charAt(i);
+			switch (c) {
+			case '<':
+				if (h < i) {
+					add(CharData.of(source.substring(h, i), CharData.IMMEDIATE));
+				}
+				h = i + 1;
+				add(EntityRef.of("lt", "<"));
+				break;
+			case '&':
+				if (h < i) {
+					add(CharData.of(source.substring(h, i), CharData.IMMEDIATE));
+				}
+				h = i + 1;
+				add(EntityRef.of("amp", "&"));
+				break;
+			case ']':
+				if (i + 2 < source.length() && source.charAt(i + 1) == ']' && source.charAt(i + 2) == '>') {
+					i += 2;
+					add(CharData.of(source.substring(h, i), CharData.IMMEDIATE));
+					h = i + 1;
+					add(EntityRef.of("gt", ">"));
+					break;
+				}
+				//FALLTHROUGH
+			default:
+				break;
+			}
+		}
+		if (h < source.length()) {
+			add(CharData.of(source.substring(h), CharData.IMMEDIATE));
 		}
 	}
 

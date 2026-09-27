@@ -2,11 +2,11 @@ package com.hideakin.yanimu.xml;
 
 public class CDATASection extends ImmutableNode {
 
-	public static final String START = "<![CDATA[";
-	public static final String END = "]]>";
+	public static final String OPEN_DELIMITER_STRING = "<![CDATA[";
+	public static final String CLOSE_DELIMITER_STRING = "]]>";
 
-	public static final byte[] START_BYTES = START.getBytes();
-	public static final byte[] END_BYTES = END.getBytes();
+	public static final byte[] OPEN_DELIMITER_BYTES = OPEN_DELIMITER_STRING.getBytes();
+	public static final byte[] CLOSE_DELIMITER_BYTES = CLOSE_DELIMITER_STRING.getBytes();
 
 	public static CDATASection of(byte[] sequence) {
 		return new CDATASection(sequence);
@@ -17,15 +17,15 @@ public class CDATASection extends ImmutableNode {
 	}
 
 	private CDATASection(byte[] sequence) {
-		super(CD_SECT, sequence, START_BYTES, END_BYTES);
+		super(CD_SECT, sequence, OPEN_DELIMITER_BYTES, CLOSE_DELIMITER_BYTES);
 	}
 
 	private CDATASection(String sequence) {
-		super(CD_SECT, sequence, START, END);
+		super(CD_SECT, sequence, OPEN_DELIMITER_STRING, CLOSE_DELIMITER_STRING);
 	}
 
 	public String innerText() {
-		return innerText(START_BYTES.length, END_BYTES.length);
+		return innerText(OPEN_DELIMITER_BYTES.length, CLOSE_DELIMITER_BYTES.length);
 	}
 
 }
