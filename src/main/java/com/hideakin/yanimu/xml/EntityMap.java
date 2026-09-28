@@ -16,6 +16,8 @@ public class EntityMap extends HashMap<String, Object> {
 
 	public static final int DEFAULT_INITIAL_CAPACITY = 32;
 
+	public static final int MAX_TRANSLATION_ITERATIONS = 10;
+
 	public EntityMap() {
 		this(DEFAULT_INITIAL_CAPACITY);
 	}
@@ -72,91 +74,88 @@ public class EntityMap extends HashMap<String, Object> {
 		if (source == null) {
 			return null;
 		}
-		String text = source;
-		StringBuilder buffer = new StringBuilder();
-		for (int retries = 10; retries > 0; retries--) {
-			if (translate(text, buffer)) {
-				text = buffer.toString();
-				buffer.setLength(0);
+		String intermediate = source;
+		StringBuilder output = new StringBuilder();
+		for (int attempts = 0; attempts < MAX_TRANSLATION_ITERATIONS; attempts++) {
+			if (translate(intermediate, output)) {
+				intermediate = output.toString();
 			} else {
 				break;
 			}
+			output.setLength(0);
 		}
-		return text;
+		return intermediate;
 	}
 
-	private boolean translate(String text, StringBuilder buffer) {
-		try (StringReader reader = new StringReader(text)) {
-			int replaced = 0;
-			int c = reader.read();
+	public boolean translate(String source, StringBuilder output) {
+		try (StringReader input = new StringReader(source)) {
+			int changes = 0;
+			int c = input.read();
 			while (c >= 0) {
 				if (c == '&') {
-					int length = buffer.length();
-					buffer.append((char)c);
-					c = reader.read();
+					int length = output.length();
+					output.append((char)c);
+					c = input.read();
 					if (c == '#') {
-						buffer.append((char)c);
-						c = reader.read();
-						boolean successful = false;
+						output.append((char)c);
+						c = input.read();
 						int d = 0;
 						if (c == 'x') {
-							buffer.append((char)c);
-							c = reader.read();
+							output.append((char)c);
+							c = input.read();
 							if (isHexadecimal(c)) {
 								do {
 									d = d * 16 + (c < 'A' ? c - '0' : c < 'a' ? c - 'A' + 10 : c - 'a' + 10);
-									buffer.append((char)c);
-									c = reader.read();
+									output.append((char)c);
+									c = input.read();
 								} while (isHexadecimal(c));
 								if (c == ';') {
-									buffer.append((char)c);
-									c = reader.read();
-									successful = true;
+									output.setLength(length);
+									output.appendCodePoint(d);
+									changes++;
+									c = input.read();
 								}
 							}
 						} else if (isDigit(c)) {
 							do {
 								d = d * 10 + c - '0';
-								buffer.append((char)c);
-								c = reader.read();
+								output.append((char)c);
+								c = input.read();
 							} while (isDigit(c));
 							if (c == ';') {
-								buffer.append((char)c);
-								c = reader.read();
-								successful = true;
+								output.setLength(length);
+								output.appendCodePoint(d);
+								changes++;
+								c = input.read();
 							}
-						}
-						if (successful) {
-							buffer.setLength(length);
-							buffer.appendCodePoint(d);
-							replaced++;
 						}
 					} else if (isNameStartChar(c)) {
-						int start = buffer.length();
-						buffer.append((char)c);
-						c = reader.read();
+						int start = output.length();
+						output.append((char)c);
+						c = input.read();
 						while (isNameChar(c)) {
-							buffer.append((char)c);
-							c = reader.read();
+							output.append((char)c);
+							c = input.read();
 						}
 						if (c == ';') {
-							String key = buffer.substring(start);
-							buffer.append((char)c);
-							c = reader.read();
+							String key = output.substring(start);
 							String value = getEntity(key);
 							if (value != null) {
-								buffer.setLength(length);
-								buffer.append(value);
-								replaced++;
+								output.setLength(length);
+								output.append(value);
+								changes++;
+							} else {
+								output.append((char)c);
 							}
+							c = input.read();
 						}
 					}
 				} else {
-					buffer.append((char)c);
-					c = reader.read();
+					output.append((char)c);
+					c = input.read();
 				}
 			}
-			return replaced > 0;
+			return changes > 0;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;

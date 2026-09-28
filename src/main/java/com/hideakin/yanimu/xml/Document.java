@@ -346,6 +346,18 @@ public class Document extends NodeList {
 		return offset < 0 ? 0 : columnCount(0, offset) + 1;
 	}
 
+	/**
+	 * Replaces entity references and character references in the given String
+	 * with their corresponding replacement text.
+	 * <p>
+	 * Entity references are the predefined entities and the ones that appear in the entity declarations.
+	 * <p>
+	 * The replacement process is repeated while the resulting String still contains any entity or character reference,
+	 * up to a maximum of ten iterations.
+	 * This prevents infinite expansion in cases where references expand into new references.
+	 * @param source the input String containing entity or character references
+	 * @return the fully expanded String, or a partially expanded String if the iteration limit is reached
+	 */
 	public String translate(String source) {
 		if (_entities != null) {
 			return _entities.translate(source);

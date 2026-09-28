@@ -28,10 +28,13 @@ import com.hideakin.yanimu.maven.util.RepositoryMap;
 import com.hideakin.yanimu.maven.util.SimpleArtifact;
 import com.hideakin.yanimu.xml.Document;
 import com.hideakin.yanimu.xml.Element;
+import com.hideakin.yanimu.xml.EntityMap;
 import com.hideakin.yanimu.xml.ParseResult;
 
 @SuppressWarnings("unused")
 public class PomDocument extends Document implements Artifact {
+
+	public static final int MAX_TRANSLATION_ITERATIONS = 10;
 
 	public static PomDocument of(Path path) {
 		return new PomDocument(path);
@@ -102,8 +105,49 @@ public class PomDocument extends Document implements Artifact {
 		_properties.put(key, value);
 	}
 
-	public String translate(String text) {
-		return _properties.translate(text);
+	/**
+	 * Replaces entity references, character references, and property references in the given String
+	 * with their corresponding replacement text.
+	 * <p>
+	 * An entity reference is a portion of text that begins with "&", is followed by an entity name, and ends with ";".
+	 * Both predefined entities and entities declared in the document type definition (DTD) are supported.
+	 * Each entity reference is replaced with the text associated with its entity name.
+	 * <p>
+	 * A character reference is a portion of text that begins with "&",
+	 * is followed by a decimal or "x"-prepended hexadecimal code point, and ends with ";".
+	 * It is replaced with the character represented by the code point.
+	 * <p>
+	 * A property reference is a portion of text that begins with "${", is followed by a property name, and ends with "}".
+	 * It is replaced with the corresponding property value defined in the properties element.
+	 * <p>
+	 * The replacement process is repeated while the resulting String still contains any reference,
+	 * up to a maximum of ten iterations.
+	 * This prevents infinite expansion in cases where references expand into new references.
+	 * @param source the input String containing entity, character, or property references
+	 * @return the fully expanded String, or a partially expanded String if the iteration limit is reached
+	 */
+	@Override
+	public String translate(String source) {
+		if (source == null) {
+			return null;
+		}
+		String intermediate = source;
+		StringBuilder output = new StringBuilder();
+		for (int attempts = 0; attempts < MAX_TRANSLATION_ITERATIONS; attempts++) {
+			boolean changed1 = _entities.translate(intermediate, output);
+			if (changed1) {
+				intermediate = output.toString();
+			}
+			output.setLength(0);
+			boolean changed2 = _properties.translate(intermediate, output);
+			if (changed2) {
+				intermediate = output.toString();
+			} else if (!changed1) {
+				break;
+			}
+			output.setLength(0);
+		}
+		return intermediate;
 	}
 
 	public PluginMap pluginManagement() {

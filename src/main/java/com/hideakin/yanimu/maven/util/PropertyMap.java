@@ -18,6 +18,8 @@ public class PropertyMap extends LinkedHashMap<String, String> {
 
 	private static final long serialVersionUID = 4507031764576908115L;
 
+	public static final int MAX_TRANSLATION_ITERATIONS = 10;
+
 	private Element _properties;
 
 	public PropertyMap() {
@@ -93,71 +95,68 @@ public class PropertyMap extends LinkedHashMap<String, String> {
 	}
 
 	public String translate(String source) {
-		return translate(source, 0);
+		if (source == null) {
+			return null;
+		}
+		String intermediate = source;
+		StringBuilder output = new StringBuilder();
+		for (int attempts = 0; attempts < MAX_TRANSLATION_ITERATIONS; attempts++) {
+			if (translate(intermediate, output)) {
+				intermediate = output.toString();
+			} else {
+				break;
+			}
+			output.setLength(0);
+		}
+		return intermediate;
 	}
 
-	private String translate(String source, int count) {
-		StringBuilder buffer = new StringBuilder();
-		StringBuilder buffer2 = new StringBuilder();
-		try (StringReader r = new StringReader(source)) {
+	public boolean translate(String source, StringBuilder output) {
+		try (StringReader input = new StringReader(source)) {
 			int changes = 0;
-			int c = r.read();
-			while (c != -1) {
+			int c = input.read();
+			while (c >= 0) {
 				if (c == '$') {
-					c = r.read();
+					int length = output.length();
+					output.append((char)c);
+					c = input.read();
+					if (c == '{') {
+						output.append((char)c);
+						c = input.read();
+						if (isNameStartChar(c)) {
+							int start = output.length();
+							output.append((char)c);
+							c = input.read();
+							while (isNameChar(c)) {
+								output.append((char)c);
+								c = input.read();
+							}
+							if (c == '}') {
+								String key = output.substring(start);
+								String value = super.get(key);
+								if (value == null) {
+									value = System.getProperty(key);
+								}
+								if (value != null) {
+									output.setLength(length);
+									output.append(value);
+									changes++;
+								} else {
+									output.append((char)c);
+								}
+								c = input.read();
+							}
+						}
+					}
 				} else {
-					buffer.append((char)c);
-					c = r.read();
-					continue;
-				}
-				if (c == '{') {
-					c = r.read();
-				} else {
-					buffer.append((char)'$');
-					continue;
-				}
-				if (isNameStartChar(c)) {
-					buffer2.setLength(0);
-					buffer2.append((char)c);
-					c = r.read();
-				} else {
-					buffer.append("${");
-					continue;
-				}
-				while (isNameChar(c)) {
-					buffer2.append((char)c);
-					c = r.read();
-				}
-				String key = buffer2.toString();
-				if (c == '}') {
-					c = r.read();
-				} else {
-					buffer.append('$');
-					buffer.append('{');
-					buffer.append(key);
-					continue;
-				}
-				String value = super.get(key);
-				if (value == null) {
-					value = System.getProperty(key);
-				}
-				if (value != null) {
-					buffer.append(value);
-					changes++;
-				} else {
-					buffer.append('$');
-					buffer.append('{');
-					buffer.append(key);
-					buffer.append('}');
+					output.append((char)c);
+					c = input.read();
 				}
 			}
-			if (changes > 0 && count < 100) {
-				return translate(buffer.toString(), count + 1);
-			} else {
-				return buffer.toString();
-			}
+			return changes > 0;
 		} catch (IOException e) {
-			return source;
+			e.printStackTrace();
+			return false;
 		}
 	}
 
