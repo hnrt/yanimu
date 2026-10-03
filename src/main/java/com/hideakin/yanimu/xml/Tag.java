@@ -5,6 +5,12 @@ import java.util.List;
 
 public class Tag extends NodeList {
 
+	public static final byte[] START_SEQUENCE = {'<'};
+	public static final byte[] STAG_END_SEQUENCE = {'>'};
+	public static final byte[] EETAG_END_SEQUENCE = {'/', '>'};
+	public static final byte[] EQ_SEQUENCE = {'='};
+	public static final byte[] SP_SEQUENCE = {' '};
+
 	public final String name;
 
 	protected Tag(int type, List<Node> nodeList) {

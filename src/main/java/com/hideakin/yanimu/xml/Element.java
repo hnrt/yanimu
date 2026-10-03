@@ -3,6 +3,7 @@ package com.hideakin.yanimu.xml;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.hideakin.yanimu.xml.Character.EQ;
 import static com.hideakin.yanimu.xml.Character.isWhiteSpace;
 
 public class Element extends NodeList {
@@ -359,108 +360,617 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * See {@link AttributeTag#attributeCount}.
+	 * Returns the number of attributes in this node.
+	 * @return the number of attributes
 	 */
 	public int attributeCount() {
-		return startTag().attributeCount();
+		AttributeTag tag = startTag();
+		int size = tag.size();
+		if (size >= 3
+				&& tag.get(0).type == STAG_START
+				&& tag.get(1).type == NAME
+				&& (tag.get(size - 1).type == STAG_END || tag.get(size - 1).type == EETAG_END)) {
+			int count = 0;
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = tag.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::attributeCount:: Possible corruption.");
+				}
+				node = tag.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					count++;
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::attributeCount:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || tag.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(getClass().getSimpleName() + "::attributeCount:: Possible corruption.");
+			}
+			return count;
+		} else {
+			throw new RuntimeException(getClass().getSimpleName() + "::attributeCount:: Possible corruption.");
+		}
 	}
 
 	/**
-	 * See {@link AttributeTag#attribute(int)}.
+	 * Returns the attribute value at the specified index.
+	 * @param index the index of the attribute to be retrieved
+	 * @return the attribute value if it exists, or null if not
 	 */
 	public String attribute(int index) {
-		return startTag().attribute(index);
+		return attribute(index, null);
 	}
 
 	/**
-	 * See {@link AttributeTag#attribute(int,String)}.
+	 * Returns the attribute value at the specified index.
+	 * @param index the index of the attribute to be retrieved
+	 * @param defaultValue the value to be returned if the specified attribute doesn't exist
+	 * @return the attribute value if it exists, or {@code defaultValue} if not
 	 */
 	public String attribute(int index, String defaultValue) {
-		return startTag().attribute(index, defaultValue);
+		AttributeTag tag = startTag();
+		int size = tag.size();
+		if (size >= 3
+				&& tag.get(0).type == STAG_START
+				&& tag.get(1).type == NAME
+				&& (tag.get(size - 1).type == STAG_END || tag.get(size - 1).type == EETAG_END)) {
+			int attrIndex = -1;
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = tag.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::attribute:: Possible corruption.");
+				}
+				node = tag.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					if (++attrIndex == index) {
+						return ((Attribute)node).value;
+					}
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::attribute:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || tag.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(getClass().getSimpleName() + "::attribute:: Possible corruption.");
+			}
+		} else {
+			throw new RuntimeException(getClass().getSimpleName() + "::attribute:: Possible corruption.");
+		}
+		return defaultValue;
 	}
 
 	/**
-	 * See {@link AttributeTag#attribute(String)}.
+	 * Returns the attribute value of the specified name.
+	 * @param name the name of the attribute to be retrieved
+	 * @return the attribute value if it exists, or null if not
 	 */
-	public String attribute(String key) {
-		return startTag().attribute(key);
+	public String attribute(String name) {
+		return attribute(name, null);
 	}
 
 	/**
-	 * See {@link AttributeTag#attribute(String,String)}.
+	 * Returns the attribute value of the specified name.
+	 * @param name the name of the attribute to be retrieved
+	 * @param defaultValue the value to be returned if the specified attribute doesn't exist
+	 * @return the attribute value if it exists, or {@code defaultValue} if not
 	 */
-	public String attribute(String key, String defaultValue) {
-		return startTag().attribute(key, defaultValue);
+	public String attribute(String name, String defaultValue) {
+		AttributeTag tag = startTag();
+		int size = tag.size();
+		if (size >= 3
+				&& tag.get(0).type == STAG_START
+				&& tag.get(1).type == NAME
+				&& (tag.get(size - 1).type == STAG_END || tag.get(size - 1).type == EETAG_END)) {
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = tag.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::attribute:: Possible corruption.");
+				}
+				node = tag.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					Attribute a = (Attribute)node;
+					if (a.name.equals(name)) {
+						return a.value;
+					}
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::attribute:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || tag.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(getClass().getSimpleName() + "::attribute:: Possible corruption.");
+			}
+		} else {
+			throw new RuntimeException(getClass().getSimpleName() + "::attribute:: Possible corruption.");
+		}
+		return defaultValue;
 	}
 
 	/**
-	 * See {@link AttributeTag#attributeList}.
+	 * Returns all the attributes.
+	 * @return the immutable list of the attributes
 	 */
 	public List<Attribute> attributeList() {
-		return startTag().attributeList();
+		List<Attribute> aa = new ArrayList<>();
+		AttributeTag tag = startTag();
+		int size = tag.size();
+		if (size >= 3
+				&& tag.get(0).type == STAG_START
+				&& tag.get(1).type == NAME
+				&& (tag.get(size - 1).type == STAG_END || tag.get(size - 1).type == EETAG_END)) {
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = tag.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::attributeList:: Possible corruption.");
+				}
+				node = tag.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					Attribute a = (Attribute)node;
+					aa.add(a);
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::attributeList:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || tag.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(getClass().getSimpleName() + "::attributeList:: Possible corruption.");
+			}
+		} else {
+			throw new RuntimeException(getClass().getSimpleName() + "::attributeList:: Possible corruption.");
+		}
+		return List.copyOf(aa);
 	}
 
 	/**
-	 * See {@link AttributeTag#attributeKeys}.
+	 * Returns all the attribute names.
+	 * @return the immutable list of the attribute names
 	 */
-	public List<String> attributeKeys() {
-		return startTag().attributeKeys();
+	public List<String> attributeNames() {
+		List<String> names = new ArrayList<>();
+		AttributeTag tag = startTag();
+		int size = tag.size();
+		if (size >= 3
+				&& tag.get(0).type == STAG_START
+				&& tag.get(1).type == NAME
+				&& (tag.get(size - 1).type == STAG_END || tag.get(size - 1).type == EETAG_END)) {
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = tag.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::attributeKeys:: Possible corruption.");
+				}
+				node = tag.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					Attribute a = (Attribute)node;
+					names.add(a.name);
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::attributeKeys:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || tag.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(getClass().getSimpleName() + "::attributeKeys:: Possible corruption.");
+			}
+		} else {
+			throw new RuntimeException(getClass().getSimpleName() + "::attributeKeys:: Possible corruption.");
+		}
+		return List.copyOf(names);
 	}
 
 	/**
-	 * See {@link AttributeTag#attributeValues}.
+	 * Returns all the attribute values.
+	 * @return the immutable list of the attribute values
 	 */
 	public List<String> attributeValues() {
-		return startTag().attributeValues();
+		List<String> values = new ArrayList<>();
+		AttributeTag tag = startTag();
+		int size = tag.size();
+		if (size >= 3
+				&& tag.get(0).type == STAG_START
+				&& tag.get(1).type == NAME
+				&& (tag.get(size - 1).type == STAG_END || tag.get(size - 1).type == EETAG_END)) {
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = tag.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::attributeValues:: Possible corruption.");
+				}
+				node = tag.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					Attribute a = (Attribute)node;
+					values.add(a.value);
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::attributeValues:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || tag.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(getClass().getSimpleName() + "::attributeValues:: Possible corruption.");
+			}
+		} else {
+			throw new RuntimeException(getClass().getSimpleName() + "::attributeValues:: Possible corruption.");
+		}
+		return List.copyOf(values);
 	}
 
 	/**
-	 * See {@link AttributeTag#setAttribute(int,String,String)}.
+	 * Sets an attribute at the specified index in this start tag.
+	 * @param index the index at which the attribute to be set
+	 * @param name the name of the attribute
+	 * @param value the raw attribute value, not enclosed in quotes
 	 */
-	public void setAttribute(int index, String key, String value) {
-		startTag().setAttribute(index, key, value);
+	public void setAttribute(int index, String name, String value) {
+		AttributeTag tag = startTag();
+		int size = tag.size();
+		if (size >= 3
+				&& tag.get(0).type == STAG_START
+				&& tag.get(1).type == NAME
+				&& (tag.get(size - 1).type == STAG_END || tag.get(size - 1).type == EETAG_END)) {
+			int attrIndex = -1;
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = tag.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
+				}
+				node = tag.get(nodeIndex + 1);
+				Attribute a;
+				if (node.type == ATTRIBUTE) {
+					if (++attrIndex == index) {
+						a = (Attribute)node;
+					} else {
+						continue;
+					}
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
+				}
+				if (a.size() == 3
+						&& a.get(0).type == NAME
+						&& a.get(1).type == EQ
+						&& a.get(2).type == ATT_VALUE) {
+					int quoteCharacter = a.last().sequence()[0];
+					tag.set(nodeIndex + 1, new Attribute(name, value, quoteCharacter, null, null));
+					return;
+				} else if (a.size() == 4
+						&& a.get(0).type == NAME
+						&& a.get(1).type == S
+						&& a.get(2).type == EQ
+						&& a.get(3).type == ATT_VALUE) {
+					int quoteCharacter = a.last().sequence()[0];
+					tag.set(nodeIndex + 1, new Attribute(name, value, quoteCharacter, a.get(1), null));
+					return;
+				} else if (a.size() == 4
+						&& a.get(0).type == NAME
+						&& a.get(1).type == EQ
+						&& a.get(2).type == S
+						&& a.get(3).type == ATT_VALUE) {
+					int quoteCharacter = a.last().sequence()[0];
+					tag.set(nodeIndex + 1, new Attribute(name, value, quoteCharacter, null, a.get(2)));
+					return;
+				} else if (a.size() == 5
+						&& a.get(0).type == NAME
+						&& a.get(1).type == S
+						&& a.get(2).type == EQ
+						&& a.get(3).type == S
+						&& a.get(4).type == ATT_VALUE) {
+					int quoteCharacter = a.last().sequence()[0];
+					tag.set(nodeIndex + 1, new Attribute(name, value, quoteCharacter, a.get(1), a.get(3)));
+					return;
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || tag.get(upperBound).type == S) {
+				throw new RuntimeException(getClass().getSimpleName() + "::setAttribute:: Index out of range.");
+			} else {
+				throw new RuntimeException(getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
+			}
+		} else {
+			throw new RuntimeException(getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
+		}
 	}
 
 	/**
-	 * See {@link AttributeTag#setAttribute(String,String)}.
+	 * Replaces the existing attribute associated with the specified name with a new attribute.<br/>
+	 * If the specified name is not found, a new attribute is appended after the last existing attribute.<br/>
+	 * The new attribute to be created is associated with the same name and contains the specified value.<br/>
+	 * The {@code value} is treated as the raw attribute value and is not expected to include any quote characters. 
+	 * @param name the name of the attribute
+	 * @param value the raw attribute value, not enclosed in quotes
 	 */
-	public void setAttribute(String key, String value) {
-		startTag().setAttribute(key, value);
+	public void setAttribute(String name, String value) {
+		AttributeTag tag = startTag();
+		int size = tag.size();
+		if (size >= 3
+				&& tag.get(0).type == STAG_START
+				&& tag.get(1).type == NAME
+				&& (tag.get(size - 1).type == STAG_END || tag.get(size - 1).type == EETAG_END)) {
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = tag.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
+				}
+				node = tag.get(nodeIndex + 1);
+				Attribute a;
+				if (node.type == ATTRIBUTE) {
+					a = (Attribute)node;
+					if (!a.name.equals(name)) {
+						continue;
+					}
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
+				}
+				if (a.size() == 3
+						&& a.get(0).type == NAME
+						&& a.get(1).type == EQ
+						&& a.get(2).type == ATT_VALUE) {
+					int quoteCharacter = a.last().sequence()[0];
+					tag.set(nodeIndex + 1, new Attribute(name, value, quoteCharacter, null, null));
+					return;
+				} else if (a.size() == 4
+						&& a.get(0).type == NAME
+						&& a.get(1).type == S
+						&& a.get(2).type == EQ
+						&& a.get(3).type == ATT_VALUE) {
+					int quoteCharacter = a.last().sequence()[0];
+					tag.set(nodeIndex + 1, new Attribute(name, value, quoteCharacter, a.get(1), null));
+					return;
+				} else if (a.size() == 4
+						&& a.get(0).type == NAME
+						&& a.get(1).type == EQ
+						&& a.get(2).type == S
+						&& a.get(3).type == ATT_VALUE) {
+					int quoteCharacter = a.last().sequence()[0];
+					tag.set(nodeIndex + 1, new Attribute(name, value, quoteCharacter, null, a.get(2)));
+					return;
+				} else if (a.size() == 5
+						&& a.get(0).type == NAME
+						&& a.get(1).type == S
+						&& a.get(2).type == EQ
+						&& a.get(3).type == S
+						&& a.get(4).type == ATT_VALUE) {
+					int quoteCharacter = a.last().sequence()[0];
+					tag.set(nodeIndex + 1, new Attribute(name, value, quoteCharacter, a.get(1), a.get(3)));
+					return;
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || tag.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
+			}
+			tag.add(upperBound, Node.of(S, Tag.SP_SEQUENCE));
+			tag.add(upperBound + 1, new Attribute(name, value));
+		} else {
+			throw new RuntimeException(getClass().getSimpleName() + "::setAttribute:: Possible corruption.");
+		}
 	}
 
 	/**
-	 * See {@link AttributeTag#addAttribute(String,String)}.
+	 * Adds a new attribute node next to the last attribute in this start tag.
+	 * @param name the name of the attribute
+	 * @param value the value of the attribute, not enclosed by quote characters
 	 */
-	public void addAttribute(String key, String value) {
-		startTag().addAttribute(key, value);
+	public void addAttribute(String name, String value) {
+		AttributeTag tag = startTag();
+		int size = tag.size();
+		if (size >= 3
+				&& tag.get(0).type == STAG_START
+				&& tag.get(1).type == NAME
+				&& (tag.get(size - 1).type == STAG_END || tag.get(size - 1).type == EETAG_END)) {
+			int upperBound = (size - 1) & ~1;
+			if (upperBound == size - 1 || tag.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(getClass().getSimpleName() + "::addAttribute:: Possible corruption.");
+			}
+			tag.add(upperBound, Node.of(S, Tag.SP_SEQUENCE));
+			tag.add(upperBound + 1, new Attribute(name, value));
+		} else {
+			throw new RuntimeException(getClass().getSimpleName() + "::addAttribute:: Possible corruption.");
+		}
 	}
 
 	/**
-	 * See {@link AttributeTag#addAttribute(int,String,String)}.
+	 * Adds a new attribute node next to the last attribute in this start tag.
+	 * @param index the attribute index to which the new attribute node is to be inserted 
+	 * @param name the name of the attribute
+	 * @param value the value of the attribute, not enclosed by quote characters
 	 */
-	public void addAttribute(int index, String key, String value) {
-		startTag().addAttribute(index, key, value);
+	public void addAttribute(int index, String name, String value) {
+		AttributeTag tag = startTag();
+		int size = tag.size();
+		if (size >= 3
+				&& tag.get(0).type == STAG_START
+				&& tag.get(1).type == NAME
+				&& (tag.get(size - 1).type == STAG_END || tag.get(size - 1).type == EETAG_END)) {
+			int attrIndex = -1;
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = tag.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::addAttribute:: Possible corruption.");
+				}
+				node = tag.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					if (++attrIndex == index) {
+						tag.add(nodeIndex, Node.of(S, Tag.SP_SEQUENCE));
+						tag.add(nodeIndex + 1, new Attribute(name, value));
+						return;
+					}
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::addAttribute:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || tag.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(getClass().getSimpleName() + "::addAttribute:: Possible corruption.");
+			}
+			if (++attrIndex == index) {
+				tag.add(upperBound, Node.of(S, Tag.SP_SEQUENCE));
+				tag.add(upperBound + 1, new Attribute(name, value));
+			} else {
+				throw new RuntimeException(getClass().getSimpleName() + "::addAttribute:: Index out of range.");
+			}
+		} else {
+			throw new RuntimeException(getClass().getSimpleName() + "::addAttribute:: Possible corruption.");
+		}
 	}
 
 	/**
-	 * See {@link AttributeTag#removeAllAttributes}.
+	 * Removes all the attributes in this start tag.
 	 */
 	public void removeAllAttributes() {
-		startTag().removeAllAttributes();
+		AttributeTag tag = startTag();
+		int size = tag.size();
+		if (size >= 3
+				&& tag.get(0).type == STAG_START
+				&& tag.get(1).type == NAME
+				&& (tag.get(size - 1).type == STAG_END || tag.get(size - 1).type == EETAG_END)) {
+			int upperBound = (size - 1) & ~1;
+			if (upperBound == size - 1) {
+				Node node0 = tag.get(0);
+				Node node1 = tag.get(1);
+				Node node2 =  tag.get(size - 1);
+				tag.clear();
+				tag.add(node0);
+				tag.add(node1);
+				tag.add(node2);
+			} else if (tag.get(upperBound).type == S) {
+				Node node0 = tag.get(0);
+				Node node1 = tag.get(1);
+				Node node2 = tag.get(size - 2);
+				Node node3 =  tag.get(size - 1);
+				tag.clear();
+				tag.add(node0);
+				tag.add(node1);
+				tag.add(node2);
+				tag.add(node3);
+			} else {
+				throw new RuntimeException(getClass().getSimpleName() + "::removeAllAttributes:: Possible corruption.");
+			}
+		} else {
+			throw new RuntimeException(getClass().getSimpleName() + "::removeAllAttributes:: Possible corruption.");
+		}
 	}
 
 	/**
-	 * See {@link AttributeTag#removeAttribute(int)}.
+	 * Removes the attribute at the specified index.
+	 * @param index of the attribute to be removed
+	 * @return the removed attribute node, or {@code NULL_NODE} if the specified index is invalid
 	 */
 	public Node removeAttribute(int index) {
-		return startTag().removeAttribute(index);
+		AttributeTag tag = startTag();
+		int size = tag.size();
+		if (size >= 3
+				&& tag.get(0).type == STAG_START
+				&& tag.get(1).type == NAME
+				&& (tag.get(size - 1).type == STAG_END || tag.get(size - 1).type == EETAG_END)) {
+			int attrIndex = -1;
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = tag.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
+				}
+				node = tag.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					if (++attrIndex == index) {
+						tag.remove(nodeIndex + 1);
+						tag.remove(nodeIndex);
+						return node;
+					}
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || tag.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
+			}
+		} else {
+			throw new RuntimeException(getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
+		}
+		return NULL_NODE;
 	}
 
 	/**
-	 * See {@link AttributeTag#removeAttribute(String)}.
+	 * Removes the attribute associated with the specified name.
+	 * @param name of the attribute to be removed
+	 * @return the removed attribute node, or {@code NULL_NODE} if the specified index is invalid
 	 */
-	public Node removeAttribute(String key) {
-		return startTag().removeAttribute(key);
+	public Node removeAttribute(String name) {
+		AttributeTag tag = startTag();
+		int size = tag.size();
+		if (size >= 3
+				&& tag.get(0).type == STAG_START
+				&& tag.get(1).type == NAME
+				&& (tag.get(size - 1).type == STAG_END || tag.get(size - 1).type == EETAG_END)) {
+			int upperBound = (size - 1) & ~1;
+			for (int nodeIndex = 2; nodeIndex < upperBound; nodeIndex += 2) {
+				Node node = tag.get(nodeIndex);
+				if (node.type == S) {
+					// Looks good.
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
+				}
+				node = tag.get(nodeIndex + 1);
+				if (node.type == ATTRIBUTE) {
+					Attribute a = (Attribute)node;
+					if (a.name.equals(name)) {
+						tag.remove(nodeIndex + 1);
+						tag.remove(nodeIndex);
+						return node;
+					}
+				} else {
+					throw new RuntimeException(getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
+				}
+			}
+			if (upperBound == size - 1 || tag.get(upperBound).type == S) {
+				// Looks good.
+			} else {
+				throw new RuntimeException(getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
+			}
+		} else {
+			throw new RuntimeException(getClass().getSimpleName() + "::removeAttribute:: Possible corruption.");
+		}
+		return NULL_NODE;
 	}
 
 	/**

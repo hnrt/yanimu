@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
+import com.hideakin.yanimu.xml.util.DebugHelper;
 import com.hideakin.yanimu.xml.util.FormatHelper;
 
 import static com.hideakin.yanimu.util.TestHelper.checkDocument;
@@ -279,6 +280,582 @@ public class ElementTest {
 			FormatHelper.indent(doc);
 			int end2 = checkDocument("AFTER", doc, content2);
 			print("content.length=%d actual=%d", content2.length, end2);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest001() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.addAttribute("abc", "xyz");
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting abc=\"xyz\"/>", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest002() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\n/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.addAttribute("abc", "xyz");
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting abc=\"xyz\"\r\n/>", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest003() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting>Hello</greeting>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.addAttribute("abc1", "xyz1");
+			element.addAttribute("abc2", "xyz2");
+			element.addAttribute("abc3", "xyz3");
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting abc1=\"xyz1\" abc2=\"xyz2\" abc3=\"xyz3\">", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest004() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting  abc0=\"xyz0\"   />";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.addAttribute("abc1", "xyz1");
+			element.addAttribute("abc2", "xyz2");
+			element.addAttribute("abc3", "xyz3");
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting  abc0=\"xyz0\" abc1=\"xyz1\" abc2=\"xyz2\" abc3=\"xyz3\"   />", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest005() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"   />";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.addAttribute(0, "abc1", "xyz1");
+			element.addAttribute(1, "abc1.5", "xyz1.5");
+			element.addAttribute(3, "abc8", "xyz8");
+			element.addAttribute(5, "abc9", "xyz9");
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting abc1=\"xyz1\" abc1.5=\"xyz1.5\"\r\nabc2=\"xyz2\" abc8=\"xyz8\" abc8.1=\"xyz8.1\" abc9=\"xyz9\"   />", element.startTag().toString());
+			assertEquals("xyz1", element.attribute(0));
+			assertEquals("xyz1.5", element.attribute(1));
+			assertEquals("xyz2", element.attribute(2));
+			assertEquals("xyz8", element.attribute(3));
+			assertEquals("xyz8.1", element.attribute(4));
+			assertEquals("xyz9", element.attribute(5));
+			assertEquals("xyz1", element.attribute("abc1"));
+			assertEquals("xyz1.5", element.attribute("abc1.5"));
+			assertEquals("xyz2", element.attribute("abc2"));
+			assertEquals("xyz8", element.attribute("abc8"));
+			assertEquals("xyz8.1", element.attribute("abc8.1"));
+			assertEquals("xyz9", element.attribute("abc9"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest050() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			assertEquals(0, element.attributeCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest051() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting ></greeting>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			assertEquals(0, element.attributeCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest052() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting x=\"1\"></greeting>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			assertEquals(1, element.attributeCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest053() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting x=\"1\" />";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			assertEquals(1, element.attributeCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest054() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting x=\"1\" y=\"2\"/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			assertEquals(2, element.attributeCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest055() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting x=\"1\" y=\"2\" ></greeting>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			assertEquals(2, element.attributeCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest056() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting x=\"1\" y=\"2\" z=\"3\"></greeting>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			assertEquals(3, element.attributeCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest057() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting x=\"1\" y=\"2\" z=\"3\" />";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			assertEquals(3, element.attributeCount());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest101() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.setAttribute(0, "abc1", "xyz1");
+			element.setAttribute(1, "abc1.5", "xyz1.5");
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting\r\nabc1=\"xyz1\" abc1.5=\"xyz1.5\"/>", element.startTag().toString());
+			assertEquals("xyz1", element.attribute(0));
+			assertEquals("xyz1.5", element.attribute(1));
+			assertEquals("xyz1", element.attribute("abc1"));
+			assertEquals("xyz1.5", element.attribute("abc1.5"));
+			assertEquals(null, element.attribute("abc2"));
+			assertEquals("opq", element.attribute("abc2", "opq"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest102() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\nabc2 = \"xyz2\" abc8.1=\"xyz8.1\"/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.setAttribute("abc2", "xyz22");
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting\r\nabc2 = \"xyz22\" abc8.1=\"xyz8.1\"/>", element.startTag().toString());
+			assertEquals("xyz22", element.attribute(0));
+			assertEquals("xyz8.1", element.attribute(1));
+			assertEquals("xyz22", element.attribute("abc2"));
+			assertEquals("xyz8.1", element.attribute("abc8.1"));
+			assertEquals(null, element.attribute("abc3"));
+			assertEquals("opq", element.attribute("abc3", "opq"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest103() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\nabc2 = \"xyz2\" abc8.1=\"xyz8.1\"/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.setAttribute("abc8.1", "xyzzy8.1");
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting\r\nabc2 = \"xyz2\" abc8.1=\"xyzzy8.1\"/>", element.startTag().toString());
+			assertEquals("xyz2", element.attribute(0));
+			assertEquals("xyzzy8.1", element.attribute(1));
+			assertEquals("xyz2", element.attribute("abc2"));
+			assertEquals("xyzzy8.1", element.attribute("abc8.1"));
+			assertEquals(null, element.attribute("abc3"));
+			assertEquals("opq", element.attribute("abc3", "opq"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest104() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\nabc2 = \"xyz2\" abc8.1=\"xyz8.1\"/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.setAttribute("abc9", "xyzzy9");
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting\r\nabc2 = \"xyz2\" abc8.1=\"xyz8.1\" abc9=\"xyzzy9\"/>", element.startTag().toString());
+			assertEquals("xyz2", element.attribute(0));
+			assertEquals("xyz8.1", element.attribute(1));
+			assertEquals("xyzzy9", element.attribute(2));
+			assertEquals("xyz2", element.attribute("abc2"));
+			assertEquals("xyz8.1", element.attribute("abc8.1"));
+			assertEquals("xyzzy9", element.attribute("abc9"));
+			assertEquals(null, element.attribute(3));
+			assertEquals("lmn", element.attribute(3, "lmn"));
+			assertEquals(null, element.attribute("abc3"));
+			assertEquals("opq", element.attribute("abc3", "opq"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest201() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.removeAllAttributes();
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting/>", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest202() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"  >Hello</greeting>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.removeAllAttributes();
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting  >", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest203() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"  />";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.removeAllAttributes();
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting  />", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest204() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\">Hello</greeting>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.removeAllAttributes();
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting>", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest301() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE  %s", DebugHelper.toString(element.startTag()));
+			Node node = element.removeAttribute(0);
+			print("AFTER   %s", DebugHelper.toString(element.startTag()));
+			print("REMOVED %s", DebugHelper.toString(node));
+			assertEquals("<greeting abc8.1=\"xyz8.1\"/>", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest302() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			Node node = element.removeAttribute(1);
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			print("REMOVED %s", DebugHelper.toString(node));
+			assertEquals("<greeting\r\nabc2=\"xyz2\"/>", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest303() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE  %s", DebugHelper.toString(element.startTag()));
+			Node node = element.removeAttribute(2);
+			print("AFTER   %s", DebugHelper.toString(element.startTag()));
+			print("REMOVED %s", DebugHelper.toString(node));
+			assertEquals(Node.NULL, node.type);
+			assertEquals("<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"/>", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest311() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE  %s", DebugHelper.toString(element.startTag()));
+			Node node = element.removeAttribute("abc2");
+			print("AFTER   %s", DebugHelper.toString(element.startTag()));
+			print("REMOVED %s", DebugHelper.toString(node));
+			assertEquals("<greeting abc8.1=\"xyz8.1\"/>", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest312() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\nabc2 = \"xyz2\" abc8.1 = \"xyz8.1\"/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE  %s", DebugHelper.toString(element.startTag()));
+			Node node = element.removeAttribute("abc8.1");
+			print("AFTER   %s", DebugHelper.toString(element.startTag()));
+			print("REMOVED %s", DebugHelper.toString(node));
+			assertEquals("<greeting\r\nabc2 = \"xyz2\"/>", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest313() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE  %s", DebugHelper.toString(element.startTag()));
+			Node node = element.removeAttribute("xyz");
+			print("AFTER   %s", DebugHelper.toString(element.startTag()));
+			print("REMOVED %s", DebugHelper.toString(node));
+			assertEquals(Node.NULL, node.type);
+			assertEquals("<greeting\r\nabc2=\"xyz2\" abc8.1=\"xyz8.1\"/>", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest901() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.addAttribute("abc", "x\"y\"z");
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting abc=\'x\"y\"z\'/>", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest902() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.addAttribute("abc", "x\'y\'z");
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting abc=\"x\'y\'z\"/>", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest903() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.addAttribute("abc", "\"xy\'z\"");
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting abc=\'\"xy&apos;z\"\'/>", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest904() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting aaa=\'zzz\' />";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.setAttribute(0, "abc", "\"xy\'z\"");
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting abc=\"&quot;xy\'z&quot;\" />", element.startTag().toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	void attributeTest905() {
+		String source = "<?xml version=\"1.0\"?>\r\n<greeting aaa=\'zzz\'/>";
+		Document doc = new Document();
+		try {
+			doc.load(source.getBytes());
+			Element element = doc.root();
+			print("BEFORE %s", DebugHelper.toString(element.startTag()));
+			element.setAttribute(0, "abc", "The quick brown \"fox\" jumps over the \'lazy\' dog.");
+			print("AFTER  %s", DebugHelper.toString(element.startTag()));
+			assertEquals("<greeting abc=\"The quick brown &quot;fox&quot; jumps over the \'lazy\' dog.\"/>", element.startTag().toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
