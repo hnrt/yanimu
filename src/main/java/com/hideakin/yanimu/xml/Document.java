@@ -14,6 +14,9 @@ import com.hideakin.yanimu.xml.doctype.EntityDeclaration;
 import com.hideakin.yanimu.xml.doctype.InternalEntityDefinition;
 import com.hideakin.yanimu.xml.internal.Processor;
 
+/**
+ * An mutable node containing a sequence of all nodes that consists of an XML document
+ */
 public class Document extends NodeList {
 
 	protected Path _path;

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A mutable node containing a sequence of mutable/immutable nodes.
+ * A mutable XML node containing a sequence of mutable/immutable nodes.
  */
 public class NodeList extends Node {
 

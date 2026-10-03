@@ -109,11 +109,11 @@ public class PomDocument extends Document implements Artifact {
 	 * Replaces entity references, character references, and property references in the given String
 	 * with their corresponding replacement text.
 	 * <p>
-	 * An entity reference is a portion of text that begins with "&", is followed by an entity name, and ends with ";".
+	 * An entity reference is a portion of text that begins with "&amp;", is followed by an entity name, and ends with ";".
 	 * Both predefined entities and entities declared in the document type definition (DTD) are supported.
 	 * Each entity reference is replaced with the text associated with its entity name.
 	 * <p>
-	 * A character reference is a portion of text that begins with "&",
+	 * A character reference is a portion of text that begins with "&amp;",
 	 * is followed by a decimal or "x"-prepended hexadecimal code point, and ends with ";".
 	 * It is replaced with the character represented by the code point.
 	 * <p>

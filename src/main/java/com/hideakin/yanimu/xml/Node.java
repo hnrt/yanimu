@@ -4,6 +4,9 @@ import java.nio.charset.StandardCharsets;
 
 import static com.hideakin.yanimu.xml.Character.*;
 
+/**
+ * An mutable XML node containing an immutable sequence of bytes.
+ */
 public class Node {
 
 	public static final int NULL = 0;

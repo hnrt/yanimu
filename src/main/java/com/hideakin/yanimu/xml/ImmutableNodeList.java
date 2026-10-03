@@ -3,7 +3,7 @@ package com.hideakin.yanimu.xml;
 import java.util.List;
 
 /**
- * An immutable node containing a sequence of mutable/immutable nodes.
+ * An immutable XML node containing a sequence of mutable/immutable nodes.
  */
 public class ImmutableNodeList extends NodeList {
 

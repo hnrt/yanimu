@@ -4,7 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
- * An immutable node containing an immutable sequence of bytes.
+ * An immutable XML node containing an immutable sequence of bytes.
  */
 public class ImmutableNode extends Node {
 
