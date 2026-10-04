@@ -1,5 +1,8 @@
 package com.hideakin.yanimu.xml;
 
+/**
+ * An immutable node object for XML Comment.
+ */
 public class Comment extends ImmutableNode {
 
 	public static final String START = "<!--";

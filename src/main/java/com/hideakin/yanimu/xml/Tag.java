@@ -3,16 +3,21 @@ package com.hideakin.yanimu.xml;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+/**
+ * A super class of {@link AttributeTag} and {@link EndTag}.
+ */
 public class Tag extends NodeList {
 
-	public static final byte[] START_SEQUENCE = {'<'};
-	public static final byte[] STAG_END_SEQUENCE = {'>'};
-	public static final byte[] EETAG_END_SEQUENCE = {'/', '>'};
-	public static final byte[] EQ_SEQUENCE = {'='};
-	public static final byte[] SP_SEQUENCE = {' '};
-
+	/**
+	 * The tag name of an XML element.
+	 */
 	public final String name;
 
+	/**
+	 * Constructs a newly created instance with a node type and a node sequence.
+	 * @param type the node type
+	 * @param nodeList the node sequence
+	 */
 	protected Tag(int type, List<Node> nodeList) {
 		super(type, nodeList);
 		name = getName(nodeList);

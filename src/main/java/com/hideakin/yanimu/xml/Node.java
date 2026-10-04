@@ -5,7 +5,7 @@ import java.nio.charset.StandardCharsets;
 import static com.hideakin.yanimu.xml.Character.*;
 
 /**
- * An mutable XML node containing an immutable sequence of bytes.
+ * An XML node object.
  */
 public class Node {
 
@@ -93,8 +93,12 @@ public class Node {
 	public static final int MALFORMED_ENTITYREF = 3006800;
 	public static final int MALFORMED_PEREFERENCE = 3006900;
 
+	public static final byte[] SP_SEQUENCE = {' '};
+
 	/**
-	 * A sentinel to avoid null pointer exceptions.
+	 * A sentinel node object to avoid null pointer exceptions.
+	 * The node type is {@code NULL}.
+	 * The byte sequence is zero byte long.
 	 */
 	public static final Node NULL_NODE = ImmutableNode.of(NULL, new byte[0]);
 
