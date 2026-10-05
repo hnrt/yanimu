@@ -3,20 +3,42 @@ package com.hideakin.yanimu.xml;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A mutable node object containing children of an XML element.
+ */
 public class Content extends NodeList {
 
+	/**
+	 * Returns a new {@code Content} object with no children.
+	 * @return a newly created {@code Content} object
+	 */
 	public static Content of() {
 		return new Content();
 	}
 
+	/**
+	 * Returns a new {@code Content} object with a child of the specified node.
+	 * @param node a child to be contained in this object
+	 * @return a newly created {@code Content} object
+	 */
 	public static Content of(Node node) {
 		return new Content(node);
 	}
 
+	/**
+	 * Returns a new {@code Content} object with children.
+	 * @param nodeList a child node sequence to be contained in this object
+	 * @return a newly created {@code Content} object
+	 */
 	public static Content of(List<Node> nodeList) {
 		return new Content(nodeList);
 	}
 
+	/**
+	 * Returns a new {@code Content} object with a child of the character data node.
+	 * @param text character data for a child node to be contained in this object
+	 * @return a newly created {@code Content} object
+	 */
 	public static Content of(String text) {
 		return new Content(text);
 	}
@@ -75,6 +97,11 @@ public class Content extends NodeList {
 		return node;
 	}
 
+	/**
+	 * Concatenates text of each child node contained in this object in their stored order
+	 * and returns the resulting {@code String}. 
+	 * @return the resulting {@code String}
+	 */
 	public String text() {
 		StringBuilder buffer = new StringBuilder();
 		for (Node node : _nodeList) {
@@ -98,6 +125,13 @@ public class Content extends NodeList {
 		return buffer.toString();
 	}
 
+	/**
+	 * Replaces all the child nodes currently contained in this object
+	 * with one or more newly created child nodes using the specified {@code String}.
+	 * Depending on the characters in the specified {@code String},
+	 * child nodes to be newly created are {@code CharData} and {@code EntityRef}. 
+	 * @param source a {@code String} to be used to create a child node of the character data.
+	 */
 	public void setText(String source) {
 		for (int i = 0; i < source.length(); i++) {
 			char c = source.charAt(i);
@@ -190,6 +224,18 @@ public class Content extends NodeList {
 		return elementList;
 	}
 
+	/**
+	 * Locates the {@code Element} nodes that have the specified name in this {@code Content} node.
+	 * <p>
+	 * The name to search for is provided by {@code names[index]}.
+	 * If it is an asterisk, all {@code Element} nodes are returned.
+	 * <p>
+	 * The search is performed recursively for all the descendants in this {@code Content} node.
+	 * @param names the array of names in which the name to search for is stored
+	 * @param index the index at which the name to search for is stored in the {@code names} array
+	 * @param elementList the {@code List} of {@code Element} to receive the results 
+	 * @return {@code elementList}
+	 */
 	public List<Element> getElementsRecursively(String[] names, int index, List<Element> elementList) {
 		for (Node node : _nodeList) {
 			if (node instanceof Element element) {

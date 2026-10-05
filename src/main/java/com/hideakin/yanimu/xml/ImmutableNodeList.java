@@ -3,18 +3,32 @@ package com.hideakin.yanimu.xml;
 import java.util.List;
 
 /**
- * An immutable XML node containing a sequence of mutable/immutable nodes.
+ * An immutable XML node containing a sequence of nodes.
  */
 public class ImmutableNodeList extends NodeList {
 
+	/**
+	 * Constructs a new object with no nodes.
+	 * @param type the node type to be set
+	 */
 	protected ImmutableNodeList(int type) {
 		super(type);
 	}
 
+	/**
+	 * Constructs a new object with just a node.
+	 * @param type the node type to be set
+	 * @param firstNode a node to be contained in this object
+	 */
 	protected ImmutableNodeList(int type, Node firstNode) {
 		super(type, firstNode);
 	}
 
+	/**
+	 * Constructs a new object with a sequence of nodes.
+	 * @param type the node type to be set
+	 * @param nodeList a sequence of nodes to be contained in this object
+	 */
 	protected ImmutableNodeList(int type, List<Node> nodeList) {
 		super(type, nodeList);
 	}

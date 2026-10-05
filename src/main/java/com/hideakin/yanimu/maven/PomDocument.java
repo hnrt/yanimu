@@ -28,8 +28,8 @@ import com.hideakin.yanimu.maven.util.RepositoryMap;
 import com.hideakin.yanimu.maven.util.SimpleArtifact;
 import com.hideakin.yanimu.xml.Document;
 import com.hideakin.yanimu.xml.Element;
-import com.hideakin.yanimu.xml.EntityMap;
 import com.hideakin.yanimu.xml.ParseResult;
+import com.hideakin.yanimu.xml.util.EntityMap;
 
 @SuppressWarnings("unused")
 public class PomDocument extends Document implements Artifact {

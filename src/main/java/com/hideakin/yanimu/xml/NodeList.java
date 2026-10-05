@@ -4,21 +4,38 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A mutable XML node containing a sequence of mutable/immutable nodes.
+ * A mutable XML node containing a sequence of nodes.
  */
 public class NodeList extends Node {
 
+	/**
+	 * A sequence of XML nodes.
+	 */
 	protected final List<Node> _nodeList = new ArrayList<>();
 
+	/**
+	 * Constructs a new object with no nodes.
+	 * @param type the node type to be set
+	 */
 	protected NodeList(int type) {
 		super(type);
 	}
 
+	/**
+	 * Constructs a new object with just a node.
+	 * @param type the node type to be set
+	 * @param firstNode a node to be contained in this object
+	 */
 	protected NodeList(int type, Node firstNode) {
 		super(type);
 		_nodeList.add(firstNode);
 	}
 
+	/**
+	 * Constructs a new object with a sequence of nodes.
+	 * @param type the node type to be set
+	 * @param nodeList a sequence of nodes to be contained in this object
+	 */
 	protected NodeList(int type, List<Node> nodeList) {
 		super(type);
 		_nodeList.addAll(nodeList);
@@ -47,7 +64,7 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * Returns an unmodifiable List containing the nodes in this node list, in its iteration order.
+	 * Returns an unmodifiable List containing the nodes in this object, in its iteration order.
 	 * @return an unmodifiable List
 	 */
 	public List<Node> copy() {
@@ -55,7 +72,7 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * Returns the number of nodes in this node list.
+	 * Returns the number of nodes contained in this object.
 	 * @return the number of nodes
 	 */
 	public int size() {
@@ -63,8 +80,8 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * Return the first node (index 0) in this node list.
-	 * If this list contains no nodes, {@code NULL_NODE} is returned.
+	 * Return the first node (index 0) in this object.
+	 * If this object contains no nodes, {@code NULL_NODE} is returned.
 	 * @return the first node, or {@code NULL_NODE} if there are no nodes
 	 */
 	public Node first() {
@@ -73,9 +90,9 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * Returns the second node (index 1) in this node list.
-	 * If this list contains fewer than two nodes, {@code NULL_NODE} is returned.
-	 * @return the second node, or {@code NULL_NODE} if no second node exists
+	 * Returns the second node (index 1) in this object.
+	 * If this object contains fewer than two nodes, {@code NULL_NODE} is returned.
+	 * @return the second node, or {@code NULL_NODE} if it is not present
 	 */
 	public Node second() {
 		int size = _nodeList.size();
@@ -83,8 +100,8 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * Return the last node in this node list.
-	 * If this list contains no nodes, {@code NULL_NODE} is returned.
+	 * Return the last node in this object.
+	 * If this object contains no nodes, {@code NULL_NODE} is returned.
 	 * @return the last node, or {@code NULL_NODE} if there are no nodes
 	 */
 	public Node last() {
@@ -93,18 +110,18 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * Return the index of the last node in this node list.
-	 * If this list contains no nodes, -1 is returned.
-	 * @return the index of the last node, or -1 if it doesn't exist
+	 * Return the index of the last node in this object.
+	 * If this object contains no nodes, -1 is returned.
+	 * @return the index of the last node, or -1 if there are no nodes
 	 */
 	public int lastIndex() {
 		return _nodeList.size() - 1;
 	}
 
 	/**
-	 * Returns the node at the specified index in this node list.
-	 * @param index the index of the node to return
-	 * @return the node at the specified index
+	 * Returns a node at the specified index in this object.
+	 * @param index the index of a node to be returned
+	 * @return a node at the specified index
 	 * @throws IndexOutOfBoundsException if the index is out of range (less than 0 or greater than or equal to the size)
 	 */
 	public Node get(int index) {
@@ -116,13 +133,13 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * Returns the node at the specified index in this node list.
+	 * Returns a node at the specified index in this object.
 	 * <p>
 	 * If the index is out of range (less than 0 or greater than or equal to the size),
 	 * the specified fallback is returned.
-	 * @param index the index of the node to return
-	 * @param fallback the value to return if the index is out of range
-	 * @return the node at the specified index, or {@code fallback} if the index is out of range
+	 * @param index the index of a node to be returned
+	 * @param fallback the value to be returned if the index is out of range
+	 * @return a node at the specified index, or {@code fallback} if the index is out of range
 	 */
 	public Node get(int index, Node fallback) {
 		int size = _nodeList.size();
@@ -133,9 +150,9 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * Replaces the node at the specified index in this node list with the specified node.
-	 * @param index the index of the node to replace
-	 * @param node the node with which the node at the specified index is to be replaced
+	 * Replaces a node at the specified index in this object with the specified node.
+	 * @param index the index of a node to be replaced
+	 * @param node a node to replace with
 	 * @throws IndexOutOfBoundsException if the index is out of range (less than 0 or greater than or equal to the size)
 	 * @throws NullPointerException if null is specified for the node
 	 * @throws IllegalArgumentException if a NULL-node is specified
@@ -153,8 +170,8 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * Appends the specified node to the end of this node list.
-	 * @param node the node to be appended to this node list
+	 * Appends the specified node to the end of this object.
+	 * @param node a node to be appended to this object
 	 * @throws NullPointerException if null is specified for the node
 	 * @throws IllegalArgumentException if a NULL-node is specified
 	 */
@@ -168,11 +185,11 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * Inserts the specified node at the specified index in this node list.
+	 * Inserts the specified node at the specified index in this object.
 	 * Shifts the node currently at that position (if any)
 	 * and any subsequent nodes to the right (adds one to their indices).
-	 * @param index the index at which the node is to be inserted
-	 * @param node the node to be inserted
+	 * @param index the index at which a node is to be inserted
+	 * @param node a node to be inserted
 	 * @throws IndexOutOfBoundsException if the index is out of range (less than 0 or greater than the size)
 	 * @throws NullPointerException if null is specified for the node
 	 * @throws IllegalArgumentException if a NULL-node is specified
@@ -190,20 +207,20 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * Removes all of the nodes from this list.
+	 * Removes all of the nodes from this object.
 	 * <p>
-	 * The list will be empty after this call returns.
+	 * This object will contain no nodes after this call returns.
 	 */
 	public void clear() {
 		_nodeList.clear();
 	}
 
 	/**
-	 * Removes the node at the specified index in this list.
+	 * Removes a node at the specified index in this object.
 	 * Shifts any subsequent nodes to the left (subtracts one from their indices).
-	 * Returns the node that was removed from the list.
-	 * @param index the index of the node to be removed
-	 * @return the node previously at the specified index
+	 * Returns the node that was removed from this object.
+	 * @param index the index of a node to be removed
+	 * @return the node previously resided at the specified index
 	 * @throws IndexOutOfBoundsException if the index is out of range (less than 0 or greater than or equal to the size)
 	 */
 	public Node remove(int index) {
@@ -216,13 +233,13 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * Removes the first occurrence of the specified node from this list, if it is present.
+	 * Removes the first occurrence of the specified node from this object, if it is present.
 	 * Shifts any subsequent nodes to the left (subtracts one from their indices).
-	 * Returns the node that was removed from the list.
+	 * Returns the node that was removed from this object.
 	 * <p>
-	 * If this list does not contain the node, it is unchanged and {@code NULL_NODE} is returned.
+	 * If this object does not contain the node, it is unchanged and {@code NULL_NODE} is returned.
 	 * @param node the node to be removed
-	 * @return the node that was removed from the list, or {@code NULL_NODE} if not found
+	 * @return the node that was removed from the object, or {@code NULL_NODE} if not found
 	 */
 	public Node remove(Node node) {
 		if (_nodeList.remove(node)) {
@@ -233,9 +250,9 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * Returns the offset of the specified node from the first node in this list.
+	 * Returns the offset of the specified node from the first node in this object.
 	 * <p>
-	 * If the node is not found, this method returns -1.
+	 * If the node is not found, -1 is returned.
 	 * @param target the node to search for
 	 * @return the offset of the node, or -1 if not found
 	 */
@@ -304,11 +321,11 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * Returns the index of the first occurrence of the specified node in this list.
+	 * Returns the index of the first occurrence of the specified node in this object.
 	 * <p>
-	 * The search is performed from the index of 0 to the end of the list.
+	 * The search is performed from the index of 0 to the end of the object.
 	 * <p>
-	 * If this list doesn't contain the specified node, -1 is returned.
+	 * If this object doesn't contain the specified node, -1 is returned.
 	 * @param target the node to search for
 	 * @return the index of the node, or -1 if not found
 	 */
@@ -317,11 +334,11 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * Returns the index of the first occurrence of the specified node in the search.
+	 * Returns the index of the first occurrence of the specified node in this object.
 	 * <p>
-	 * The search is performed from the index of {@code start} to the end of the list.
+	 * The search is performed from the index of {@code start} to the end of this object.
 	 * <p>
-	 * If {@code start} is less than 0, 0 is used as the start of search instead.
+	 * If {@code start} is less than 0, 0 is used instead.
 	 * <p>
 	 * If the specified node is not found, -1 is returned.
 	 * @param target the node to search for
@@ -336,13 +353,13 @@ public class NodeList extends Node {
 	}
 
 	/**
-	 * Returns the index of the first occurrence of the specified node in the search.
+	 * Returns the index of the first occurrence of the specified node in this object.
 	 * <p>
 	 * The search is performed from the index of {@code start} to {@code end} - 1.
 	 * <p>
-	 * If {@code start} is less than 0, 0 is used as the start of search instead.
+	 * If {@code start} is less than 0, 0 is used instead.
 	 * <p>
-	 * If {@code end} is greater than the size of this list, the size is used as the end of search instead.
+	 * If {@code end} is greater than the size of this list, the size is used instead.
 	 * <p>
 	 * If the specified node is not found, -1 is returned.
 	 * @param target the node to search for

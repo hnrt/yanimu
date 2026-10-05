@@ -6,7 +6,6 @@ import com.hideakin.yanimu.xml.Content;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.EmptyElementTag;
 import com.hideakin.yanimu.xml.EndTag;
-import com.hideakin.yanimu.xml.EntityMap;
 import com.hideakin.yanimu.xml.EntityRef;
 import com.hideakin.yanimu.xml.ParseException;
 import com.hideakin.yanimu.xml.ParseResult;
@@ -34,6 +33,7 @@ import com.hideakin.yanimu.xml.doctype.InternalParameterEntityDefinition;
 import com.hideakin.yanimu.xml.doctype.NotationDeclaration;
 import com.hideakin.yanimu.xml.doctype.NotationType;
 import com.hideakin.yanimu.xml.util.DebugHelper;
+import com.hideakin.yanimu.xml.util.EntityMap;
 import com.hideakin.yanimu.xml.ParameterEntityReference;
 
 import static com.hideakin.yanimu.xml.Node.*;

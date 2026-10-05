@@ -14,6 +14,7 @@ import com.hideakin.yanimu.xml.doctype.DocumentTypeDeclaration;
 import com.hideakin.yanimu.xml.doctype.EntityDeclaration;
 import com.hideakin.yanimu.xml.doctype.InternalEntityDefinition;
 import com.hideakin.yanimu.xml.internal.Processor;
+import com.hideakin.yanimu.xml.util.EntityMap;
 
 /**
  * An XML document object.
