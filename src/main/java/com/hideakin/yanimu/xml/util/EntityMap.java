@@ -38,7 +38,7 @@ public class EntityMap extends HashMap<String, Object> {
 	public static final int DEFAULT_INITIAL_CAPACITY = 32;
 
 	/**
-	 * The maximum iterations for the replacement processing in {@link String translate(String)}.
+	 * The maximum iterations for the replacement processing in {@link EntityMap#translate(String)}.
 	 */
 	public static final int MAX_TRANSLATION_ITERATIONS = 10;
 
