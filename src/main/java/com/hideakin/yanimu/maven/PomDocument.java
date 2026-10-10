@@ -1,18 +1,9 @@
 package com.hideakin.yanimu.maven;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -20,7 +11,6 @@ import com.hideakin.yanimu.maven.util.Artifact;
 import com.hideakin.yanimu.maven.util.DependencyMap;
 import com.hideakin.yanimu.maven.util.LocalRepository;
 import com.hideakin.yanimu.maven.util.PluginMap;
-import com.hideakin.yanimu.maven.util.Property;
 import com.hideakin.yanimu.maven.util.PropertyMap;
 import com.hideakin.yanimu.maven.util.RemoteRepository;
 import com.hideakin.yanimu.maven.util.Repository;
@@ -28,10 +18,10 @@ import com.hideakin.yanimu.maven.util.RepositoryMap;
 import com.hideakin.yanimu.maven.util.SimpleArtifact;
 import com.hideakin.yanimu.xml.Document;
 import com.hideakin.yanimu.xml.Element;
-import com.hideakin.yanimu.xml.ParseResult;
-import com.hideakin.yanimu.xml.util.EntityMap;
 
-@SuppressWarnings("unused")
+/**
+ * A project object model (POM) document object.
+ */
 public class PomDocument extends Document implements Artifact {
 
 	public static final int MAX_TRANSLATION_ITERATIONS = 10;
@@ -131,23 +121,23 @@ public class PomDocument extends Document implements Artifact {
 		if (source == null) {
 			return null;
 		}
-		String intermediate = source;
+		String last = source;
 		StringBuilder output = new StringBuilder();
 		for (int attempts = 0; attempts < MAX_TRANSLATION_ITERATIONS; attempts++) {
-			boolean changed1 = _entities.translate(intermediate, output);
+			boolean changed1 = _entities.translate(last, output);
 			if (changed1) {
-				intermediate = output.toString();
+				last = output.toString();
 			}
 			output.setLength(0);
-			boolean changed2 = _properties.translate(intermediate, output);
+			boolean changed2 = _properties.translate(last, output);
 			if (changed2) {
-				intermediate = output.toString();
+				last = output.toString();
 			} else if (!changed1) {
 				break;
 			}
 			output.setLength(0);
 		}
-		return intermediate;
+		return last;
 	}
 
 	public PluginMap pluginManagement() {
@@ -184,19 +174,19 @@ public class PomDocument extends Document implements Artifact {
 		map.put("groupId", e -> _groupId = e.innerText());
 		map.put("artifactId", e -> _artifactId = e.innerText());
 		map.put("version", e -> _version = e.innerText());
+		map.put("properties", e -> _properties.load(e));
+		map.put("repositories", e -> _repositories.load(e, e.getElements("/repository")));
+		map.put("pluginRepositories", e -> _pluginRepositories.load(e, e.getElements("/pluginRepository")));
+		map.put("dependencies", e -> _dependencies.load(e));
 		for (Element e : _root.getElements("/*")) {
 			Consumer<Element> c = map.get(e.name);
 			if (c != null) {
 				c.accept(e);
 			}
 		}
-		_properties.load(_root.getElement("/properties"));
-		_repositories.load(_root.getElement("/repositories"), _root.getElements("/repositories/repository"));
-		_pluginRepositories.load(_root.getElement("/pluginRepositories"), _root.getElements("/pluginRepositories/pluginRepository"));
 		_pluginManagement.load(_root.getElement("/build/pluginManagement/plugins"));
 		_plugins.load(_root.getElement("/build/plugins"));
 		_dependencyManagement.load(_root.getElement("/dependencyManagement/dependencies"), _repositories, x -> _properties.translate(x));
-		_dependencies.load(_root.getElement("/dependencies"));
 	}
 
 	public void load(RepositoryMap repositories) throws Exception {

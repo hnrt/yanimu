@@ -283,6 +283,12 @@ public class Document extends NodeList {
 		onLoaded();
 	}
 
+	/**
+	 * Executes the object specific processing.
+	 * Override this method in each subclass,
+	 * instead of overriding {@link Document#load(byte[],ParseResult)},
+	 * if necessary.
+	 */
 	protected void onLoaded() {
 	}
 
