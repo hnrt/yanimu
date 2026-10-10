@@ -21,10 +21,10 @@ package com.hideakin.yanimu.xml;
  */
 public class QuotedString extends ImmutableNode {
 
-	private static final byte[] DOUBLE_QUOTE = {'&','q','u','o','t',';'};
-	private static final byte[] SINGLE_QUOTE = {'&','a','p','o','s',';'};
-	private static final String DOUBLE_QUOTE_STRING = "&quot;";
-	private static final String SINGLE_QUOTE_STRING = "&apos;";
+	private static final byte[] DOUBLE_QUOTE_ENTITY_REF = {'&','q','u','o','t',';'};
+	private static final byte[] SINGLE_QUOTE_ENTITY_REF = {'&','a','p','o','s',';'};
+	private static final String DOUBLE_QUOTE_ENTITY_REF_STRING = "&quot;";
+	private static final String SINGLE_QUOTE_ENTITY_REF_STRING = "&apos;";
 
 	/**
 	 * Creates a new node with a node type and a byte sequence stored as text enclosed in quotes.
@@ -33,7 +33,7 @@ public class QuotedString extends ImmutableNode {
 	 * @return a newly created node
 	 */
 	public static QuotedString of(int type, byte[] sequence) {
-		return new QuotedString(type, encloseTextInQuotes(sequence));
+		return new QuotedString(type, sequence);
 	}
 
 	/**
@@ -90,122 +90,161 @@ public class QuotedString extends ImmutableNode {
 				out[2] = '\"';
 			}
 			return out;
-		} else if (source[0] == source[source.length - 1] && (source[0] == '\"' || source[0] == '\'')) {
-			return source;
 		} else {
-			int s = 0;
-			int d = 0;
-			for (int i = 0; i < source.length; i++) {
+			int start, end;
+			if ((source[0] == '\"' || source[0] == '\'') && source[0] == source[source.length - 1]) {
+				start = 1;
+				end = source.length - 1;
+			} else {
+				start = 0;
+				end = source.length;
+			}
+			int singleQuotes = 0;
+			int doubleQuotes = 0;
+			for (int i = start; i < end; i++) {
 				if (source[i] == '\'') {
-					s++;
+					singleQuotes++;
 				} else if (source[i] == '\"') {
-					d++;
+					doubleQuotes++;
 				}
 			}
-			if (d == 0 || s == 0) {
-				byte q = (byte)(d == 0 ? '\"' : '\'');
-				byte[] out = new byte[1 + source.length + 1];
-				out[0] = q;
-				System.arraycopy(source, 0, out, 1, source.length);
-				out[1 + source.length] = q;
-				return out;
-			} else if (s > d) {
-				byte[] out = new byte[1 + source.length + (DOUBLE_QUOTE.length - 1) * d + 1];
+			if (doubleQuotes == 0 && singleQuotes == 0) {
+				if (start == 1) {
+					return source;
+				} else {
+					byte[] out = new byte[1 + source.length + 1];
+					out[0] = '\"';
+					System.arraycopy(source, 0, out, 1, source.length);
+					out[1 + source.length] = '\"';
+					return out;
+				}
+			} else if (doubleQuotes == 0) {
+				byte[] out = new byte[1 + (end - start) + 1];
 				out[0] = '\"';
-				int h = 0;
-				int j = 0;
-				for (int i = 0; i < source.length; i++) {
+				System.arraycopy(source, start, out, 1, end - start);
+				out[1 + end - start] = '\"';
+				return out;
+			} else if (singleQuotes == 0) {
+				byte[] out = new byte[1 + (end - start) + 1];
+				out[0] = '\'';
+				System.arraycopy(source, start, out, 1, end - start);
+				out[1 + end - start] = '\'';
+				return out;
+			} else if (singleQuotes >= doubleQuotes) {
+				byte[] out = new byte[1 + (end - start) + (DOUBLE_QUOTE_ENTITY_REF.length - 1) * doubleQuotes + 1];
+				out[0] = '\"';
+				int j = 1;
+				int h = start;
+				for (int i = start; i < end; i++) {
 					if (source[i] == '\"') {
 						int n = i - h;
 						System.arraycopy(source, h, out, j, n);
-						h = i + 1;
 						j += n;
-						System.arraycopy(DOUBLE_QUOTE, s, out, j, DOUBLE_QUOTE.length);
-						j += DOUBLE_QUOTE.length;
+						System.arraycopy(DOUBLE_QUOTE_ENTITY_REF, 0, out, j, DOUBLE_QUOTE_ENTITY_REF.length);
+						j += DOUBLE_QUOTE_ENTITY_REF.length;
+						h = i + 1;
 					}
 				}
-				if (h < source.length) {
-					System.arraycopy(source, h, out, j, source.length - h);
+				if (h < end) {
+					int n = end - h;
+					System.arraycopy(source, h, out, j, n);
+					j += n;
 				}
-				out[1 + source.length] = '\"';
+				out[j] = '\"';
 				return out;
 			} else {
-				byte[] out = new byte[1 + source.length + (SINGLE_QUOTE.length - 1) * s + 1];
+				byte[] out = new byte[1 + (end - start) + (SINGLE_QUOTE_ENTITY_REF.length - 1) * singleQuotes + 1];
 				out[0] = '\'';
-				int h = 0;
-				int j = 0;
-				for (int i = 0; i < source.length; i++) {
+				int j = 1;
+				int h = start;
+				for (int i = start; i < end; i++) {
 					if (source[i] == '\'') {
 						int n = i - h;
 						System.arraycopy(source, h, out, j, n);
-						h = i + 1;
 						j += n;
-						System.arraycopy(SINGLE_QUOTE, s, out, j, SINGLE_QUOTE.length);
-						j += SINGLE_QUOTE.length;
+						System.arraycopy(SINGLE_QUOTE_ENTITY_REF, 0, out, j, SINGLE_QUOTE_ENTITY_REF.length);
+						j += SINGLE_QUOTE_ENTITY_REF.length;
+						h = i + 1;
 					}
 				}
-				if (h < source.length) {
-					System.arraycopy(source, h, out, j, source.length - h);
+				if (h < end) {
+					int n = end - h;
+					System.arraycopy(source, h, out, j, n);
+					j += n;
 				}
-				out[1 + source.length] = '\'';
+				out[j] = '\'';
 				return out;
 			}
 		}
 	}
 
 	private static String encloseTextInQuotes(String source) {
-		if (source.length() == 0) {
+		int length = source.length();
+		if (length == 0) {
 			return "\"\"";
-		} else if (source.length() == 1) {
+		} else if (length == 1) {
 			if (source.charAt(0) == '\"') {
 				return "\'\"\'";
 			} else {
 				return "\"" + source + "\"";
 			}
-		} else if (source.charAt(0) == source.charAt(source.length() - 1) && (source.charAt(0) == '\"' || source.charAt(0) == '\'')) {
-			return source;
 		} else {
-			int s = 0;
-			int d = 0;
-			for (int i = 0; i < source.length(); i++) {
+			int start, end;
+			if ((source.charAt(0) == '\"' || source.charAt(0) == '\'') && source.charAt(0) == source.charAt(length - 1)) {
+				start = 1;
+				end = length - 1;
+			} else {
+				start = 0;
+				end = length;
+			}
+			int singleQuotes = 0;
+			int doubleQuotes = 0;
+			for (int i = start; i < end; i++) {
 				if (source.charAt(i) == '\'') {
-					s++;
+					singleQuotes++;
 				} else if (source.charAt(i) == '\"') {
-					d++;
+					doubleQuotes++;
 				}
 			}
-			if (d == 0 || s == 0) {
-				String q = d == 0 ? "\"" : "\'";
-				return q + source + q;
-			} else if (s > d) {
+			if (doubleQuotes == 0 && singleQuotes == 0) {
+				if (start == 1) {
+					return source;
+				} else {
+					return "\"" + source.substring(start, end) + "\"";
+				}
+			} else if (doubleQuotes == 0) {
+				return "\"" + source.substring(start, end) + "\"";
+			} else if (singleQuotes == 0) {
+				return "\'" + source.substring(start, end) + "\'";
+			} else if (singleQuotes >= doubleQuotes) {
 				StringBuilder out = new StringBuilder();
 				out.append('\"');
-				int h = 0;
-				for (int i = source.indexOf('\"', h); i != -1; i = source.indexOf('\"', h)) {
-					if (h < i) {
-						out.append(source.substring(h, i));
-					}
+				int h = start;
+				int i = source.indexOf('\"', h);
+				while (h <= i && i < end) {
+					out.append(source.substring(h, i));
+					out.append(DOUBLE_QUOTE_ENTITY_REF_STRING);
 					h = i + 1;
-					out.append(DOUBLE_QUOTE_STRING);
+					i = source.indexOf('\"', h);
 				}
-				if (h < source.length()) {
-					out.append(source.substring(h));
+				if (h < end) {
+					out.append(source.substring(h, end));
 				}
 				out.append('\"');
 				return out.toString();
 			} else {
 				StringBuilder out = new StringBuilder();
 				out.append('\'');
-				int h = 0;
-				for (int i = source.indexOf('\'', h); i != -1; i = source.indexOf('\'', h)) {
-					if (h < i) {
-						out.append(source.substring(h, i));
-					}
+				int h = start;
+				int i = source.indexOf('\'', h);
+				while (h <= i && i < end) {
+					out.append(source.substring(h, i));
+					out.append(SINGLE_QUOTE_ENTITY_REF_STRING);
 					h = i + 1;
-					out.append(SINGLE_QUOTE_STRING);
+					i = source.indexOf('\'', h);
 				}
-				if (h < source.length()) {
-					out.append(source.substring(h));
+				if (h < end) {
+					out.append(source.substring(h, end));
 				}
 				out.append('\'');
 				return out.toString();

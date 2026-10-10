@@ -838,7 +838,7 @@ public class ElementTest {
 			print("BEFORE %s", DebugHelper.toString(element.startTag()));
 			element.setAttribute(0, "abc", "\"xy\'z\"");
 			print("AFTER  %s", DebugHelper.toString(element.startTag()));
-			assertEquals("<greeting abc=\"&quot;xy\'z&quot;\" />", element.startTag().toString());
+			assertEquals("<greeting abc=\'\"xy&apos;z\"\' />", element.startTag().toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());

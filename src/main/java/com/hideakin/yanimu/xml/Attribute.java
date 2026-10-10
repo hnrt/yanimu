@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * An immutable node object for storing a name-value pair contained in an XML element.
+ * An immutable node for a name-value pair stored in an XML element.
  */
 public class Attribute extends ImmutableNodeList {
 
@@ -23,37 +23,44 @@ public class Attribute extends ImmutableNodeList {
 	public final String value;
 
 	/**
-	 * Constructs an Attribute object with a sequence of XML nodes, a name, and a value.
-	 * @param nodeList List of nodes containing a name node,
-	 * an optional white space node,
-	 * an equal sign node,
-	 * an optional white space node,
-	 * and a quoted string node
-	 * @param name the name of attribute
-	 * @param value the value of attribute
+	 * Initializes a newly created attribute with a sequence of nodes, a name, and a value.
+	 * @param sequence a sequence of nodes containing:
+	 * <ol>
+	 * <li>name</li>
+	 * <li>optional white space</li>
+	 * <li>equal sign</li>
+	 * <li>optional white space</li>
+	 * <li>quoted string</li>
+	 * </ol>
+	 * @param name a name of attribute
+	 * @param value a value of attribute
 	 */
-	public Attribute(List<Node> nodeList, String name, String value) {
-		super(ATTRIBUTE, nodeList);
+	public Attribute(List<Node> sequence, String name, String value) {
+		super(ATTRIBUTE, sequence);
 		this.name = name;
 		this.value = value;
+		safeSize(); // just to check the sequence
 	}
 
 	/**
-	 * Constructs an Attribute object with a name and a value.
-	 * @param name the name of attribute
-	 * @param value the value of attribute
+	 * Initializes a newly created attribute with a name and a value.
+	 * @param name a name of attribute
+	 * @param value a value of attribute
 	 */
 	public Attribute(String name, String value) {
-		super(ATTRIBUTE, nodeListOf(name, value, '\"', null, null));
+		super(ATTRIBUTE, List.of(
+				Node.of(NAME, name.getBytes(StandardCharsets.UTF_8)),
+				Node.of(EQ, EQ_SEQUENCE),
+				Node.of(ATT_VALUE, "\"" + value + "\"")));
 		this.name = name;
 		this.value = value;
 	}
 
 	/**
-	 * Constructs an Attribute object with a name and a value.
-	 * @param name the name of attribute
-	 * @param value the value of attribute
-	 * @param source List of nodes to copy
+	 * Initializes a newly created attribute with a name, a value, and an attribute to copy the nodes from.
+	 * @param name a name of attribute
+	 * @param value a value of attribute
+	 * @param source an attribute from which the white space nodes are copied
 	 */
 	public Attribute(String name, String value, Attribute source) {
 		super(ATTRIBUTE, nodeListOf(name, value, source));
@@ -62,116 +69,47 @@ public class Attribute extends ImmutableNodeList {
 	}
 
 	private static List<Node> nodeListOf(String name, String value, Attribute source) {
-		int size = source.size();
+		String qs = "\"" + value + "\"";
+		int size = source.safeSize();
 		if (size == 3) {
-			return nodeListOf(name, value, source.last().sequence()[0], null, null);
+			return List.of(
+					Node.of(NAME, name.getBytes(StandardCharsets.UTF_8)),
+					Node.of(EQ, EQ_SEQUENCE),
+					Node.of(ATT_VALUE, qs));
 		} else if (size == 4) {
 			if (source.get(1).type == S) {
-				return nodeListOf(name, value, source.last().sequence()[0], source.get(1), null);
+				return List.of(
+						Node.of(NAME, name.getBytes(StandardCharsets.UTF_8)),
+						source.get(1),
+						Node.of(EQ, EQ_SEQUENCE),
+						Node.of(ATT_VALUE, qs));
 			} else if (source.get(2).type == S) {
-				return nodeListOf(name, value, source.last().sequence()[0], null, source.get(2));
+				return List.of(
+						Node.of(NAME, name.getBytes(StandardCharsets.UTF_8)),
+						Node.of(EQ, EQ_SEQUENCE),
+						source.get(2),
+						Node.of(ATT_VALUE, qs));
 			} else {
 				throw new RuntimeException("Attribute::nodeListOf: BUG1!");
 			}
 		} else if (size == 5) {
-			return nodeListOf(name, value, source.last().sequence()[0], source.get(1), source.get(3));
+			return List.of(
+					Node.of(NAME, name.getBytes(StandardCharsets.UTF_8)),
+					source.get(1),
+					Node.of(EQ, EQ_SEQUENCE),
+					source.get(3),
+					Node.of(ATT_VALUE, qs));
 		} else {
 			throw new RuntimeException("Attribute::nodeListOf: BUG2!");
 		}
 	}
 
-	private static List<Node> nodeListOf(String name, String value, int quoteCharacter, Node wsBeforeEq, Node wsAfterEq) {
-		if (wsBeforeEq != null && wsAfterEq != null) {
-			return List.of(
-				Node.of(NAME, name.getBytes(StandardCharsets.UTF_8)),
-				wsBeforeEq,
-				Node.of(EQ, EQ_SEQUENCE),
-				wsAfterEq,
-				Node.of(ATT_VALUE, quote(value, quoteCharacter).getBytes(StandardCharsets.UTF_8)));
-		} else if (wsBeforeEq != null && wsAfterEq == null) {
-			return List.of(
-				Node.of(NAME, name.getBytes(StandardCharsets.UTF_8)),
-				wsBeforeEq,
-				Node.of(EQ, EQ_SEQUENCE),
-				Node.of(ATT_VALUE, quote(value, quoteCharacter).getBytes(StandardCharsets.UTF_8)));
-		} else if (wsBeforeEq == null && wsAfterEq != null) {
-			return List.of(
-				Node.of(NAME, name.getBytes(StandardCharsets.UTF_8)),
-				Node.of(EQ, EQ_SEQUENCE),
-				wsAfterEq,
-				Node.of(ATT_VALUE, quote(value, quoteCharacter).getBytes(StandardCharsets.UTF_8)));
-		} else {
-			return List.of(
-				Node.of(NAME, name.getBytes(StandardCharsets.UTF_8)),
-				Node.of(EQ, EQ_SEQUENCE),
-				Node.of(ATT_VALUE, quote(value, quoteCharacter).getBytes(StandardCharsets.UTF_8)));
-		}
-	}
-
 	/**
-	 * Creates a new byte sequence representing the value of an attribute node,
-	 * enclosed in the specified quote characters.<br/>
-	 * The provided {@code source} is treated as the raw attribute value and
-	 * is not expected to include any quote characters.
-	 * @param source the raw attribute value, not enclosed in quotes
-	 * @param quoteCharacter the quote character used to enclose {@code source}
-	 * @return a newly created byte array containing the quoted attribute value
+	 * Verifies if this node has a valid sequence of nodes and returns the number of nodes. 
+	 * @return the number of nodes
+	 * @throws CorruptionException if this node has a malformed sequence of nodes.
 	 */
-	public static String quote(String source, int quoteCharacter) {
-		return quote(source, quoteCharacter, 0);
-	}
-
-	/**
-	 * Creates a new String representing the value of an attribute node,
-	 * enclosed in the specified quote character.<br/>
-	 * The provided {@code source} is treated as the raw attribute value and
-	 * is not expected to include any quote characters.<br/>
-	 * If the {@code source} contains the specified quote character, this
-	 * method attempts to use the alternative quote character.<br/>
-	 * For example, if the first attempt uses the double quotation mark,
-	 * the second attempt uses the apostrophe, and vice versa.<br/>
-	 * If the {@code source} contains both supported quote characters,
-	 * this method replaces the quote characters occurring in the {@code source} with the corresponding entity reference.
-	 * @param source the raw attribute value, not enclosed in quotes
-	 * @param quoteCharacter the quote character used to enclose {@code source}
-	 * @param quoteCharacterAttempted the quote character used previously
-	 * @return a newly created String containing the quoted attribute value
-	 */
-	private static String quote(String source, int quoteCharacter, int quoteCharacterAttempted) {
-		int pos = source.indexOf(quoteCharacter);
-		if (pos >= 0) {
-			if (quoteCharacterAttempted == 0) {
-				return quote(source, quoteCharacter == '\"' ? '\'' : '\"' , quoteCharacter);
-			} else {
-				String entity = quoteCharacter == '\"' ? "&quot;" : "&apos;";
-				StringBuilder buffer = new StringBuilder();
-				buffer.append((char)quoteCharacter);
-				int start = 0;
-				do {
-					if (start < pos) {
-						buffer.append(source.substring(start, pos));
-					}
-					buffer.append(entity);
-					start = pos + 1;
-					pos = source.indexOf(quoteCharacter, start);
-				} while (pos >= start);
-				if (start < source.length()) {
-					buffer.append(source.substring(start));
-				}
-				buffer.append((char)quoteCharacter);
-				return buffer.toString();
-			}
-		} else {
-			StringBuilder buffer = new StringBuilder();
-			buffer.append((char)quoteCharacter);
-			buffer.append(source);
-			buffer.append((char)quoteCharacter);
-			return buffer.toString();
-		}
-	}
-
-	@Override
-	public int size() {
+	public int safeSize() {
 		int size = super.size();
 		switch (size) {
 		case 3:
