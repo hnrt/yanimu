@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * A immutable node object for storing a name-value pair contained in an XML element
+ * An immutable node object for storing a name-value pair contained in an XML element.
  */
 public class Attribute extends ImmutableNodeList {
 

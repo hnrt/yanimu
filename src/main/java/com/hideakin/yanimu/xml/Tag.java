@@ -9,7 +9,7 @@ import java.util.List;
 public class Tag extends NodeList {
 
 	/**
-	 * The tag name of an XML element.
+	 * A tag name of an XML element.
 	 */
 	public final String name;
 

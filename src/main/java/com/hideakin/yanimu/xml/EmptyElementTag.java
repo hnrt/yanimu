@@ -4,34 +4,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * An mutable node object for XML Empty Element Tag.
+ * A mutable node for XML Empty Element Tag.
  */
 public class EmptyElementTag extends AttributeTag {
 
 	private static final byte[] EETAG_END_SEQUENCE = {'/', '>'};
 
 	/**
-	 * Creates a new mutable node of {@code EETAG} with no attributes in it.
-	 * @param name the tag name to be set to this tag
-	 * @return a newly created node of empty element tag
+	 * Creates a new node of type {@code EETAG} with the specified tag name.
+	 * @param name a tag name to assign to this node
+	 * @return a newly created node
 	 */
 	public static EmptyElementTag of(String name) {
 		return new EmptyElementTag(name);
 	}
 
 	/**
-	 * Creates a new mutable node of {@code EETAG} with the specified node sequence.
-	 * @param source the node sequence to be set to this tag
-	 * @return a newly created node of empty element tag
+	 * Creates a new node of type {@code EETAG} with the specified sequence of nodes.
+	 * @param source a sequence of nodes this node consists of
+	 * @return a newly created node
 	 */
 	public static EmptyElementTag of(List<Node> source) {
 		return new EmptyElementTag(source);
 	}
 
 	/**
-	 * Creates a new mutable node of {@code EETAG} with the specified node sequence.
-	 * @param source the tag from which the node sequence to be copied
-	 * @return a newly created node of empty element tag
+	 * Creates a new node of type {@code EETAG} with the specified attribute tag.
+	 * @param source an attribute tag the nodes of which are to be contained in this node
+	 * @return a newly created node
 	 */
 	public static EmptyElementTag of(AttributeTag source) {
 		List<Node> nodeList = new ArrayList<>(source._nodeList);
