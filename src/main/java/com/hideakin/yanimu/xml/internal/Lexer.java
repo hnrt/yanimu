@@ -9,8 +9,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * The lexical analyzer for the XML Processor.
+ */
 public class Lexer {
 
+	/**
+	 * The reserved word map for the XML document.
+	 */
 	public static final Map<String, Integer> RESERVED_WORDS;
 
 	static {
@@ -47,10 +53,19 @@ public class Lexer {
 	private Reader _reader;
 	private int _c; // current UNICODE code point
 
+	/**
+	 * Initializes a newly created object with a byte representation of the content.
+	 * @param content a byte representation of the content
+	 */
 	public Lexer(byte[] content) {
 		this(content, LexerContext.BASE);
 	}
 
+	/**
+	 * Initializes a newly created object with a byte representation of the content and the lexical analyzing context.
+	 * @param content a byte representation of the content
+	 * @param context the lexical analyzing context to start processing
+	 */
 	public Lexer(byte[] content, int context) {
 		_context = LexerContext.of(context);
 		_buffer = new CodePointBuffer();
@@ -58,6 +73,11 @@ public class Lexer {
 		readChar();
 	}
 
+	/**
+	 * Initializes a newly created object with a byte representation of the content and the parent to derive the context from.
+	 * @param content a byte representation of the content
+	 * @param parent the parent {@code Lexer} object
+	 */
 	public Lexer(byte[] content, Lexer parent) {
 		_context = parent._context;
 		_buffer = parent._buffer;
@@ -65,38 +85,78 @@ public class Lexer {
 		readChar();
 	}
 
+	/**
+	 * Initializes a newly created object with a {@code String} representation of the content.
+	 * @param content a {@code String} representation of the content
+	 */
 	public Lexer(String content) {
 		this(content.getBytes(StandardCharsets.UTF_8), LexerContext.BASE);
 	}
 
+	/**
+	 * Initializes a newly created object with a {@code String} representation of the content and the lexical analyzing context.
+	 * @param content a {@code String} representation of the content
+	 * @param context the lexical analyzing context to start processing
+	 */
 	public Lexer(String content, int context) {
 		this(content.getBytes(StandardCharsets.UTF_8), context);
 	}
 
+	/**
+	 * Initializes a newly created object with a {@code String} representation of the content and the parent to derive the context from.
+	 * @param content a {@code String} representation of the content
+	 * @param parent the parent {@code Lexer} object
+	 */
 	public Lexer(String content, Lexer parent) {
 		this(content.getBytes(StandardCharsets.UTF_8), parent);
 	}
 
+	/**
+	 * Returns the current lexical analyzing context.
+	 * @return the current lexical analyzing context.
+	 */
 	public int getContext() {
 		return _context.get();
 	}
 
+	/**
+	 * Changes the current lexical analyzing context to the specified one.
+	 * @param context a new lexical analyzing context to assign
+	 */
 	public void setContext(int context) {
 		_context.set(context);
 	}
 
+	/**
+	 * Pushes the current lexical analyzing context to change it to the specified one.
+	 * @param context a new lexical analyzing context to assign
+	 * @return context
+	 */
 	public int pushContext(int context) {
 		return _context.push(context);
 	}
 
+	/**
+	 * Pops the current lexical analyzing context to change it to the previously pushed one.
+	 * @return the lexical analyzing context that has been changed
+	 */
 	public int popContext() {
 		return _context.pop();
 	}
 
+	/**
+	 * Reads the next node from the content.
+	 * @return the {@code Node} read
+	 */
 	public Node read() {
 		return read(0);
 	}
 
+	/**
+	 * Reads the next node from the content temporally overriding the lexical analyzing context.
+	 * @param preferred the lexical analyzing context to temporally override
+	 * @return the {@code Node} read
+	 */
 	public Node read(int preferred) {
 		if (_c == EOF) {
 			return nodeOf(EOF);

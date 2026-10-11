@@ -3,8 +3,16 @@ package com.hideakin.yanimu.xml.internal;
 import static com.hideakin.yanimu.xml.Character.*;
 import static com.hideakin.yanimu.xml.Node.ILLEGAL_ENCODING;
 
+/**
+ * The UTF-8 Encoded Content Reader.
+ */
 public class UTF8Reader extends AnyReader {
 
+	/**
+	 * Initializes a newly created UTF-8 content reader.
+	 * @param content a UTF-8 encoded byte representation of the content to read
+	 * @param buffer a code point buffer to use
+	 */
 	public UTF8Reader(byte[] content, CodePointBuffer buffer) {
 		super(content, buffer);
 		if (3 <= content.length && content[0]  == -17 && content[1] == -69 && content[2] == -65) {

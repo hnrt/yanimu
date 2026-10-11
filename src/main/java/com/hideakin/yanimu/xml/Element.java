@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.hideakin.yanimu.xml.Character.isWhiteSpace;
+import static com.hideakin.yanimu.xml.NullElement.NULL_ELEMENT;
 
 /**
  * The XML Element.
@@ -244,7 +245,7 @@ public class Element extends NodeList {
 				element.setParent(this);
 			}
 		} else {
-			throw new RuntimeException("Element::set: No content.");
+			throw new RuntimeException(getClass().getSimpleName() + "::set: No content.");
 		}
 	}
 
@@ -763,17 +764,27 @@ public class Element extends NodeList {
 	/**
 	 * Locates Element nodes that match the criteria specified by {@code name}
 	 * and returns the first located one if one or more nodes are found.
-	 * If no Element nodes are found, null is returned.
+	 * If no Element nodes are found, {@link NullElement#NULL_ELEMENT} is returned.
 	 * @param name the tag name pattern used to locate Element nodes.
 	 *             The pattern may include multiple tag names separated by slashes to specify an Element hierarchy.
 	 *             If {@code name} begins with a slash, the search is performed starting from the direct children.
 	 *             Otherwise, the search begins from any descendant elements.
 	 *             An asterisk acts as a wildcard that matches any tag name.
-	 * @return the first located node, or null if not found
+	 * @return the first located node, or {@link NullElement#NULL_ELEMENT} if not found
 	 */
 	public Element getElement(String name) {
 		List<Element> elementList = getElements(name);
-		return elementList.size() > 0 ? elementList.get(0) : null;
+		return elementList.size() > 0 ? elementList.get(0) : NULL_ELEMENT;
+	}
+
+	/**
+	 * DO NOT USE THIS CONSTRUCTOR.
+	 * This is only for {@link NullElement}.
+	 */
+	protected Element() {
+		super(NULL, List.of());
+		name = "";
+		_parent = null;
 	}
 
 }

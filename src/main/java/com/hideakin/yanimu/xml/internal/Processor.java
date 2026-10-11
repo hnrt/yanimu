@@ -49,11 +49,15 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 
-//
-// Notes:
-// HTTP(S) access to external DTDs are not supported.
-// XML catalog is not supported.
-//
+/**
+ * The XML Processor.
+ * <p>
+ * Notes:
+ * <ul>
+ * <li>HTTP(S) access to external DTDs are not supported.</li>
+ * <li>XML catalog is not supported.</li>
+ * </ul>
+ */
 public class Processor {
 
 	private final byte[] _content;
@@ -66,28 +70,28 @@ public class Processor {
 	private final ParseResultWriter _result;
 	private final List<Object> _markupDeclarationList;
 
-	public Processor(byte[] content) {
-		_content = content;
-		_result = ParseResultWriter.of(new ParseResult());
-		_entityMap = new EntityMap();
-		_markupDeclarationList = new ArrayList<>();
-	}
-
+	/**
+	 * Initializes a newly created processor.
+	 * @param content a byte sequence of the content to process (parse)
+	 * @param entityMap an object to receive entity declarations
+	 * @param result an object to receive information caught while parsing the content
+	 */
 	public Processor(byte[] content, EntityMap entityMap, ParseResult result) {
-		_content = content;
-		_result = ParseResultWriter.of(result);
-		_entityMap = entityMap;
-		_markupDeclarationList = new ArrayList<>();
+		this(content, entityMap, ParseResultWriter.of(result), new ArrayList<>());
 	}
 
 	private Processor(byte[] content, EntityMap entityMap, ParseResultWriter result, List<Object> markupDeclarationList) {
 		_content = content;
-		_result = result;
 		_entityMap = entityMap;
-		_markupDeclarationList = markupDeclarationList;
+		_result = result;
+		_markupDeclarationList = new ArrayList<>();
 	}
 
-	public List<Node> parse() throws Exception {
+	/**
+	 * Parses the content as an XML document.
+	 * @return the resulting {@code List} of the parsed nodes
+	 */
+	public List<Node> parse() {
 		_lexer = new Lexer(_content);
 		DebugHelper.printLexerContext(_lexer.getContext());
 		_nn = new ArrayList<>();
@@ -105,7 +109,7 @@ public class Processor {
 		}
 	}
 
-	private void parseProlog() throws Exception {
+	private void parseProlog() {
 		if (_n.type == PI_START) {
 			push();
 			read(PI_TARGET);
@@ -154,7 +158,7 @@ public class Processor {
 		}
 	}
 
-	private void parseXmlDeclaration() throws Exception {
+	private void parseXmlDeclaration() {
 		String name;
 		String version;
 		String encoding = null;
@@ -267,7 +271,7 @@ public class Processor {
 		store(t);
 	}
 
-	private boolean parseMisc() throws Exception {
+	private boolean parseMisc() {
 		switch (_n.type) {
 		case S:
 			read();
@@ -284,7 +288,7 @@ public class Processor {
 		}
 	}
 
-	private void parseDoctypeDeclaration() throws Exception {
+	private void parseDoctypeDeclaration() {
 		String name;
 		ExternalIdentifiers extid = null;
 		push();
@@ -361,7 +365,7 @@ public class Processor {
 		store(dtd);
 	}
 
-	private ElementTypeDeclaration parseElementDecl() throws Exception {
+	private ElementTypeDeclaration parseElementDecl() {
 		String name;
 		push();
 		read();
@@ -395,7 +399,7 @@ public class Processor {
 		return etd;
 	}
 
-	private ContentSpec parseContentSpec() throws Exception {
+	private ContentSpec parseContentSpec() {
 		if (_n.type == EMPTY) {
 			read();
 			return new ContentSpec(EMPTY);
@@ -409,7 +413,7 @@ public class Processor {
 		}
 	}
 
-	private ContentSpec parseMixedOrChildren() throws Exception {
+	private ContentSpec parseMixedOrChildren() {
 		ContentSpec cs;
 		if (_n.type == '(') {
 			read(NAME);
@@ -515,7 +519,7 @@ public class Processor {
 		return cs;
 	}
 
-	private Object parseChoiceOrSequence() throws Exception {
+	private Object parseChoiceOrSequence() {
 		Object choiceOrSequence;
 		if (_n.type == '(') {
 			read(NAME);
@@ -568,7 +572,7 @@ public class Processor {
 		return choiceOrSequence;
 	}
 
-	private ContentParticle parseCP() throws Exception {
+	private ContentParticle parseCP() {
 		Object target;
 		if (_n.type == NAME) {
 			target = _n.toString();
@@ -590,7 +594,7 @@ public class Processor {
 		}
 	}
 
-	private AttributeListDeclaration parseAttlistDecl() throws Exception {
+	private AttributeListDeclaration parseAttlistDecl() {
 		String name;
 		List<AttributeDefinition> defList = new ArrayList<>();
 		push();
@@ -642,7 +646,7 @@ public class Processor {
 		return ald;
 	}
 
-	private Object parseAttType() throws Exception {
+	private Object parseAttType() {
 		Object type;
 		switch (_n.type) {
 		case TYPE_CDATA:
@@ -668,7 +672,7 @@ public class Processor {
 		return type;
 	}
 
-	private NotationType parseNotationType() throws Exception {
+	private NotationType parseNotationType() {
 		NotationType nt;
 		if (_n.type == TYPE_NOTATION) {
 			read();
@@ -720,7 +724,7 @@ public class Processor {
 		return nt;
 	}
 
-	private EnumerationType parseEnumeration() throws Exception {
+	private EnumerationType parseEnumeration() {
 		EnumerationType et;
 		if (_n.type == '(') {
 			read(NMTOKEN);
@@ -762,7 +766,7 @@ public class Processor {
 		return et;
 	}
 
-	private AttributeDefault parseDefaultDecl() throws Exception {
+	private AttributeDefault parseDefaultDecl() {
 		AttributeDefault ad;
 		String value;
 		switch (_n.type) {
@@ -802,7 +806,7 @@ public class Processor {
 		return ad;
 	}
 
-	private EntityDeclaration parseEntityDecl() throws Exception {
+	private EntityDeclaration parseEntityDecl() {
 		String key;
 		Object definition;
 		push();
@@ -891,7 +895,7 @@ public class Processor {
 		return ed;
 	}
 
-	private NotationDeclaration parseNotationDecl() throws Exception {
+	private NotationDeclaration parseNotationDecl() {
 		String name;
 		ExternalIdentifiers extid;
 		push();
@@ -930,11 +934,11 @@ public class Processor {
 		return nd;
 	}
 
-	private ExternalIdentifiers parseExternalId() throws Exception {
+	private ExternalIdentifiers parseExternalId() {
 		return parseExternalId(true);
 	}
 
-	private ExternalIdentifiers parseExternalId(boolean systemLiteralIsMandatory) throws Exception {
+	private ExternalIdentifiers parseExternalId(boolean systemLiteralIsMandatory) {
 		String sysValue = null;
 		String pubValue = null;
 		if (_n.type == SYSTEM) {
@@ -988,7 +992,7 @@ public class Processor {
 		}
 	}
 
-	private void parseElement(Element parent) throws Exception {
+	private void parseElement(Element parent) {
 		push();
 		AttributeTag tag = parseStartTag();
 		Element element = new Element(tag.name, parent);
@@ -1000,7 +1004,7 @@ public class Processor {
 		store(element);
 	}
 
-	private AttributeTag parseStartTag() throws Exception {
+	private AttributeTag parseStartTag() {
 		AttributeTag tag;
 		if (_n.type == STAG_START) {
 			push();
@@ -1059,7 +1063,7 @@ public class Processor {
 		}
 	}
 
-	private void parseContent(Element parent) throws Exception {
+	private void parseContent(Element parent) {
 		push();
 		while (true) {
 			if (_n.type == CHAR_DATA) {
@@ -1101,7 +1105,7 @@ public class Processor {
 		}
 	}
 
-	private void parseEndTag(String name) throws Exception {
+	private void parseEndTag(String name) {
 		if (_n.type == ETAG_START) {
 			push();
 			read();
@@ -1166,7 +1170,7 @@ public class Processor {
 		}
 	}
 
-	public List<Node> parseExternalSubset() throws Exception {
+	private List<Node> parseExternalSubset() {
 		_lexer = new Lexer(_content, LexerContext.EXTERNAL);
 		_nn = new ArrayList<>();
 		_n = _lexer.read();
@@ -1197,7 +1201,7 @@ public class Processor {
 		return _nn;
 	}
 
-	private void parseTextDeclaration() throws Exception {
+	private void parseTextDeclaration() {
 		String name;
 		String version = null;
 		String encoding = null;
@@ -1278,7 +1282,7 @@ public class Processor {
 		store(t);
 	}
 
-	private boolean parseExternalSubsetDeclaration() throws Exception {
+	private boolean parseExternalSubsetDeclaration() {
 		switch (_n.type) {
 		case ELEMENT_DECL_START:
 			ElementTypeDeclaration etd = parseElementDecl();
@@ -1315,7 +1319,7 @@ public class Processor {
 		}
 	}
 
-	private void parseConditionalSection() throws Exception {
+	private void parseConditionalSection() {
 		read();
 		if (_n.type == S) {
 			read();
@@ -1366,11 +1370,11 @@ public class Processor {
 		}
 	}
 
-	private ProcessingInstruction parseProcessingInstruction() throws Exception {
+	private ProcessingInstruction parseProcessingInstruction() {
 		return parseProcessingInstruction(null);
 	}
 
-	private ProcessingInstruction parseProcessingInstruction(String name) throws Exception {
+	private ProcessingInstruction parseProcessingInstruction(String name) {
 		String body = null;
 		if (name == null) {
 			push();

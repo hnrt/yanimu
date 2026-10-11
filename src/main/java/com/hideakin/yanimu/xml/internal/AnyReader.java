@@ -2,13 +2,36 @@ package com.hideakin.yanimu.xml.internal;
 
 import static com.hideakin.yanimu.xml.Character.*;
 
+/**
+ * The base class implements the Reader interface.
+ */
 public class AnyReader implements Reader {
 
+	/**
+	 * The byte representation of the content.
+	 */
 	protected final byte[] _content;
-	protected final CodePointBuffer _buffer;
-	protected int _i; // index of the next byte to read
-	protected int _c; // current UNICODE code point
 
+	/**
+	 * The code point buffer.
+	 */
+	protected final CodePointBuffer _buffer;
+
+	/**
+	 * The index of the next byte to read.
+	 */
+	protected int _i;
+
+	/**
+	 * The UNICODE code point currently read.
+	 */
+	protected int _c;
+
+	/**
+	 * Initializes a newly created object with a byte sequence of the content and a code point buffer.
+	 * @param content a byte sequence of the content to read
+	 * @param buffer a code point buffer
+	 */
 	protected AnyReader(byte[] content, CodePointBuffer buffer) {
 		_content = content;
 		_buffer = buffer;
@@ -57,6 +80,10 @@ public class AnyReader implements Reader {
 		return _c;
 	}
 
+	/**
+	 * Stores a code point in the buffer.
+	 * @param c a code point to store
+	 */
 	protected void storeCodePoint(int c) {
 		_buffer.append(c);
 	}

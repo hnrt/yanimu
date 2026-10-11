@@ -4,7 +4,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 import com.hideakin.yanimu.maven.util.LocalRepository;
 import com.hideakin.yanimu.maven.util.RemoteRepository;
@@ -75,34 +78,37 @@ public class MetadataDocument extends Document {
 	}
 
 	@Override
-	public void load(byte[] content) throws Exception {
-		super.load(content);
-		initialize();
-	}
-
-	private void initialize() {
-		if (super.root() == null) {
+	protected void onLoaded() {
+		if (_root == null) {
 			return;
 		}
-		List<Element> elements = getElements("/metadata/groupId");
-		_groupId = elements.size() > 0 ? elements.get(0).innerText() : null;
-		elements = getElements("/metadata/artifactId");
-		_artifactId = elements.size() > 0 ? elements.get(0).innerText() : null;
-		elements = getElements("/metadata/versioning/latest");
-		_latest = elements.size() > 0 ? elements.get(0).innerText() : null;
-		elements = getElements("/metadata/versioning/release");
-		_release = elements.size() > 0 ? elements.get(0).innerText() : null;
-		elements = getElements("/metadata/versioning/versions/version");
-		if (elements.size() > 0) {
-			_versions = new ArrayList<>();
-			for (Element element : elements) {
-				_versions.add(element.innerText());
+		_groupId = null;
+		_artifactId = null;
+		_latest = null;
+		_release = null;
+		_versions = null;
+		_lastUpdated = null;
+		Map<String, Consumer<Element>> map = new HashMap<>();
+		map.put("groupId", e -> _groupId = e.innerText());
+		map.put("artifactId", e -> _artifactId = e.innerText());
+		map.put("versioning", e -> {
+			_latest = e.getElement("/latest").innerText();
+			_release = e.getElement("/release").innerText();
+			_lastUpdated = e.getElement("/lastUpdated").innerText();
+			List<Element> elements = getElements("/versions/version");
+			if (elements.size() > 0) {
+				_versions = new ArrayList<>();
+				for (Element element : elements) {
+					_versions.add(element.innerText());
+				}
 			}
-		} else {
-			_versions = null;
+		});
+		for (Element e : _root.getElements("/*")) {
+			Consumer<Element> c = map.get(e.name);
+			if (c != null) {
+				c.accept(e);
+			}
 		}
-		elements = getElements("/metadata/versioning/lastUpdated");
-		_lastUpdated = elements.size() > 0 ? elements.get(0).innerText() : null;
 	}
 
 	public void load(RepositoryMap repositories) throws Exception {

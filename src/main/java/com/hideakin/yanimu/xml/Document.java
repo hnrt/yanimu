@@ -16,6 +16,8 @@ import com.hideakin.yanimu.xml.doctype.InternalEntityDefinition;
 import com.hideakin.yanimu.xml.internal.Processor;
 import com.hideakin.yanimu.xml.util.EntityMap;
 
+import static com.hideakin.yanimu.xml.NullElement.NULL_ELEMENT;
+
 /**
  * The XML Document.
  */
@@ -211,27 +213,30 @@ public class Document extends NodeList {
 
 	/**
 	 * Reads a byte sequence from a file specified by the path and parses them to construct an XML document.
-	 * @throws Exception if an I/O error or a parse error occurs
+	 * @throws IOException if an I/O error occurs
+	 * @throws ParseException if a parse error occurs
 	 */
-	public void load() throws Exception {
+	public void load() throws IOException {
 		load(Files.readAllBytes(_path), new ParseResult());
 	}
 
 	/**
 	 * Reads a byte sequence from a file specified by the path and parses them to construct an XML document.
 	 * @param result an object to receive information caught while parsing the byte sequence
-	 * @throws Exception if an I/O error or a parse error occurs
+	 * @throws IOException if an I/O error occurs
+	 * @throws ParseException if a parse error occurs
 	 */
-	public void load(ParseResult result) throws Exception {
+	public void load(ParseResult result) throws IOException {
 		load(Files.readAllBytes(_path), result);
 	}
 
 	/**
 	 * Reads a byte sequence from the specified {@code InputStream} and parses them to construct an XML document.
 	 * @param in an {@code InputStream} to read a byte sequence from
-	 * @throws Exception if an I/O error or a parse error occurs
+	 * @throws IOException if an I/O error occurs
+	 * @throws ParseException if a parse error occurs
 	 */
-	public void load(InputStream in) throws Exception {
+	public void load(InputStream in) throws IOException {
 		load(in.readAllBytes(), new ParseResult());
 	}
 
@@ -239,18 +244,19 @@ public class Document extends NodeList {
 	 * Reads a byte sequence from the specified {@code InputStream} and parses them to construct an XML document.
 	 * @param in an {@code InputStream} to read a byte sequence from
 	 * @param result an object to receive information caught while parsing the byte sequence
-	 * @throws Exception if an I/O error or a parse error occurs
+	 * @throws IOException if an I/O error occurs
+	 * @throws ParseException if a parse error occurs
 	 */
-	public void load(InputStream in, ParseResult result) throws Exception {
+	public void load(InputStream in, ParseResult result) throws IOException {
 		load(in.readAllBytes(), result);
 	}
 
 	/**
 	 * Parses the specified byte sequence to construct an XML document.
 	 * @param content the byte sequence to parse
-	 * @throws Exception if an I/O error or a parse error occurs
+	 * @throws ParseException if a parse error occurs
 	 */
-	public void load(byte[] content) throws Exception {
+	public void load(byte[] content) {
 		load(content, new ParseResult());
 	}
 
@@ -258,9 +264,9 @@ public class Document extends NodeList {
 	 * Parses the specified byte sequence to construct an XML document.
 	 * @param content a byte sequence to parse
 	 * @param result an object to receive information caught while parsing the byte sequence
-	 * @throws Exception if an I/O error or a parse error occurs
+	 * @throws ParseException if a parse error occurs
 	 */
-	public void load(byte[] content, ParseResult result) throws Exception {
+	public void load(byte[] content, ParseResult result) {
 		_nodeList.clear();
 		_xml = null;
 		_dtd = null;
@@ -376,11 +382,11 @@ public class Document extends NodeList {
 	 *             from the root element.
 	 *             Otherwise, the search begins from any descendant elements.
 	 *             An asterisk acts as a wildcard that matches any tag name.
-	 * @return an {@code Element} node, or {@code null} if not found
+	 * @return an {@code Element} node, or {@link NullElement#NULL_ELEMENT} if not found
 	 */
 	public Element getElement(String name) {
 		List<Element> elementList = getElements(name);
-		return elementList.size() > 0 ? elementList.get(0) : null;
+		return elementList.size() > 0 ? elementList.get(0) : NULL_ELEMENT;
 	}
 
 	/**
