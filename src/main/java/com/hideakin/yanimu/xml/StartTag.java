@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A mutable node for XML Start Tag.
+ * A mutable node for the XML Start Tag.
  */
 public class StartTag extends AttributeTag {
 
@@ -41,7 +41,7 @@ public class StartTag extends AttributeTag {
 
 	private StartTag(String name) {
 		super(STAG, List.of(
-				ImmutableNode.of(STAG_START, START_SEQUENCE),
+				ImmutableNode.of(STAG_START, START_BYTES),
 				ImmutableNode.of(NAME, name),
 				ImmutableNode.of(STAG_END, STAG_END_SEQUENCE)));
 	}

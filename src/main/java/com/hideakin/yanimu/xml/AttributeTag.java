@@ -20,7 +20,7 @@ public class AttributeTag extends Tag {
 	/**
 	 * The byte sequence of the start of Start Tag / Empty Element Tag.
 	 */
-	protected static final byte[] START_SEQUENCE = {'<'};
+	protected static final byte[] START_BYTES = {'<'};
 
 	/**
 	 * Constructs a newly created instance with a node type and a node sequence.
@@ -68,7 +68,7 @@ public class AttributeTag extends Tag {
 	}
 
 	/**
-	 * Verifies if this AttributeTag correctly contains a sequence of nodes
+	 * Verifies if this AttributeTag has a valid sequence of nodes
 	 * as a start tag or an empty element tag
 	 * and then returns the number of nodes in this AttributeTag.
 	 * @param endType the node type of the last node

@@ -6,19 +6,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * An immutable node for a name-value pair stored in an XML element.
+ * An immutable node for a name-value pair stored in an XML Element.
  */
 public class Attribute extends ImmutableNodeList {
 
 	private static final byte[] EQ_SEQUENCE = {'='};
 
 	/**
-	 * A name of attribute in an XML element
+	 * The name of attribute
 	 */
 	public final String name;
 
 	/**
-	 * A value of attribute in an XML element
+	 * The value of attribute
 	 */
 	public final String value;
 

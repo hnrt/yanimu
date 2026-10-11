@@ -5,10 +5,13 @@ import java.nio.charset.StandardCharsets;
 import static com.hideakin.yanimu.xml.Character.*;
 
 /**
- * An XML node object.
+ * The XML Node.
  */
 public class Node {
 
+	/**
+	 * The node type for the sentinel to represent the boundary of a collection of nodes. 
+	 */
 	public static final int NULL = 0;
 
 	// Character.MAX_CODE_POINT : 0x10FFFF = 1114111
@@ -96,19 +99,19 @@ public class Node {
 	public static final byte[] SP_SEQUENCE = {' '};
 
 	/**
-	 * A sentinel node object to avoid null pointer exceptions.
+	 * A sentinel node to avoid null pointer exceptions.
 	 * The node type is {@code NULL}.
 	 * The byte sequence is zero byte long.
 	 */
 	public static final Node NULL_NODE = ImmutableNode.of(NULL, new byte[0]);
 
 	/**
-	 * Creates a new immutable node instance.
+	 * Creates a new immutable node with a node type and a byte sequence.
 	 * <p>
 	 * The concrete class to be instantiated is determined by the specified node type.
-	 * @param type the node type that determines the concrete terminal node class
-	 * @param sequence the UTF-8 encoded text representation of the node
-	 * @return a newly created terminal node instance
+	 * @param type a node type that determines the concrete terminal node class
+	 * @param sequence a UTF-8 encoded byte representation of this node
+	 * @return a newly created node
 	 */
 	public static Node of(int type, byte[] sequence) {
 		switch (type) {
@@ -135,12 +138,12 @@ public class Node {
 	}
 
 	/**
-	 * Creates a new immutable node instance.
+	 * Creates a new immutable node with a node type and a {@code String} sequence.
 	 * <p>
 	 * The concrete class to be instantiated is determined by the specified node type.
-	 * @param type the node type that determines the concrete terminal node class
-	 * @param sequence the String representation of the node
-	 * @return a newly created terminal node instance
+	 * @param type a node type that determines the concrete terminal node class
+	 * @param sequence a {@code String} representation of this node
+	 * @return a newly created node
 	 */
 	public static Node of(int type, String sequence) {
 		switch (type) {
@@ -166,8 +169,15 @@ public class Node {
 		}
 	}
 
+	/**
+	 * The node type.
+	 */
 	public final int type;
 
+	/**
+	 * Initializes a newly created node with a node type.
+	 * @param type a node type to assign to this node
+	 */
 	protected Node(int type) {
 		this.type = type;
 	}
@@ -179,7 +189,7 @@ public class Node {
 	}
 
 	/**
-	 * Returns the UTF-8 encoded text representation of this node.
+	 * Returns the UTF-8 encoded byte representation of this node.
 	 * @return array of byte
 	 */
 	public byte[] sequence() {
@@ -187,7 +197,7 @@ public class Node {
 	}
 
 	/**
-	 * Returns the number of bytes of the UTF-8 encoded text representation of this node.
+	 * Returns the number of bytes of the UTF-8 encoded byte representation of this node.
 	 * @return number of bytes
 	 */
 	public int length() {

@@ -3,7 +3,7 @@ package com.hideakin.yanimu.xml;
 import java.util.List;
 
 /**
- * A mutable node for XML End Tag.
+ * A mutable node for the XML End Tag.
  */
 public class EndTag extends Tag {
 
@@ -25,14 +25,14 @@ public class EndTag extends Tag {
 		return new EndTag(source);
 	}
 
-	private static final byte[] START_SEQUENCE = {'<', '/'};
-	private static final byte[] END_SEQUENCE = {'>'};
+	private static final byte[] START_BYTES = {'<', '/'};
+	private static final byte[] END_BYTES = {'>'};
 
 	private EndTag(String name) {
 		super(ETAG, List.of(
-				ImmutableNode.of(ETAG_START, START_SEQUENCE),
-				ImmutableNode.of(NAME, name),
-				ImmutableNode.of(ETAG_END, END_SEQUENCE)));
+				Node.of(ETAG_START, START_BYTES),
+				Node.of(NAME, name),
+				Node.of(ETAG_END, END_BYTES)));
 	}
 
 	private EndTag(List<Node> nodeList) {

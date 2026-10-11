@@ -3,7 +3,7 @@ package com.hideakin.yanimu.xml;
 import java.nio.charset.StandardCharsets;
 
 /**
- * An immutable node object for XML Character Data.
+ * An immutable node for the XML Character Data.
  * <p>
  * Character data defines the following illegal characters:
  * <ul>
@@ -19,58 +19,62 @@ import java.nio.charset.StandardCharsets;
 public class CharData extends ImmutableNode {
 
 	/**
-	 * A flag value not to normalize the sequence; to take the sequence as it is.
+	 * The flag value not to normalize the sequence; to take the sequence as it is.
 	 */
 	public static final int IMMEDIATE = 0;
 
 	/**
-	 * A flag value to normalize the sequence.
+	 * The flag value to normalize the sequence.
 	 */
 	public static final int NORMALIZE = 1;
 
 	/**
-	 * Creates a new immutable node of {@code CHAR_DATA}.
+	 * Creates a new node of type {@code CHAR_DATA}.
 	 * <p>
 	 * The normalization is took place on storing the given sequence in it.
-	 * @param sequence the UTF-8 representation of character data
-	 * @return a newly created node of {@code CHAR_DATA}
+	 * @param sequence a UTF-8 encoded byte representation of character data to assign to this node
+	 * @return a newly created node
 	 */
 	public static CharData of(byte[] sequence) {
 		return new CharData(sequence, NORMALIZE);
 	}
 
 	/**
-	 * Creates a new immutable node of {@code CHAR_DATA}.
+	 * Creates a new node of type {@code CHAR_DATA}.
 	 * <p>
 	 * The normalization is took place on storing the given sequence in it.
-	 * @param sequence the String representation of character data
-	 * @return a newly created node of {@code CHAR_DATA}
+	 * @param sequence a {@code String} representation of character data to assign to this node
+	 * @return a newly created node
 	 */
 	public static CharData of(String sequence) {
 		return new CharData(sequence.getBytes(StandardCharsets.UTF_8), NORMALIZE);
 	}
 
 	/**
-	 * Creates a new immutable node of {@code CHAR_DATA} with a flag to indicate the normalization processing.
+	 * Creates a new node of type {@code CHAR_DATA}, initializing by a flag to indicate the normalization processing.
 	 * <p>
-	 * If the flag is set to {@code NORMALIZE}, the normalization is took place on storing the given sequence in it.
+	 * If the flag is set to {@code NORMALIZE}, the normalization is taken place on storing the given sequence in it.
 	 * <p>
-	 * If the flag is set to {@code IMMEDIATE}, the normalization is not took place; the given sequence is stored as it is.
-	 * @param sequence the UTF-8 representation of character data
-	 * @return a newly created node of {@code CHAR_DATA}
+	 * If the flag is set to {@code IMMEDIATE}, the normalization is not taken place;
+	 * the given sequence is stored as is.
+	 * @param sequence a UTF-8 encoded byte representation of character data to assign to this node
+	 * @param flag a flag to indicate whether the normalization is taken place.
+	 * @return a newly created node
 	 */
 	public static CharData of(byte[] sequence, int flag) {
 		return new CharData(sequence, flag);
 	}
 
 	/**
-	 * Creates a new immutable node of {@code CHAR_DATA} with a flag to indicate the normalization processing.
+	 * Creates a new node of type {@code CHAR_DATA}, initializing by a flag to indicate the normalization processing.
 	 * <p>
-	 * If the flag is set to {@code NORMALIZE}, the normalization is took place on storing the given sequence in it.
+	 * If the flag is set to {@code NORMALIZE}, the normalization is taken place on storing the given sequence in it.
 	 * <p>
-	 * If the flag is set to {@code IMMEDIATE}, the normalization is not took place; the given sequence is stored as it is.
-	 * @param sequence the String representation of character data
-	 * @return a newly created node of {@code CHAR_DATA}
+	 * If the flag is set to {@code IMMEDIATE}, the normalization is not taken place;
+	 * the given sequence is stored as is.
+	 * @param sequence a String representation of character data to assign to this node
+	 * @param flag a flag to indicate whether the normalization is taken place.
+	 * @return a newly created node
 	 */
 	public static CharData of(String sequence, int flag) {
 		return new CharData(sequence.getBytes(StandardCharsets.UTF_8), flag);
@@ -81,10 +85,10 @@ public class CharData extends ImmutableNode {
 	}
 
 	/**
-	 * Replaces a less-than sign, an ampersand, and a greater-than sign contained in the given byte sequences
+	 * Replaces a less-than sign, an ampersand, and a greater-than sign in the given byte sequence
 	 * with their corresponding entity reference.
-	 * For a greater-than sign, the replacement is took place only if it follows two closing square brackets.
-	 * @param source the byte sequence to process
+	 * For a greater-than sign, the replacement is taken place only if it follows two closing square brackets.
+	 * @param source a byte sequence to process
 	 * @return the resulting byte sequence
 	 */
 	public static byte[] normalize(byte[] source) {

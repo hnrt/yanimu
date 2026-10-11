@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A mutable node for XML Empty Element Tag.
+ * A mutable node for the XML Empty Element Tag.
  */
 public class EmptyElementTag extends AttributeTag {
 
-	private static final byte[] EETAG_END_SEQUENCE = {'/', '>'};
+	private static final byte[] END_BYTES = {'/', '>'};
 
 	/**
 	 * Creates a new node of type {@code EETAG} with the specified tag name.
@@ -35,15 +35,15 @@ public class EmptyElementTag extends AttributeTag {
 	 */
 	public static EmptyElementTag of(AttributeTag source) {
 		List<Node> nodeList = new ArrayList<>(source._nodeList);
-		nodeList.set(nodeList.size() - 1, ImmutableNode.of(EETAG_END, EETAG_END_SEQUENCE));
+		nodeList.set(nodeList.size() - 1, ImmutableNode.of(EETAG_END, END_BYTES));
 		return new EmptyElementTag(nodeList);
 	}
 
 	private EmptyElementTag(String name) {
 		super(EETAG, List.of(
-				ImmutableNode.of(STAG_START, START_SEQUENCE),
-				ImmutableNode.of(NAME, name),
-				ImmutableNode.of(EETAG_END, EETAG_END_SEQUENCE)));
+				Node.of(STAG_START, START_BYTES),
+				Node.of(NAME, name),
+				Node.of(EETAG_END, END_BYTES)));
 	}
 
 	private EmptyElementTag(List<Node> nodeList) {

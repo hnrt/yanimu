@@ -96,7 +96,7 @@ public class NodeTest {
 
 	@Test
 	void test008() {
-		Node node = Node.of(Node.COMMENT, (Comment.START + "hello" + Comment.END).getBytes());
+		Node node = Node.of(Node.COMMENT, (Comment.START_STRING + "hello" + Comment.END_STRING).getBytes());
 		assertEquals(Node.COMMENT, node.type);
 		assertEquals(true, node instanceof Comment);
 		assertEquals("hello", ((Comment)node).innerText());
@@ -123,7 +123,7 @@ public class NodeTest {
 
 	@Test
 	void test011() {
-		Node node = Node.of(Node.ENTITY_REF, (EntityRef.START + "amp" + EntityRef.END).getBytes());
+		Node node = Node.of(Node.ENTITY_REF, (EntityRef.START_STRING + "amp" + EntityRef.END_STRING).getBytes());
 		assertEquals(Node.ENTITY_REF, node.type);
 		assertEquals(true, node instanceof EntityRef);
 		assertEquals("amp", ((EntityRef)node).name);
@@ -132,7 +132,7 @@ public class NodeTest {
 
 	@Test
 	void test012() {
-		Node node = Node.of(Node.PEREFERENCE, (ParameterEntityReference.START + "bogus" + ParameterEntityReference.END).getBytes());
+		Node node = Node.of(Node.PEREFERENCE, (ParameterEntityReference.START_STRING + "bogus" + ParameterEntityReference.END_STRING).getBytes());
 		assertEquals(Node.PEREFERENCE, node.type);
 		assertEquals(true, node instanceof ParameterEntityReference);
 		assertEquals("bogus", ((ParameterEntityReference)node).name);

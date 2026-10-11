@@ -1,29 +1,43 @@
 package com.hideakin.yanimu.xml;
 
 /**
- * An immutable node object for XML CDATA section.
+ * An immutable node for the XML CDATA Section.
  */
 public class CDATASection extends ImmutableNode {
 
+	/**
+	 * The sequence of open delimiter for CDATA section. ({@code String} representation)
+	 */
 	public static final String OPEN_DELIMITER_STRING = "<![CDATA[";
+
+	/**
+	 * The sequence of close delimiter for CDATA section. ({@code String} representation)
+	 */
 	public static final String CLOSE_DELIMITER_STRING = "]]>";
 
+	/**
+	 * The sequence of open delimiter for CDATA section. (byte representation)
+	 */
 	public static final byte[] OPEN_DELIMITER_BYTES = OPEN_DELIMITER_STRING.getBytes();
+
+	/**
+	 * The sequence of close delimiter for CDATA section. (byte representation)
+	 */
 	public static final byte[] CLOSE_DELIMITER_BYTES = CLOSE_DELIMITER_STRING.getBytes();
 
 	/**
-	 * Creates a new CDATA section node with a UTF-8 representation of text.
-	 * @param sequence a byte sequence of the CDATA section text encoded in UTF-8
-	 * @return a newly created CDATA section node
+	 * Creates a new node of type {@code CD_SECT} with a UTF-8 encoded byte representation of text.
+	 * @param sequence a UTF-8 encoded byte sequence of text
+	 * @return a newly created node
 	 */
 	public static CDATASection of(byte[] sequence) {
 		return new CDATASection(sequence);
 	}
 
 	/**
-	 * Creates a new CDATA section node with a String representation of text.
-	 * @param sequence a String of the CDATA section text
-	 * @return a newly created CDATA section node
+	 * Creates a new node of type {@code CD_SECT} with a {@code String} representation of text.
+	 * @param sequence a {@code String} representation of text
+	 * @return a newly created node
 	 */
 	public static CDATASection of(String sequence) {
 		return new CDATASection(sequence);
@@ -38,8 +52,9 @@ public class CDATASection extends ImmutableNode {
 	}
 
 	/**
-	 * Returns the text contained in this CDATA section.
-	 * @return the text from which the leading "&lt;![CDATA[" and the trailing "]]&gt;" are excluded.
+	 * Returns text in this node.
+	 * @return a {@code String} representation of the text in this node,
+	 * excluding the start sequence "&lt;![CDATA[" and the end sequence "]]&gt;".
 	 */
 	public String innerText() {
 		return innerText(OPEN_DELIMITER_BYTES.length, CLOSE_DELIMITER_BYTES.length);

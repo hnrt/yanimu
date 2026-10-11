@@ -17,37 +17,37 @@ import com.hideakin.yanimu.xml.internal.Processor;
 import com.hideakin.yanimu.xml.util.EntityMap;
 
 /**
- * An XML document object.
+ * The XML Document.
  */
 public class Document extends NodeList {
 
 	/**
-	 * A file path
+	 * The file path
 	 */
 	protected Path _path;
 
 	/**
-	 * An XML declaration
+	 * The XML declaration
 	 */
 	protected XmlDeclaration _xml;
 
 	/**
-	 * A document type declaration
+	 * The document type declaration
 	 */
 	protected DocumentTypeDeclaration _dtd;
 
 	/**
-	 * An entity map
+	 * The entity map
 	 */
 	protected EntityMap _entities;
 
 	/**
-	 * A document root element
+	 *The document root element
 	 */
 	protected Element _root;
 
 	/**
-	 * Initializes a newly created Document object with its path set to null.
+	 * Initializes a newly created node with no path.
 	 */
 	public Document() {
 		super(DOCUMENT);
@@ -55,7 +55,8 @@ public class Document extends NodeList {
 	}
 
 	/**
-	 * Initializes a newly created Document object with its path set to the specified one.
+	 * Initializes a newly created node with a path.
+	 * @param path a file path to assign to this node.
 	 */
 	public Document(Path path) {
 		super(DOCUMENT);
@@ -65,7 +66,7 @@ public class Document extends NodeList {
 
 	/**
 	 * Returns the file path currently set.
-	 * @return the file path currently set.
+	 * @return the file path currently set, or {@code null} if not set
 	 */
 	public Path path() {
 		return _path;
@@ -73,7 +74,7 @@ public class Document extends NodeList {
 
 	/**
 	 * Sets the file path.
-	 * @param path the file path to assign
+	 * @param path a file path to assign to this node.
 	 */
 	public void setPath(Path path) {
 		_path = path;
@@ -88,10 +89,10 @@ public class Document extends NodeList {
 	}
 
 	/**
-	 * Sets the XML declaration of this {@code Document}.
+	 * Sets the XML declaration.
 	 * <p>
-	 * If {@code xml} is {@code null}, the current XML declaration is removed from this {@code Document}.
-	 * @param xml the XML declaration to assign; {@code null} clears the current XML declaration
+	 * If {@code null} is specified, the current XML declaration is removed from this document.
+	 * @param xml an XML declaration to assign; {@code null} clears the current XML declaration
 	 */
 	public void setXml(XmlDeclaration xml) {
 		if (get(0).type == XML_DECL) {
@@ -118,10 +119,10 @@ public class Document extends NodeList {
 	}
 
 	/**
-	 * Sets the document type declaration of this {@code Document}.
+	 * Sets the document type declaration.
 	 * <p>
-	 * If {@code dtd} is {@code null}, the current document type declaration is removed from this {@code Document}.
-	 * @param dtd the document type declaration to assign; {@code null} clears the current document type declaration
+	 * If {@code null} is specified, the current document type declaration is removed from this document.
+	 * @param dtd a document type declaration to assign; {@code null} clears the current document type declaration
 	 */
 	public void setDtd(DocumentTypeDeclaration dtd) {
 		for (int i = 0; i < size(); i++) {
@@ -171,18 +172,18 @@ public class Document extends NodeList {
 	}
 
 	/**
-	 * Returns the root {@code Element} of this {@code Document}.
-	 * @return the root {@code Element}, or {@code null} if not set
+	 * Returns the root element.
+	 * @return the root element, or {@code null} if not set
 	 */
 	public Element root() {
 		return _root;
 	}
 
 	/**
-	 * Sets the root {@code Element} of this {@code Document}.
+	 * Sets the root {@code Element}.
 	 * <p>
-	 * If {@code root} is {@code null}, the current root {@code Element} is removed from this {@code Document}.
-	 * @param root the {@code Element} to assign as the root; {@code null} clears the current root
+	 * If {@code null} is specified, the current root element is removed from this document.
+	 * @param root an {@code Element} to assign as the root; {@code null} clears the current root
 	 */
 	public void setRoot(Element root) {
 		for (int i = 0; i < size(); i++) {
@@ -209,55 +210,55 @@ public class Document extends NodeList {
 	}
 
 	/**
-	 * Reads the byte sequence from a file specified by the path and parses them as an XML document.
-	 * @throws Exception
+	 * Reads a byte sequence from a file specified by the path and parses them to construct an XML document.
+	 * @throws Exception if an I/O error or a parse error occurs
 	 */
 	public void load() throws Exception {
 		load(Files.readAllBytes(_path), new ParseResult());
 	}
 
 	/**
-	 * Reads the byte sequence from a file specified by the path and parses them as an XML document.
-	 * @param result the information caught while parsing the document
-	 * @throws Exception
+	 * Reads a byte sequence from a file specified by the path and parses them to construct an XML document.
+	 * @param result an object to receive information caught while parsing the byte sequence
+	 * @throws Exception if an I/O error or a parse error occurs
 	 */
 	public void load(ParseResult result) throws Exception {
 		load(Files.readAllBytes(_path), result);
 	}
 
 	/**
-	 * Reads the byte sequence from the specified {@code InputStream} and parses them as an XML document.
-	 * @param in {@code InputStream} to read the byte sequence from
-	 * @throws Exception
+	 * Reads a byte sequence from the specified {@code InputStream} and parses them to construct an XML document.
+	 * @param in an {@code InputStream} to read a byte sequence from
+	 * @throws Exception if an I/O error or a parse error occurs
 	 */
 	public void load(InputStream in) throws Exception {
 		load(in.readAllBytes(), new ParseResult());
 	}
 
 	/**
-	 * Reads the byte sequence from the specified {@code InputStream} and parses them as an XML document.
-	 * @param in {@code InputStream} to read the byte sequence from
-	 * @param result the information caught while parsing the document
-	 * @throws Exception
+	 * Reads a byte sequence from the specified {@code InputStream} and parses them to construct an XML document.
+	 * @param in an {@code InputStream} to read a byte sequence from
+	 * @param result an object to receive information caught while parsing the byte sequence
+	 * @throws Exception if an I/O error or a parse error occurs
 	 */
 	public void load(InputStream in, ParseResult result) throws Exception {
 		load(in.readAllBytes(), result);
 	}
 
 	/**
-	 * Parses the specified byte sequence as an XML document.
+	 * Parses the specified byte sequence to construct an XML document.
 	 * @param content the byte sequence to parse
-	 * @throws Exception
+	 * @throws Exception if an I/O error or a parse error occurs
 	 */
 	public void load(byte[] content) throws Exception {
 		load(content, new ParseResult());
 	}
 
 	/**
-	 * Parses the specified byte sequence as an XML document.
-	 * @param content the byte sequence to parse
-	 * @param result the information caught while parsing the document
-	 * @throws Exception
+	 * Parses the specified byte sequence to construct an XML document.
+	 * @param content a byte sequence to parse
+	 * @param result an object to receive information caught while parsing the byte sequence
+	 * @throws Exception if an I/O error or a parse error occurs
 	 */
 	public void load(byte[] content, ParseResult result) throws Exception {
 		_nodeList.clear();
@@ -293,12 +294,12 @@ public class Document extends NodeList {
 	}
 
 	/**
-	 * Serializes this Document into a byte sequence and writes it to a file.
+	 * Serializes this document into a byte sequence and writes it to a file.
 	 * <p>
-	 * The byte sequence is generated by serializing the nodes contained in this Document in their stored order.
+	 * The byte sequence is generated by serializing the nodes contained in this document in their stored order.
 	 * The output encoding is determined as follows:
 	 * <ul>
-	 * <li>If this Document contains an XML declaration with an {@code encoding} attribute, that encoding is used.</li>
+	 * <li>If this document contains an XML declaration with an {@code encoding} attribute, that encoding is used.</li>
 	 * <li>Otherwise, UTF-8 is used.</li>
 	 * </ul>
 	 * <p>
@@ -335,15 +336,15 @@ public class Document extends NodeList {
 	}
 
 	/**
-	 * Locates {@code Element} instances that match the criteria specified by {@code name}.
-	 * @param name the tag name pattern used to locate {@code Element} instances.
+	 * Locates {@code Element} nodes that match the criteria specified by {@code name}.
+	 * @param name a tag name pattern used to locate {@code Element} nodes.
 	 *             The pattern may include multiple tag names separated by slashes
 	 *             to specify an element hierarchy.
 	 *             If {@code name} begins with a slash, the search is performed starting
 	 *             from the root element.
 	 *             Otherwise, the search begins from any descendant elements.
 	 *             An asterisk acts as a wildcard that matches any tag name.
-	 * @return {@code List} of {@code Element} instances
+	 * @return a {@code List} of {@code Element} nodes
 	 */
 	public List<Element> getElements(String name) {
 		List<Element> elementList = new ArrayList<>();
@@ -367,15 +368,15 @@ public class Document extends NodeList {
 	}
 
 	/**
-	 * Locates the first {@code Element} instance that matches the criteria specified by {@code name}.
-	 * @param name the tag name pattern used to locate {@code Element} instances.
+	 * Locates the first {@code Element} node that matches the criteria specified by {@code name}.
+	 * @param name a tag name pattern used to locate {@code Element} nodes.
 	 *             The pattern may include multiple tag names separated by slashes
 	 *             to specify an element hierarchy.
 	 *             If {@code name} begins with a slash, the search is performed starting
 	 *             from the root element.
 	 *             Otherwise, the search begins from any descendant elements.
 	 *             An asterisk acts as a wildcard that matches any tag name.
-	 * @return {@code Element} instance
+	 * @return an {@code Element} node, or {@code null} if not found
 	 */
 	public Element getElement(String name) {
 		List<Element> elementList = getElements(name);
@@ -384,7 +385,7 @@ public class Document extends NodeList {
 
 	/**
 	 * Returns the line number at the specified offset.
-	 * @param offset the byte offset of interest from the beginning of this Document
+	 * @param offset the byte offset of interest from the beginning of this document
 	 * @return the line number
 	 */
 	public int toLineNumber(int offset) {
@@ -393,7 +394,7 @@ public class Document extends NodeList {
 
 	/**
 	 * Returns the column number at the specified offset.
-	 * @param offset the byte offset of interest from the beginning of this Document
+	 * @param offset the byte offset of interest from the beginning of this document
 	 * @return the column number
 	 */
 	public int toColumnNumber(int offset) {
@@ -401,16 +402,16 @@ public class Document extends NodeList {
 	}
 
 	/**
-	 * Replaces entity references and character references in the given String
+	 * Replaces entity references and character references in the given text
 	 * with their corresponding replacement text.
 	 * <p>
 	 * Entity references are the predefined entities and the ones that appear in the entity declarations.
 	 * <p>
-	 * The replacement process is repeated while the resulting String still contains any entity or character reference,
+	 * The replacement process is repeated while the resulting text still contains any entity or character reference,
 	 * up to a maximum of ten iterations.
 	 * This prevents infinite expansion in cases where references expand into new references.
-	 * @param source the input String containing entity or character references
-	 * @return the fully expanded String, or a partially expanded String if the iteration limit is reached
+	 * @param source an input {@code String} containing entity or character references
+	 * @return a fully expanded {@code String}, or a partially expanded {@code String} if the iteration limit is reached
 	 */
 	public String translate(String source) {
 		if (_entities != null) {

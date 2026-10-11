@@ -6,7 +6,7 @@ import java.util.List;
 import static com.hideakin.yanimu.xml.Character.isWhiteSpace;
 
 /**
- * An XML element object.
+ * The XML Element.
  */
 public class Element extends NodeList {
 

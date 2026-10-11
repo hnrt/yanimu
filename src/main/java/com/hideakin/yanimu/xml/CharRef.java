@@ -3,36 +3,47 @@ package com.hideakin.yanimu.xml;
 import java.nio.charset.StandardCharsets;
 
 /**
- * An immutable node object for XML Character Reference.
+ * An immutable node for the XML Character Reference.
  */
 public class CharRef extends ImmutableNode {
 
+	/**
+	 * The start sequence of character reference for the decimal representation of code point.
+	 */
 	public static final String START = "&#";
+
+	/**
+	 * The start sequence of character reference for the hexadecimal representation of code point.
+	 */
 	public static final String START_HEX = "&#x";
+
+	/**
+	 * The end sequence of character reference.
+	 */
 	public static final String END = ";";
 
 	/**
-	 * Creates a new immutable node of {@code CHAR_REF}.
-	 * @param codepoint the code point of a character reference to format in this node
-	 * @return a newly created node of {@code CHAR_REF}
+	 * Creates a new node of type {@code CHAR_REF}.
+	 * @param codepoint a code point for a character reference to assign to this node
+	 * @return a newly created node
 	 */
 	public static CharRef of(int codepoint) {
 		return new CharRef(codepoint);
 	}
 
 	/**
-	 * Creates a new immutable node of {@code CHAR_REF}.
-	 * @param sequence the UTF-8 representation of a character reference to be stored in this node
-	 * @return a newly created node of {@code CHAR_REF}
+	 * Creates a new node of type {@code CHAR_REF}.
+	 * @param sequence a UTF-8 encoded byte representation of a character reference to assign to this node
+	 * @return a newly created node
 	 */
 	public static CharRef of(byte[] sequence) {
 		return new CharRef(sequence);
 	}
 
 	/**
-	 * Creates a new immutable node of {@code CHAR_REF}.
-	 * @param sequence the String representation of a character reference to be stored in this node
-	 * @return a newly created node of {@code CHAR_REF}
+	 * Creates a new node of type {@code CHAR_REF}.
+	 * @param sequence a {@code String} representation of a character reference to assign to this node
+	 * @return a newly created node
 	 */
 	public static CharRef of(String sequence) {
 		return new CharRef(sequence.getBytes(StandardCharsets.UTF_8));
