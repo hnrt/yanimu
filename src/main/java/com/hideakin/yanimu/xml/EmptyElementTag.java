@@ -8,7 +8,7 @@ import java.util.List;
  */
 public class EmptyElementTag extends AttributeTag {
 
-	private static final byte[] END_BYTES = {'/', '>'};
+	private static final byte[] EETAG_END_BYTES = {'/', '>'};
 
 	/**
 	 * Creates a new node of type {@code EETAG} with the specified tag name.
@@ -35,15 +35,15 @@ public class EmptyElementTag extends AttributeTag {
 	 */
 	public static EmptyElementTag of(AttributeTag source) {
 		List<Node> nodeList = new ArrayList<>(source._nodeList);
-		nodeList.set(nodeList.size() - 1, ImmutableNode.of(EETAG_END, END_BYTES));
+		nodeList.set(nodeList.size() - 1, Node.of(EETAG_END, EETAG_END_BYTES));
 		return new EmptyElementTag(nodeList);
 	}
 
 	private EmptyElementTag(String name) {
 		super(EETAG, List.of(
-				Node.of(STAG_START, START_BYTES),
+				Node.of(STAG_START, STAG_START_BYTES),
 				Node.of(NAME, name),
-				Node.of(EETAG_END, END_BYTES)));
+				Node.of(EETAG_END, EETAG_END_BYTES)));
 	}
 
 	private EmptyElementTag(List<Node> nodeList) {

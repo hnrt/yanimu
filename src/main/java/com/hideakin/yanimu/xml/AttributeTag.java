@@ -20,7 +20,7 @@ public class AttributeTag extends Tag {
 	/**
 	 * The byte sequence of the start of Start Tag / Empty Element Tag.
 	 */
-	protected static final byte[] START_BYTES = {'<'};
+	protected static final byte[] STAG_START_BYTES = {'<'};
 
 	/**
 	 * Constructs a newly created instance with a node type and a node sequence.

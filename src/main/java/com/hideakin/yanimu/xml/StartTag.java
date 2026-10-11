@@ -8,7 +8,7 @@ import java.util.List;
  */
 public class StartTag extends AttributeTag {
 
-	private static final byte[] STAG_END_SEQUENCE = {'>'};
+	private static final byte[] STAG_END_BYTES = {'>'};
 
 	/**
 	 * Creates a new node of type {@code STAG} with the specified tag name.
@@ -35,15 +35,15 @@ public class StartTag extends AttributeTag {
 	 */
 	public static StartTag of(AttributeTag source) {
 		List<Node> nodeList = new ArrayList<>(source._nodeList);
-		nodeList.set(nodeList.size() - 1, ImmutableNode.of(STAG_END, STAG_END_SEQUENCE));
+		nodeList.set(nodeList.size() - 1, Node.of(STAG_END, STAG_END_BYTES));
 		return new StartTag(nodeList);
 	}
 
 	private StartTag(String name) {
 		super(STAG, List.of(
-				ImmutableNode.of(STAG_START, START_BYTES),
-				ImmutableNode.of(NAME, name),
-				ImmutableNode.of(STAG_END, STAG_END_SEQUENCE)));
+				Node.of(STAG_START, STAG_START_BYTES),
+				Node.of(NAME, name),
+				Node.of(STAG_END, STAG_END_BYTES)));
 	}
 
 	private StartTag(List<Node> nodeList) {
