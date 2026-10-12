@@ -1,6 +1,8 @@
 package com.hideakin.yanimu.xml.util;
 
+import com.hideakin.yanimu.xml.AttributeTag;
 import com.hideakin.yanimu.xml.Element;
+import com.hideakin.yanimu.xml.EndTag;
 import com.hideakin.yanimu.xml.Node;
 import com.hideakin.yanimu.xml.NodeList;
 
@@ -80,8 +82,22 @@ public class FormatHelper {
 	public static void indent(NodeList nonTerminalNode, byte[] lineSeparator, int unitWidth, int level) {
 		if (nonTerminalNode.type == ELEMENT) {
 			Element element = (Element)nonTerminalNode;
+			AttributeTag st = element.startTag();
+			for (int i = 0; i < st.size(); i++) {
+				Node node = st.get(i);
+				if (node.type == S) {
+					st.set(i, Node.of(S, normalizeLineSeparators(node.sequence(), lineSeparator)));
+				}
+			}
 			if (element.empty()) {
 				return;
+			}
+			EndTag et = element.endTag();
+			for (int i = 0; i < et.size(); i++) {
+				Node node = et.get(i);
+				if (node.type == S) {
+					et.set(i, Node.of(S, normalizeLineSeparators(node.sequence(), lineSeparator)));
+				}
 			}
 			Node previous = element.startTag();
 			for (int i = 0; i < nonTerminalNode.size(); i++) {
@@ -95,6 +111,12 @@ public class FormatHelper {
 					}
 					if (node.type == ELEMENT) {
 						indent((NodeList)node, lineSeparator, unitWidth, level + 1);
+					}
+				} else if (node.type == CHAR_DATA) {
+					nonTerminalNode.set(i, Node.of(CHAR_DATA, normalizeLineSeparators(node.sequence(), lineSeparator)));
+					if (isLineSeparatorAndIndentation(previous)) {
+						nonTerminalNode.remove(i - 1);
+						i--;
 					}
 				}
 				previous = node;
@@ -118,6 +140,8 @@ public class FormatHelper {
 					if (node.type == ELEMENT || node.type == Node.DOCTYPE_DECL) {
 						indent((NodeList)node, lineSeparator, unitWidth, level + 1);
 					}
+				} else if (node.type == S) {
+					nonTerminalNode.set(i, Node.of(S, normalizeLineSeparators(node.sequence(), lineSeparator)));
 				}
 				previous = node;
 			}
@@ -142,6 +166,8 @@ public class FormatHelper {
 								nonTerminalNode.set(nonTerminalNode.lastIndex(), Node.of(S, lineSeparatorAndIndentation(lineSeparator, unitWidth, level - 1)));
 							}
 							break;
+						} else if (node.type == S) {
+							nonTerminalNode.set(i, Node.of(S, normalizeLineSeparators(node.sequence(), lineSeparator)));
 						}
 						previous = node;
 					}
@@ -199,6 +225,92 @@ public class FormatHelper {
 		byte[] sequence = Arrays.copyOf(lineSeparator, n);
 		Arrays.fill(sequence, n1, n, (byte)SP);
 		return sequence;
+	}
+
+	/**
+	 * Replaces all occurrences of line separator with the specified one.
+	 * @param source an input
+	 * @param lineSeparator the line separator to use
+	 * @return the resulting byte sequence
+	 */
+	public static byte[] normalizeLineSeparators(byte[] source, byte[] lineSeparator) {
+		if (lineSeparator[0] == '\n') {
+			int d = 0;
+			for (int i = 0; i < source.length; i++) {
+				if (source[i] == '\n') {
+					continue;
+				} else if (source[i] == '\r') {
+					i++;
+					if (i < source.length && source[i] == '\n') {
+						d--;
+					} else {
+						i--;
+					}
+				} else {
+					continue;
+				}
+			}
+			if (d == 0) {
+				return source;
+			}
+			byte[] destination = new byte[source.length + d];
+			int j = 0;
+			for (int i = 0; i < source.length; i++) {
+				if (source[i] == '\n') {
+					destination[j++] = '\n';
+				} else if (source[i] == '\r') {
+					i++;
+					if (i < source.length && source[i] == '\n') {
+						destination[j++] = '\n';
+					} else {
+						destination[j++] = '\r';
+						i--;
+					}
+				} else {
+					destination[j++] = source[i];
+				}
+			}
+			return destination;
+		} else {
+			int d = 0;
+			for (int i = 0; i < source.length; i++) {
+				if (source[i] == '\n') {
+					d++;
+				} else if (source[i] == '\r') {
+					i++;
+					if (i < source.length && source[i] == '\n') {
+						continue;
+					} else {
+						i--;
+					}
+				} else {
+					continue;
+				}
+			}
+			if (d == 0) {
+				return source;
+			}
+			byte[] destination = new byte[source.length + d];
+			int j = 0;
+			for (int i = 0; i < source.length; i++) {
+				if (source[i] == '\n') {
+					destination[j++] = '\r';
+					destination[j++] = '\n';
+				} else if (source[i] == '\r') {
+					i++;
+					if (i < source.length && source[i] == '\n') {
+						destination[j++] = '\r';
+						destination[j++] = '\n';
+					} else {
+						destination[j++] = '\r';
+						i--;
+					}
+				} else {
+					destination[j++] = source[i];
+				}
+			}
+			return destination;
+		}
 	}
 
 	/**

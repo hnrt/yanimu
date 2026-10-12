@@ -15,7 +15,7 @@ public class QuotedStringTest {
 
 	@BeforeAll
 	static void initAll() {
-		start(NodeTest.class);
+		start(QuotedStringTest.class);
 	}
 
 	@AfterAll

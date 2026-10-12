@@ -2,6 +2,8 @@ package com.hideakin.yanimu.xml.util;
 
 public class LineSeparatorCounter {
 
+	private static final String _native = System.getProperty("line.separator");
+
 	private int _lf = 0;
 	private int _crlf = 0;
 
@@ -25,11 +27,11 @@ public class LineSeparatorCounter {
 	}
 
 	public boolean isLF() {
-		return _lf >= _crlf;
+		return _lf > _crlf || (_lf == _crlf && "\n".equals(_native));
 	}
 
 	public boolean isCRLF() {
-		return _lf < _crlf;
+		return _lf < _crlf || (_lf == _crlf && "\r\n".equals(_native));
 	}
 
 }

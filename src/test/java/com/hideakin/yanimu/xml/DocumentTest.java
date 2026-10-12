@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
 import com.hideakin.yanimu.xml.util.DebugHelper;
+import com.hideakin.yanimu.xml.util.FormatHelper;
 
 import static com.hideakin.yanimu.util.TestHelper.checkDocument;
 import static com.hideakin.yanimu.util.TestHelper.start;
@@ -431,7 +432,32 @@ public class DocumentTest {
 	}
 
 	@Test
-	void test501() {
+	void saveTest001() {
+		Path path = Path.of("FC3693A0-A2CA-431C-A613-B1FC5B7D1800.xml");
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy/>";
+		Document doc = new Document(path);
+		try {
+			doc.load(source.getBytes(StandardCharsets.UTF_8));
+			doc.save();
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail("Failed to save the document.");
+		} finally {
+			try {
+				if (Files.deleteIfExists(path)) {
+					print("Deleted %s", path);
+				} else {
+					print("Did not delete %s", path);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Test
+	void saveTest002() {
 		Path path = Path.of("B5113D95-D5B4-42C0-9E4F-103F7EB875E1", "E780C820-075C-4D1F-B5DB-FC17A0708AAF.xml");
 		String source = "<?xml version=\"1.0\"?>\r\n"
 				+ "<greeting>Hello, world!</greeting>";
@@ -458,7 +484,7 @@ public class DocumentTest {
 	}
 
 	@Test
-	void test502() {
+	void saveTest003() {
 		Path path = Path.of("B5113D95-D5B4-42C0-9E4F-103F7EB875E1", "E780C820-075C-4D1F-B5DB-FC17A0708AAF.xml");
 		String source = "<?xml version=\"1.0\"?>\r\n"
 				+ "<greeting>Hello, world!</greeting>";
@@ -484,7 +510,7 @@ public class DocumentTest {
 	}
 
 	@Test
-	void test503() {
+	void saveTest004() {
 		Path path = Path.of("B5113D95-D5B4-42C0-9E4F-103F7EB875E1", "E780C820-075C-4D1F-B5DB-FC17A0708AAF.xml");
 		String source = "<?xml version=\"1.0\"?>\r\n"
 				+ "<greeting>Hello, world!</greeting>";
@@ -510,6 +536,554 @@ public class DocumentTest {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	@Test
+	void indentTest001() {
+		String source = "<?xml version=\"1.0\"?>"
+				+ "<xyzzy>"
+				+ "<foo/>"
+				+ "<bar/>"
+				+ "<baz/>"
+				+ "</xyzzy>";
+		String eol = System.getProperty("line.separator");
+		String expected = "<?xml version=\"1.0\"?>" + eol
+				+ "<xyzzy>" + eol
+				+ "  <foo/>" + eol
+				+ "  <bar/>" + eol
+				+ "  <baz/>" + eol
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest002() {
+		String source = "<?xml version=\"1.0\"?>\n"
+				+ "<xyzzy>\r\n"
+				+ "<foo/>"
+				+ "<bar/>"
+				+ "<baz/>"
+				+ "</xyzzy>";
+		String eol = System.getProperty("line.separator");
+		String expected = "<?xml version=\"1.0\"?>" + eol
+				+ "<xyzzy>" + eol
+				+ "  <foo/>" + eol
+				+ "  <bar/>" + eol
+				+ "  <baz/>" + eol
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest003() {
+		String source = "<?xml version=\"1.0\"?>"
+				+ "<xyzzy>\n"
+				+ "<foo/>\r\n"
+				+ "<bar/>\n"
+				+ "<baz/>\r\n"
+				+ "</xyzzy>";
+		String eol = System.getProperty("line.separator");
+		String expected = "<?xml version=\"1.0\"?>" + eol
+				+ "<xyzzy>" + eol
+				+ "  <foo/>" + eol
+				+ "  <bar/>" + eol
+				+ "  <baz/>" + eol
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest004() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>"
+				+ "<foo/>"
+				+ "<bar/>"
+				+ "<baz/>"
+				+ "</xyzzy>";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <bar/>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest005() {
+		String source = "<?xml version=\"1.0\"?>\n"
+				+ "<xyzzy>"
+				+ "<foo/>"
+				+ "<bar/>"
+				+ "<baz/>"
+				+ "</xyzzy>";
+		String expected = "<?xml version=\"1.0\"?>\n"
+				+ "<xyzzy>\n"
+				+ "  <foo/>\n"
+				+ "  <bar/>\n"
+				+ "  <baz/>\n"
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest006() {
+		String source = "<?xml version=\"1.0\"?>"
+				+ "<xyzzy>"
+				+ "<foo/>"
+				+ "<bar/>"
+				+ "<baz/>"
+				+ "</xyzzy>\r\n";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <bar/>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>\r\n";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest007() {
+		String source = "<?xml version=\"1.0\"?>"
+				+ "<xyzzy>"
+				+ "<foo/>"
+				+ "<bar/>"
+				+ "<baz/>"
+				+ "</xyzzy>\n";
+		String expected = "<?xml version=\"1.0\"?>\n"
+				+ "<xyzzy>\n"
+				+ "  <foo/>\n"
+				+ "  <bar/>\n"
+				+ "  <baz/>\n"
+				+ "</xyzzy>\n";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest008() {
+		String source = "<?xml version=\"1.0\"?>"
+				+ "<xyzzy>"
+				+ "<foo/>"
+				+ "<bar/>\r\n"
+				+ "<baz/>\r\n"
+				+ "</xyzzy>\n";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <bar/>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>\r\n";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest009() {
+		String source = "<?xml version=\"1.0\"?>"
+				+ "<xyzzy>"
+				+ "<foo/>"
+				+ "<bar/>\n"
+				+ "<baz/>\n"
+				+ "</xyzzy>\r\n";
+		String expected = "<?xml version=\"1.0\"?>\n"
+				+ "<xyzzy>\n"
+				+ "  <foo/>\n"
+				+ "  <bar/>\n"
+				+ "  <baz/>\n"
+				+ "</xyzzy>\n";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest010() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy\n a=\"x\"\n b=\"y\">\r\n"
+				+ "<foo/>\r\n"
+				+ "<bar/>\r\n"
+				+ "<baz\n/>\r\n"
+				+ "</xyzzy\n  >";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy\r\n a=\"x\"\r\n b=\"y\">\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <bar/>\r\n"
+				+ "  <baz\r\n/>\r\n"
+				+ "</xyzzy\r\n  >";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest011() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <bar/>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <bar/>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		Element element = doc.root().getElement("/foo");
+		Node removed = doc.root().remove(element);
+		assertEquals(element, removed);
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest012() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <bar/>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		Element element = doc.root().getElement("/bar");
+		Node removed = doc.root().remove(element);
+		assertEquals(element, removed);
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest013() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <bar/>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <bar/>\r\n"
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		Element element = doc.root().getElement("/baz");
+		Node removed = doc.root().remove(element);
+		assertEquals(element, removed);
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest014() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <bar/>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		Element element1 = doc.root().getElement("/foo");
+		Element element2 = doc.root().getElement("/bar");
+		Node removed1 = doc.root().remove(element1);
+		assertEquals(element1, removed1);
+		Node removed2 = doc.root().remove(element2);
+		assertEquals(element2, removed2);
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest015() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <bar/>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <bar/>\r\n"
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		Element element1 = doc.root().getElement("/foo");
+		Element element2 = doc.root().getElement("/baz");
+		Node removed1 = doc.root().remove(element1);
+		assertEquals(element1, removed1);
+		Node removed2 = doc.root().remove(element2);
+		assertEquals(element2, removed2);
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest016() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <bar/>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		Element element1 = doc.root().getElement("/bar");
+		Element element2 = doc.root().getElement("/baz");
+		Node removed1 = doc.root().remove(element1);
+		assertEquals(element1, removed1);
+		Node removed2 = doc.root().remove(element2);
+		assertEquals(element2, removed2);
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest017() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <bar/>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy/>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		Element element1 = doc.root().getElement("/foo");
+		Element element2 = doc.root().getElement("/bar");
+		Element element3 = doc.root().getElement("/baz");
+		Node removed1 = doc.root().remove(element1);
+		assertEquals(element1, removed1);
+		Node removed2 = doc.root().remove(element2);
+		assertEquals(element2, removed2);
+		Node removed3 = doc.root().remove(element3);
+		assertEquals(element3, removed3);
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest018() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "<foo/>"
+				+ "<bar>"
+				+ "<quux/>"
+				+ "<fred/>"
+				+ "<waldo/>"
+				+ "</bar>"
+				+ "<baz/>\r\n"
+				+ "</xyzzy>";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "    <foo/>\r\n"
+				+ "    <bar>\r\n"
+				+ "        <quux/>\r\n"
+				+ "        <waldo/>\r\n"
+				+ "    </bar>\r\n"
+				+ "    <baz/>\r\n"
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		Element element1 = doc.getElement("bar");
+		Element element2 = doc.getElement("fred");
+		Node removed2 = element1.remove(element2);
+		assertEquals(element2, removed2);
+		FormatHelper.indent(doc, 4);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest019() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "<foo/>"
+				+ "<bar>"
+				+ "<quux/>"
+				+ "<fred/>"
+				+ "<waldo/>"
+				+ "</bar>"
+				+ "<baz/>\r\n"
+				+ "</xyzzy>";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "    <foo/>\r\n"
+				+ "    <bar>\r\n"
+				+ "        <fred/>\r\n"
+				+ "    </bar>\r\n"
+				+ "    <baz/>\r\n"
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		Element element1 = doc.getElement("bar");
+		Element element2 = doc.getElement("quux");
+		Element element3 = doc.getElement("waldo");
+		Node removed2 = element1.remove(element2);
+		assertEquals(element2, removed2);
+		Node removed3 = element1.remove(element3);
+		assertEquals(element3, removed3);
+		FormatHelper.indent(doc, 4);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest020() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "<foo/>"
+				+ "<bar>"
+				+ "<quux/>"
+				+ "<fred/>"
+				+ "<waldo/>"
+				+ "</bar>"
+				+ "<baz/>\r\n"
+				+ "</xyzzy>";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "    <foo/>\r\n"
+				+ "    <bar/>\r\n"
+				+ "    <baz/>\r\n"
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		Element element1 = doc.getElement("bar");
+		Element element2 = doc.getElement("quux");
+		Element element3 = doc.getElement("fred");
+		Element element4 = doc.getElement("waldo");
+		Node removed2 = element1.remove(element2);
+		assertEquals(element2, removed2);
+		Node removed3 = element1.remove(element3);
+		assertEquals(element3, removed3);
+		Node removed4 = element1.remove(element4);
+		assertEquals(element4, removed4);
+		FormatHelper.indent(doc, 4);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest021() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "<foo/>"
+				+ "<bar/>"
+				+ "<baz/>\r\n"
+				+ "</xyzzy>";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <bar>\r\n"
+				+ "    <quux/>\r\n"
+				+ "  </bar>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		Element element1 = doc.getElement("bar");
+		Element element2 = new Element("quux");
+		element1.add(element2);
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest022() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "<foo/>"
+				+ "<bar/>"
+				+ "<baz/>\r\n"
+				+ "</xyzzy>";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <bar>\r\n"
+				+ "    <quux/>\r\n"
+				+ "    <fred/>\r\n"
+				+ "  </bar>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		Element element1 = doc.getElement("bar");
+		Element element2 = new Element("quux");
+		Element element3 = new Element("fred");
+		element1.add(element2);
+		element1.add(element3);
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
+	@Test
+	void indentTest023() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "<foo/>"
+				+ "<bar/>"
+				+ "<baz/>\r\n"
+				+ "</xyzzy>";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <bar>\r\n"
+				+ "    <waldo/>\r\n"
+				+ "    <quux/>\r\n"
+				+ "    <fred/>\r\n"
+				+ "  </bar>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		Element element1 = doc.getElement("bar");
+		Element element2 = new Element("quux");
+		Element element3 = new Element("fred");
+		Element element4 = new Element("waldo");
+		element1.add(element2);
+		element1.add(element3);
+		element1.add(0, element4);
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
 	}
 
 }

@@ -311,17 +311,28 @@ public class Document extends NodeList {
 	 * <p>
 	 * The resulting byte sequence is written to the file specified by the {@code _path} field.
 	 * @throws IOException if an I/O error occurs while writing the file
+	 * @throws NullPointerException if the path is not yet set
 	 */
 	public void save() throws IOException {
+		if (_path == null) {
+			throw new NullPointerException("Path not set.");
+		}
+		Path parent = _path.getParent();
+		if (parent == null) {
+			parent = _path.toAbsolutePath().getParent();
+			if (parent == null) {
+				throw new IOException("Unable to locate the parent directory of " + _path);
+			}
+		}
 		if (Files.exists(_path)) {
 			if (Files.isDirectory(_path)) {
 				throw new IOException("Unable to write to a directory.");
 			}
-		} else if (!Files.exists(_path.getParent())) {
-			Files.createDirectories(_path.getParent());
+		} else if (!Files.exists(parent)) {
+			Files.createDirectories(parent);
 		}
 		String fileName = _path.getFileName().toString() + "." + UUID.randomUUID().toString();
-		Path path = _path.getParent().resolve(fileName);
+		Path path = parent.resolve(fileName);
 		try {
 			byte[] bb = sequence();
 			if (_xml != null && _xml.encoding != null && !_xml.encoding.toUpperCase().equals("UTF-8")) {
