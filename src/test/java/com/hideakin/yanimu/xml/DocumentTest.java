@@ -1086,4 +1086,26 @@ public class DocumentTest {
 		assertEquals(expected, doc.toString());
 	}
 
+	@Test
+	void indentTest024() {
+		String source = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "<foo/>"
+				+ "<bar/>"
+				+ "<baz/>\r\n"
+				+ "</xyzzy>";
+		String expected = "<?xml version=\"1.0\"?>\r\n"
+				+ "<xyzzy>\r\n"
+				+ "  <foo/>\r\n"
+				+ "  <bar>quux fred waldo</bar>\r\n"
+				+ "  <baz/>\r\n"
+				+ "</xyzzy>";
+		Document doc = new Document();
+		doc.load(source.getBytes(StandardCharsets.UTF_8));
+		Element element1 = doc.getElement("bar");
+		element1.setInnerText("quux fred waldo");
+		FormatHelper.indent(doc);
+		assertEquals(expected, doc.toString());
+	}
+
 }
