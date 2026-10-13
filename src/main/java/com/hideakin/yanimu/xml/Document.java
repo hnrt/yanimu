@@ -41,10 +41,10 @@ public class Document extends NodeList {
 	/**
 	 * The entity map
 	 */
-	protected EntityMap _entities;
+	protected final EntityMap _entities = new EntityMap();
 
 	/**
-	 *The document root element
+	 * The document root
 	 */
 	protected Element _root;
 
@@ -53,7 +53,6 @@ public class Document extends NodeList {
 	 */
 	public Document() {
 		super(DOCUMENT);
-		_entities = new EntityMap();
 	}
 
 	/**
@@ -63,7 +62,6 @@ public class Document extends NodeList {
 	public Document(Path path) {
 		super(DOCUMENT);
 		_path = path;
-		_entities = new EntityMap();
 	}
 
 	/**
@@ -139,14 +137,14 @@ public class Document extends NodeList {
 					}
 				}
 				_dtd = dtd;
-				_entities = populateEntityMap();
+				populateEntityMap();
 				return;
 			case ELEMENT:
 				if (dtd != null) {
 					add(i, dtd);
 				}
 				_dtd = dtd;
-				_entities = populateEntityMap();
+				populateEntityMap();
 				return;
 			default:
 				break;
@@ -156,26 +154,25 @@ public class Document extends NodeList {
 			add(dtd);
 		}
 		_dtd = dtd;
-		_entities = populateEntityMap();
+		populateEntityMap();
 	}
 
-	private EntityMap populateEntityMap() {
-		EntityMap entityMap = new EntityMap();
+	private void populateEntityMap() {
+		_entities.clear();
 		if (_dtd != null) {
 			for (Object obj : _dtd.declarations) {
 				if (obj instanceof EntityDeclaration entity) {
 					if (entity.definition instanceof InternalEntityDefinition ied) {
-						entityMap.put(ied.key, ied);
+						_entities.put(ied.key, ied);
 					}
 				}
 			}
 		}
-		return entityMap;
 	}
 
 	/**
-	 * Returns the root element.
-	 * @return the root element, or {@code null} if not set
+	 * Returns the document root.
+	 * @return the document root, or {@code null} if not set
 	 */
 	public Element root() {
 		return _root;
@@ -270,10 +267,10 @@ public class Document extends NodeList {
 		_nodeList.clear();
 		_xml = null;
 		_dtd = null;
-		_entities = new EntityMap();
+		_entities.clear();
 		_root = null;
 		Processor processor = new Processor(content, _entities, result);
-		List<Node> nodeList = processor.parse();
+		List<Node> nodeList = processor.parse(this);
 		_nodeList.addAll(nodeList);
 		if (first() instanceof XmlDeclaration xml) {
 			_xml = xml;
@@ -281,7 +278,6 @@ public class Document extends NodeList {
 		for (Node node : _nodeList) {
 			if (node instanceof Element element) {
 				_root = element;
-				_root.setParent(this);
 				break;
 			} else if (node instanceof DocumentTypeDeclaration dtd) {
 				_dtd = dtd;

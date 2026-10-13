@@ -62,6 +62,12 @@ public class EntityMap extends HashMap<String, Object> {
 		installPredefinedEntities();
 	}
 
+	@Override
+	public void clear() {
+		super.clear();
+		installPredefinedEntities();
+	}
+
 	private void installPredefinedEntities() {
 		put("lt", new InternalEntityDefinition("lt", translate("&#38;#60;")));
 		put("gt", new InternalEntityDefinition("gt", translate("&#62;")));

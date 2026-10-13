@@ -19,12 +19,12 @@ public class Element extends NodeList {
 	/**
 	 * The parent of this element.
 	 */
-	protected Object _parent;
+	protected Node _parent;
 
 	/**
-	 * Constructs a new Element that has an empty content.
+	 * Constructs a new {@code Element} that has an empty content.
 	 * <p>
-	 * The newly created Element has no parent (its parent is initialized to {@code null}).
+	 * The newly created {@code Element} has no parent (its parent is initialized to {@code null}).
 	 * @param name the tag name
 	 */
 	public Element(String name) {
@@ -34,12 +34,12 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * Constructs a new Element whose content is provided as a String.
+	 * Constructs a new {@code Element} whose content is provided as a String.
 	 * <p>
 	 * The specified {@code innerText} may be represented as multiple nodes,
 	 * such as CHAR_DATA, ENTITY_REF, or CHAR_REF, depending on its content.
 	 * <p>
-	 * The newly created Element has no parent (its parent is initialized to {@code null}).
+	 * The newly created {@code Element} has no parent (its parent is initialized to {@code null}).
 	 * @param name the tag name
 	 * @param innerText the textual content to be set in this element
 	 */
@@ -50,14 +50,14 @@ public class Element extends NodeList {
 	}
 
 	/**
-	 * Constructs a new Element node with the specified parent.
+	 * Constructs a new {@code Element} node with the specified parent.
 	 * <p>
-	 * The content of this Element is not initialized at creation time;
-	 * {@link Element#set} must be invoked later to populate the node list.
+	 * The content of this {@code Element} is not initialized at creation time;
+	 * {@link Element#set(List)} must be invoked later to populate the node list.
 	 * @param name the tag name
-	 * @param parent the parent Element
+	 * @param parent a {@code Node} object as the parent
 	 */
-	public Element(String name, Element parent) {
+	public Element(String name, Node parent) {
 		super(ELEMENT);
 		this.name = name;
 		_parent = parent;
@@ -67,7 +67,7 @@ public class Element extends NodeList {
 	 * Populates this Element with its actual terminal nodes.
 	 * <p>
 	 * This method must be invoked if the Element was created via
-	 * {@link Element#Element(String, Element)},
+	 * {@link Element#Element(String, Node)},
 	 * because that constructor does not initialize the node list.
 	 * @param nodeList the list of nodes to be assigned to this Element
 	 */
@@ -94,28 +94,34 @@ public class Element extends NodeList {
 	}
 
 	/**
+	 * Returns the parent object.
+	 * @return the parent object.
+	 */
+	public Node getParent() {
+		return _parent;
+	}
+
+	/**
 	 * Sets the parent of this Element to the specified object.
 	 * <p>
 	 * If this Element is the root of the tree,
-	 * a {@code Document} instance should be provided
-	 * instead of an {@code Element}.
-	 * @param parent the Element or Document to be assigned as the parent;
-	 * {@code null} detaches this Element from its current parent
+	 * a {@code Document} object must be provided instead of an {@code Element} object.
+	 * @param parent the {@code Element} or {@code Document} to be assigned as the parent;
+	 * {@code null} detaches this {@code Element} from its current parent
 	 */
-	public void setParent(Object parent) {
+	public void setParent(Node parent) {
 		_parent = parent;
 	}
 
 	/**
-	 * Returns the Document to which this Element belongs.
+	 * Returns the {@code Document} this {@code Element} belongs to.
 	 * <p>
-	 * A {@code Document} instance must be assigned as the parent of the
-	 * root Element for this method to return a non-null value.
+	 * The root {@code Element} must assign the {@code Document} to its parent.
 	 * @return the associated Document, or {@code null} if no Document has been set
 	 */
 	public Document document() {
-		if (_parent instanceof Element parentElement) {
-			return parentElement.document();
+		if (_parent instanceof Element theElement) {
+			return theElement.document();
 		} else if (_parent instanceof Document theDocument) {
 			return theDocument;
 		} else {

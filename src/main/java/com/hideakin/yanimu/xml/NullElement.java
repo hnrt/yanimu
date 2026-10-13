@@ -25,7 +25,7 @@ public class NullElement extends Element {
 	}
 
 	@Override
-	public void setParent(Object parent) {
+	public void setParent(Node parent) {
 	}
 
 	@Override

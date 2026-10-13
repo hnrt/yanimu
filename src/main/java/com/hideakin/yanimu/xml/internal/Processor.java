@@ -89,16 +89,17 @@ public class Processor {
 
 	/**
 	 * Parses the content as an XML document.
+	 * @param parent a parent for the document root
 	 * @return the resulting {@code List} of the parsed nodes
 	 */
-	public List<Node> parse() {
+	public List<Node> parse(Node parent) {
 		_lexer = new Lexer(_content);
 		DebugHelper.printLexerContext(_lexer.getContext());
 		_nn = new ArrayList<>();
 		_n = _lexer.read();
 		DebugHelper.printForLexer(_n);
 		parseProlog();
-		parseElement(null);
+		parseElement(parent);
 		while (parseMisc()) {
 			continue;
 		}
@@ -992,7 +993,7 @@ public class Processor {
 		}
 	}
 
-	private void parseElement(Element parent) {
+	private void parseElement(Node parent) {
 		push();
 		AttributeTag tag = parseStartTag();
 		Element element = new Element(tag.name, parent);
