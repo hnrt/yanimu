@@ -53,7 +53,6 @@ public class DebugHelper {
 		nt.put(Integer.valueOf(Node.ETAG), "ETAG");
 		nt.put(Integer.valueOf(Node.ETAG_START), "ETAG_START");
 		nt.put(Integer.valueOf(Node.ETAG_END), "ETAG_END");
-		nt.put(Integer.valueOf(Node.CONTENT), "CONTENT");
 		nt.put(Integer.valueOf(Node.EETAG), "EETAG");
 		nt.put(Integer.valueOf(Node.EETAG_END), "EETAG_END");
 		nt.put(Integer.valueOf(Node.ELEMENT_DECL), "ELEMENT_DECL");

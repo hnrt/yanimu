@@ -47,7 +47,6 @@ public class Node {
 	public static final int ETAG = 2004200;
 	public static final int ETAG_START = 2004201;
 	public static final int ETAG_END = 2004202;
-	public static final int CONTENT = 2004300;
 	public static final int EETAG = 2004400;
 	public static final int EETAG_END = 2004401;
 	public static final int ELEMENT_DECL = 2004500;

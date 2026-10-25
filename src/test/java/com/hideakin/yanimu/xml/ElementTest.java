@@ -117,9 +117,9 @@ public class ElementTest {
 			assertEquals("3", elements.get(2).attribute("id"));
 			assertEquals("4", elements.get(3).attribute("id"));
 			assertEquals("41", elements.get(4).attribute("id"));
-			assertEquals("43", elements.get(5).attribute("id"));
-			assertEquals("421", elements.get(6).attribute("id"));
-			assertEquals("422", elements.get(7).attribute("id"));
+			assertEquals("421", elements.get(5).attribute("id"));
+			assertEquals("422", elements.get(6).attribute("id"));
+			assertEquals("43", elements.get(7).attribute("id"));
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());

@@ -44,9 +44,12 @@ public class Element extends NodeList {
 	 * @param innerText the textual content to be set in this element
 	 */
 	public Element(String name, String innerText) {
-		super(ELEMENT, List.of(StartTag.of(name), Content.of(innerText), EndTag.of(name)));
+		super(ELEMENT);
 		this.name = name;
 		_parent = null;
+		_nodeList.add(StartTag.of(name));
+		addText(innerText);
+		_nodeList.add(EndTag.of(name));
 	}
 
 	/**
@@ -74,7 +77,7 @@ public class Element extends NodeList {
 	public void set(List<Node> nodeList) {
 		if (_nodeList.size() == 0 &&
 			((nodeList.size() == 1 && nodeList.get(0).type == EETAG) ||
-			 (nodeList.size() == 3 && nodeList.get(0).type == STAG && nodeList.get(1).type == CONTENT && nodeList.get(2).type == ETAG))) {
+			 (nodeList.size() >= 2 && nodeList.get(0).type == STAG && nodeList.get(nodeList.size() - 1).type == ETAG))) {
 			_nodeList.addAll(nodeList);
 		} else {
 			throw new RuntimeException(getClass().getSimpleName() + "::set: INCORRECT USE!");
@@ -135,9 +138,8 @@ public class Element extends NodeList {
 	 */
 	@Override
 	public List<Node> copy() {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			return content.copy();
+		if (_nodeList.size() > 2) {
+			return List.copyOf(_nodeList.subList(1, _nodeList.size() - 1));
 		} else {
 			return List.of();
 		}
@@ -149,12 +151,8 @@ public class Element extends NodeList {
 	 */
 	@Override
 	public int size() {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			return content.size();
-		} else {
-			return 0;
-		}
+		int n = _nodeList.size() - 2;
+		return n > 0 ? n : 0;
 	}
 
 	/**
@@ -164,9 +162,8 @@ public class Element extends NodeList {
 	 */
 	@Override
 	public Node first() {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			return content.first();
+		if (_nodeList.size() > 2) {
+			return _nodeList.get(1);
 		} else {
 			return NULL_NODE;
 		}
@@ -179,9 +176,8 @@ public class Element extends NodeList {
 	 */
 	@Override
 	public Node last() {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			return content.last();
+		if (_nodeList.size() > 2) {
+			return _nodeList.get(_nodeList.size() - 2);
 		} else {
 			return NULL_NODE;
 		}
@@ -194,12 +190,8 @@ public class Element extends NodeList {
 	 */
 	@Override
 	public int lastIndex() {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			return content.lastIndex();
-		} else {
-			return -1;
-		}
+		int i = _nodeList.size() - 3;
+		return i >= 0 ? i : -1;
 	}
 
 	/**
@@ -210,9 +202,8 @@ public class Element extends NodeList {
 	 */
 	@Override
 	public Node get(int index) {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			return content.get(index);
+		if (0 <= index && index < _nodeList.size() - 2) {
+			return _nodeList.get(index + 1);
 		} else {
 			throw new IndexOutOfBoundsException(getClass().getSimpleName() + "::get: Index out of range.");
 		}
@@ -229,9 +220,8 @@ public class Element extends NodeList {
 	 */
 	@Override
 	public Node get(int index, Node fallback) {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			return content.get(index, fallback);
+		if (0 <= index && index < _nodeList.size() - 2) {
+			return _nodeList.get(index + 1);
 		} else {
 			return fallback;
 		}
@@ -244,14 +234,16 @@ public class Element extends NodeList {
 	 */
 	@Override
 	public void set(int index, Node node) {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			content.set(index, node);
+		if (0 <= index && index < _nodeList.size() - 2) {
+			if (_nodeList.get(index + 1) instanceof Element element) {
+				element.setParent(null);
+			}
+			_nodeList.set(index + 1, node);
 			if (node instanceof Element element) {
 				element.setParent(this);
 			}
 		} else {
-			throw new RuntimeException(getClass().getSimpleName() + "::set: No content.");
+			throw new IndexOutOfBoundsException(getClass().getSimpleName() + "::set: Index out of range.");
 		}
 	}
 
@@ -263,15 +255,15 @@ public class Element extends NodeList {
 	 */
 	@Override
 	public void add(Node node) {
-		AttributeTag tag = (AttributeTag)_nodeList.get(0);
+		AttributeTag tag = startTag();
 		if (tag.type == EETAG) {
 			_nodeList.clear();
 			_nodeList.add(tag.toStartTag());
-			_nodeList.add(Content.of());
+			_nodeList.add(node);
 			_nodeList.add(EndTag.of(tag.name));
+		} else {
+			_nodeList.add(_nodeList.size() - 1, node);
 		}
-		Content content = (Content)_nodeList.get(1);
-		content.add(node);
 		if (node instanceof Element element) {
 			element.setParent(this);
 		}
@@ -289,15 +281,17 @@ public class Element extends NodeList {
 	 */
 	@Override
 	public void add(int index, Node node) {
-		AttributeTag tag = (AttributeTag)_nodeList.get(0);
-		if (tag.type == EETAG) {
+		AttributeTag tag = startTag();
+		if (tag.type == EETAG && index == 0) {
 			_nodeList.clear();
 			_nodeList.add(tag.toStartTag());
-			_nodeList.add(Content.of());
+			_nodeList.add(node);
 			_nodeList.add(EndTag.of(name));
+		} else if (0 <= index && index <= _nodeList.size() - 2) {
+			_nodeList.add(index + 1, node);
+		} else {
+			throw new IndexOutOfBoundsException(getClass().getSimpleName() + "::add: Index out of range.");
 		}
-		Content content = (Content)_nodeList.get(1);
-		content.add(index, node);
 		if (node instanceof Element element) {
 			element.setParent(this);
 		}
@@ -309,9 +303,17 @@ public class Element extends NodeList {
 	 */
 	@Override
 	public void clear() {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			content.clear();
+		AttributeTag sTag = startTag();
+		if (sTag.type == STAG) {
+			EndTag eTag = endTag();
+			for (Node node : _nodeList) {
+				if (node instanceof Element element) {
+					element.setParent(null);
+				}
+			}
+			_nodeList.clear();
+			_nodeList.add(sTag);
+			_nodeList.add(eTag);
 		}
 	}
 
@@ -325,11 +327,14 @@ public class Element extends NodeList {
 	 */
 	@Override
 	public Node remove(int index) {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			return content.remove(index);
+		if (0 <= index && index < _nodeList.size() - 2) {
+			Node node = _nodeList.remove(index + 1);
+			if (node instanceof Element element) {
+				element.setParent(null);
+			}
+			return node;
 		} else {
-			throw new IndexOutOfBoundsException(getClass().getSimpleName() + "::remove: An empty element has no children.");
+			throw new IndexOutOfBoundsException(getClass().getSimpleName() + "::remove: Index out of range.");
 		}
 	}
 
@@ -344,11 +349,14 @@ public class Element extends NodeList {
 	 */
 	@Override
 	public Node remove(Node node) {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			return content.remove(node);
+		if (_nodeList.size() > 2 && _nodeList.subList(1, _nodeList.size() - 1).remove(node)) {
+			if (node instanceof Element element) {
+				element.setParent(null);
+			}
+			return node;
+		} else {
+			return NULL_NODE;
 		}
-		return NULL_NODE;
 	}
 
 	/**
@@ -372,7 +380,7 @@ public class Element extends NodeList {
 	 * @return End tag node
 	 */
 	public EndTag endTag() {
-		return _nodeList.size() == 3 ? (EndTag)_nodeList.get(2) : null;
+		return _nodeList.size() >= 2 ? (EndTag)_nodeList.get(_nodeList.size() - 1) : null;
 	}
 
 	/**
@@ -490,7 +498,7 @@ public class Element extends NodeList {
 	 * Replaces the existing attribute associated with the specified name with a new attribute.<br/>
 	 * If the specified name is not found, a new attribute is appended after the last existing attribute.<br/>
 	 * The new attribute to be created is associated with the same name and contains the specified value.<br/>
-	 * The {@code value} is treated as the raw attribute value and is not expected to include any quote characters. 
+	 * The {@code value} is treated as the raw attribute value and is not expected to include any quote characters.
 	 * @param name the name of the attribute
 	 * @param value the raw attribute value, not enclosed in quotes
 	 */
@@ -521,7 +529,7 @@ public class Element extends NodeList {
 
 	/**
 	 * Adds a new attribute node next to the last attribute in this start tag.
-	 * @param index the attribute index to which the new attribute node is to be inserted 
+	 * @param index the attribute index to which the new attribute node is to be inserted
 	 * @param name the name of the attribute
 	 * @param value the value of the attribute, not enclosed by quote characters
 	 * @throws IndexOutOfBoundsException if the index is out of range
@@ -635,66 +643,148 @@ public class Element extends NodeList {
 		} else if (hasElement()) {
 			return false;
 		} else {
-			Content content = (Content)_nodeList.get(1);
-			String text = content.text();
-			for (int i = 0; i < text.length(); i++) {
-				int c = text.charAt(i);
-				if (isWhiteSpace(c)) {
-					continue;
-				} else {
-					return false;
+			String text = innerText();
+			if (text != null) {
+				for (int i = 0; i < text.length(); i++) {
+					int c = text.charAt(i);
+					if (isWhiteSpace(c)) {
+						continue;
+					} else {
+						return false;
+					}
 				}
 			}
-			AttributeTag tag = (AttributeTag)_nodeList.get(0);
+			AttributeTag tag = startTag().toEmptyElementTag();
 			_nodeList.clear();
-			_nodeList.add(tag.toEmptyElementTag());
+			_nodeList.add(tag);
 			return true;
 		}
 	}
 
 	/**
 	 * Returns the inner text String of this Element.
-	 * @return the inner text string of this Element, or null if this Element is an empty element
+	 * @return the inner text string of this Element,
+	 * or null if this Element is an empty element or there is no inner text
 	 */
 	public String innerText() {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			return content.text();
-		} else {
-			return null;
+		StringBuilder buffer = new StringBuilder();
+		int count = 0;
+		for (Node node : _nodeList) {
+			switch (node.type) {
+			case STAG:
+			case ETAG:
+			case COMMENT:
+			case PI:
+				break;
+			case CHAR_DATA:
+				buffer.append(node.toString());
+				count++;
+				break;
+			case ENTITY_REF:
+				buffer.append(((EntityRef)node).translated);
+				count++;
+				break;
+			case CHAR_REF:
+				buffer.appendCodePoint(((CharRef)node).codepoint);
+				count++;
+				break;
+			case CD_SECT:
+				buffer.append(((CDATASection)node).innerText());
+				count++;
+				break;
+			default: // EETAG, ELEMENT
+				return null;
+			}
 		}
+		return count > 0 ? buffer.toString() : null;
 	}
 
 	/**
 	 * Returns the inner text String of this Element.
 	 * @param fallback the return value on error
 	 * @return the inner text String of this Element,
-	 * or {@code fallback} if this Element is an empty element or the inner text is empty
+	 * or {@code fallback} if this Element is an empty element or there is no inner text
 	 */
 	public String innerText(String fallback) {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			String text = content.text();
-			return text.length() > 0 ? text : fallback;
-		} else {
-			return fallback;
-		}
+		String text = innerText();
+		return text != null ? text : fallback;
 	}
 
 	/**
 	 * Sets the given String to the inner text String of this Element.
-	 * @param value to be set
+	 * @param source to be set
 	 */
-	public void setInnerText(String value) {
-		if (_nodeList.size() == 1) {
-			AttributeTag tag = startTag().toStartTag();
-			_nodeList.clear();
-			_nodeList.add(tag);
-			_nodeList.add(Content.of());
-			_nodeList.add(EndTag.of(name));
+	public void setInnerText(String source) {
+		AttributeTag sTag = startTag();
+		EndTag eTag;
+		if (sTag.type == EETAG) {
+			sTag = sTag.toStartTag();
+			eTag = EndTag.of(name);
+		} else {
+			eTag = endTag();
 		}
-		Content content = (Content)_nodeList.get(1);
-		content.setText(value);
+		_nodeList.clear();
+		_nodeList.add(sTag);
+		addText(source);
+		_nodeList.add(eTag);
+	}
+
+	private void addText(String source) {
+		for (int i = 0; i < source.length(); i++) {
+			char c = source.charAt(i);
+			switch (c) {
+			case '<':
+			case '&':
+				addText(source, i);
+				return;
+			case ']':
+				if (i + 2 < source.length() && source.charAt(i + 1) == ']' && source.charAt(i + 2) == '>') {
+					addText(source, i);
+					return;
+				}
+				//FALLTHROUGH
+			default:
+				break;
+			}
+		}
+		_nodeList.add(CharData.of(source, CharData.IMMEDIATE));
+	}
+
+	private void addText(String source, int first) {
+		int h = 0;
+		for (int i = first; i < source.length(); i++) {
+			char c = source.charAt(i);
+			switch (c) {
+			case '<':
+				if (h < i) {
+					_nodeList.add(CharData.of(source.substring(h, i), CharData.IMMEDIATE));
+				}
+				h = i + 1;
+				_nodeList.add(EntityRef.of("lt", "<"));
+				break;
+			case '&':
+				if (h < i) {
+					_nodeList.add(CharData.of(source.substring(h, i), CharData.IMMEDIATE));
+				}
+				h = i + 1;
+				_nodeList.add(EntityRef.of("amp", "&"));
+				break;
+			case ']':
+				if (i + 2 < source.length() && source.charAt(i + 1) == ']' && source.charAt(i + 2) == '>') {
+					i += 2;
+					_nodeList.add(CharData.of(source.substring(h, i), CharData.IMMEDIATE));
+					h = i + 1;
+					_nodeList.add(EntityRef.of("gt", ">"));
+					break;
+				}
+				//FALLTHROUGH
+			default:
+				break;
+			}
+		}
+		if (h < source.length()) {
+			_nodeList.add(CharData.of(source.substring(h), CharData.IMMEDIATE));
+		}
 	}
 
 	/**
@@ -719,12 +809,12 @@ public class Element extends NodeList {
 	 * @return true if this Element has one or more child elements or false otherwise
 	 */
 	public boolean hasElement() {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			return content.hasElement();
-		} else {
-			return false;
+		for (Node node : _nodeList) {
+			if (node.type == ELEMENT) {
+				return true;
+			}
 		}
+		return false;
 	}
 
 	/**
@@ -738,33 +828,58 @@ public class Element extends NodeList {
 	 * @return List of Element nodes
 	 */
 	public List<Element> getElements(String name) {
+		List<Element> acc = new ArrayList<>();
 		if (name != null && name.length() > 0) {
-			String[] names = name.split("/");
-			boolean isRelative = names[0].length() > 0;
-			return getElements(names, isRelative ? 0 : 1, isRelative);
-		} else {
-			return new ArrayList<>();
-		}
-	}
-
-	public List<Element> getElements(String[] names, int index, boolean isRelative) {
-		if (_nodeList.size() > 1) {
-			Content content = (Content)_nodeList.get(1);
-			List<Element> elementList = content.getElements(names[index]);
-			if (index + 1 < names.length && elementList.size() > 0) {
-				List<Element> elementList2 = new ArrayList<>();
-				for (Element element : elementList) {
-					elementList2.addAll(element.getElements(names, index + 1, false));
+			int pos = name.indexOf('/');
+			if (pos == 0) {
+				pos = name.indexOf('/', 1);
+				if (pos >= 1) {
+					String name1 = name.substring(1, pos);
+					boolean anyMatch = name1.equals("*");
+					for (Node node : _nodeList) {
+						if (node instanceof Element element) {
+							if (anyMatch || element.name.equals(name1)) {
+								String name2 = name.substring(pos);
+								acc.addAll(element.getElements(name2));
+							}
+						}
+					}
+				} else {
+					String name1 = name.substring(1);
+					boolean anyMatch = name1.equals("*");
+					for (Node node : _nodeList) {
+						if (node instanceof Element element) {
+							if (anyMatch || element.name.equals(name1)) {
+								acc.add(element);
+							}
+						}
+					}
 				}
-				elementList = elementList2;
+			} else if (pos >= 1) {
+				String name1 = name.substring(0, pos);
+				boolean anyMatch = name1.equals("*");
+				for (Node node : _nodeList) {
+					if (node instanceof Element element) {
+						if (anyMatch || element.name.equals(name1)) {
+							String name2 = name.substring(pos);
+							acc.addAll(element.getElements(name2));
+						}
+						acc.addAll(element.getElements(name));
+					}
+				}
+			} else {
+				boolean anyMatch = name.equals("*");
+				for (Node node : _nodeList) {
+					if (node instanceof Element element) {
+						if (anyMatch || element.name.equals(name)) {
+							acc.add(element);
+						}
+						acc.addAll(element.getElements(name));
+					}
+				}
 			}
-			if (isRelative) {
-				content.getElementsRecursively(names, index, elementList);
-			}
-			return elementList;
-		} else {
-			return new ArrayList<>();
 		}
+		return acc;
 	}
 
 	/**

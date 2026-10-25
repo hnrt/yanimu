@@ -360,24 +360,42 @@ public class Document extends NodeList {
 	 * @return a {@code List} of {@code Element} nodes
 	 */
 	public List<Element> getElements(String name) {
-		List<Element> elementList = new ArrayList<>();
-		if (name != null && name.length() > 0 && _root != null) {
-			String[] names = name.split("/");
-			boolean isRelative = names[0].length() > 0;
-			int index = isRelative ? 0 : 1;
-			boolean anyMatch = names[index].equals("*");
-			if (anyMatch || _root.name.equals(names[index])) {
-				if (index + 1 < names.length) {
-					elementList.addAll(_root.getElements(names, index + 1, false));
+		List<Element> acc = new ArrayList<>();
+		if (name != null && name.length() > 0) {
+			int pos = name.indexOf('/');
+			if (pos == 0) {
+				pos = name.indexOf('/', 1);
+				if (pos >= 1) {
+					String name1 = name.substring(1, pos);
+					boolean anyMatch = name1.equals("*");
+					if (anyMatch || _root.name.equals(name1)) {
+						String name2 = name.substring(pos);
+						acc.addAll(_root.getElements(name2));
+					}
 				} else {
-					elementList.add(_root);
+					String name1 = name.substring(1);
+					boolean anyMatch = name1.equals("*");
+					if (anyMatch || _root.name.equals(name1)) {
+						acc.add(_root);
+					}
 				}
-			}
-			if (isRelative) {
-				elementList.addAll(_root.getElements(names, index, true));
+			} else if (pos >= 1) {
+				String name1 = name.substring(0, pos);
+				boolean anyMatch = name1.equals("*");
+				if (anyMatch || _root.name.equals(name1)) {
+					String name2 = name.substring(pos);
+					acc.addAll(_root.getElements(name2));
+				}
+				acc.addAll(_root.getElements(name));
+			} else {
+				boolean anyMatch = name.equals("*");
+				if (anyMatch || _root.name.equals(name)) {
+					acc.add(_root);
+				}
+				acc.addAll(_root.getElements(name));
 			}
 		}
-		return elementList;
+		return acc;
 	}
 
 	/**

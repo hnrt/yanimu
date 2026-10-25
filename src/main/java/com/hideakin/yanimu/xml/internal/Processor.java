@@ -2,7 +2,6 @@ package com.hideakin.yanimu.xml.internal;
 
 import com.hideakin.yanimu.xml.Attribute;
 import com.hideakin.yanimu.xml.AttributeTag;
-import com.hideakin.yanimu.xml.Content;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.EmptyElementTag;
 import com.hideakin.yanimu.xml.EndTag;
@@ -1065,7 +1064,6 @@ public class Processor {
 	}
 
 	private void parseContent(Element parent) {
-		push();
 		while (true) {
 			if (_n.type == CHAR_DATA) {
 				read();
@@ -1099,8 +1097,6 @@ public class Processor {
 				read();
 				break;
 			default:
-				Content content = Content.of(pop());
-				store(content);
 				return;
 			}
 		}
