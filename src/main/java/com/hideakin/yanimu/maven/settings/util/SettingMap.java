@@ -45,15 +45,15 @@ public class SettingMap<T extends SimpleSetting> extends LinkedHashMap<String, T
 			if (existing != null) {
 				for (int i = 0; i < _element.size(); i++) {
 					Node node = _element.get(i);
-					if (node.type == Node.ELEMENT && (Element)node == existing.element()) {
-						_element.set(i, setting.element());
+					if (node.type == Node.ELEMENT && (Element)node == existing.element) {
+						_element.set(i, setting.element);
 						return existing;
 					}
 				}
 				//NEVER REACH HERE BUT PASS THROUGH JUST IN CASE
 			}
 		}
-		_element.add(setting.element());
+		_element.add(setting.element);
 		return null;
 	}
 

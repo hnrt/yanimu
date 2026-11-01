@@ -10,13 +10,29 @@ import com.hideakin.yanimu.xml.internal.LexerContext;
 
 import static com.hideakin.yanimu.xml.Character.*;
 
+/**
+ * A helper class for debugging XML classes.
+ */
 public class DebugHelper {
 
+	/**
+	 * A flag value for enabling the lexical analyzer debugging output.
+	 */
 	public static final int FLAG_LEXER = 1;
 
+	/**
+	 * The debugging flags the lexical analyzer respects.
+	 */
 	public static int enabled = 0;
 
+	/**
+	 * An immutable map for the lexical analyzing context lookup.
+	 */
 	public static final Map<Integer, String> NODE_TYPES;
+
+	/**
+	 * An immutable map for the node type lookup.
+	 */
 	public static final Map<Integer, String> LEXER_CONTEXTS;
 
 	static {
@@ -118,6 +134,14 @@ public class DebugHelper {
 		LEXER_CONTEXTS = Map.copyOf(lc);
 	}
 
+	private DebugHelper() {
+	}
+
+	/**
+	 * Returns a {@code String} representation of the specified node.
+	 * @param node a node to check
+	 * @return a {@code String} representation of the specified node
+	 */
 	public static String toString(Node node) {
 		StringBuilder buffer = new StringBuilder();
 		String label = NODE_TYPES.get(Integer.valueOf(node.type));
@@ -162,11 +186,21 @@ public class DebugHelper {
 		return buffer.toString();
 	}
 
+	/**
+	 * Prints a line of the node information to the standard output
+	 * if the debugging output is enabled.
+	 * @param node a node of interest
+	 */
 	public static void printForLexer(Node node) {
 		if ((enabled & FLAG_LEXER) == 0) return;
 		System.out.printf("# NODE %s\n", toString(node));
 	}
 
+	/**
+	 * Prints a line of the lexical analyzer's context information to the standard output
+	 * if the debugging output is enabled.
+	 * @param ctx a lexical analyzer's context of interest
+	 */
 	public static void printLexerContext(int ctx) {
 		if ((enabled & FLAG_LEXER) == 0) return;
 		String label = LEXER_CONTEXTS.get(Integer.valueOf(ctx));

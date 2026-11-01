@@ -146,12 +146,12 @@ public class PomDocumentTest {
 						node2 = pom.getElement("/project/properties/" + key).child(0);
 						start2 = pom.offset(node2);
 						end2 = start2 + node2.length();
-					} else if (dep1.element().getElement("/version") != null) {
-						node1 = dep1.element().getElement("/version").child(0);
+					} else if (dep1.element.getElement("/version") != null) {
+						node1 = dep1.element.getElement("/version").child(0);
 						start1 = pom.offset(node1);
 						end1 = start1 + node1.length();
 						dep1.setVersion(sv2.toString());
-						node2 = dep1.element().getElement("/version").child(0);
+						node2 = dep1.element.getElement("/version").child(0);
 						start2 = pom.offset(node2);
 						end2 = start2 + node2.length();
 					} else {

@@ -38,14 +38,14 @@ public class Profile extends SimpleSetting {
 	}
 
 	private void initialize() {
-		Element id = _element.getElement("id");
+		Element id = element.getElement("id");
 		if (id != null) {
 			super.put("id", id);
 		}
-		_activation = _element.getElement("activation");
-		_properties.load(_element.getElement("/properties"));
-		_repositories.load(_element.getElement("/repositories"), _element.getElements("/repositories/repository"));
-		_pluginRepositories.load(_element.getElement("/pluginRepositories"), _element.getElements("/pluginRepositories/pluginRepository"));
+		_activation = element.getElement("activation");
+		_properties.load(element.getElement("/properties"));
+		_repositories.load(element.getElement("/repositories"), element.getElements("/repositories/repository"));
+		_pluginRepositories.load(element.getElement("/pluginRepositories"), element.getElements("/pluginRepositories/pluginRepository"));
 	}
 
 	public Activation activation() {
@@ -58,22 +58,22 @@ public class Profile extends SimpleSetting {
 
 	public void setActivation(Activation activation) {
 		if (_activation != null) {
-			for (int i = 0; i < _element.size(); i++) {
-				Node node = _element.get(i);
+			for (int i = 0; i < element.size(); i++) {
+				Node node = element.get(i);
 				if (node.type == Node.ELEMENT && "activation".equals(((Element)node).name)) {
 					if (activation != null) {
-						_activation = activation.element();
-						_element.set(i, activation.element());
+						_activation = activation.element;
+						element.set(i, activation.element);
 					} else {
 						_activation = null;
-						_element.remove(i);
+						element.remove(i);
 					}
 					break;
 				}
 			}
 		} else if (activation != null) {
-			_activation = activation.element();
-			_element.add(activation.element());
+			_activation = activation.element;
+			element.add(activation.element);
 		}
 	}
 

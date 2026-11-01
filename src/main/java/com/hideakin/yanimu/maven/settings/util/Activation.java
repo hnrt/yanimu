@@ -45,7 +45,7 @@ public class Activation extends ElementMap {
 				}
 			}
 			if (file == null || (exists == null && missing == null)) {
-				_element.remove(fileElement);
+				element.remove(fileElement);
 			}
 		} else if (exists != null) {
 			Element fileElement = exists.parent();
@@ -62,7 +62,7 @@ public class Activation extends ElementMap {
 				}
 			}
 			if (file == null || (exists == null && missing == null)) {
-				_element.remove(fileElement);
+				element.remove(fileElement);
 			}
 		} else if (missing != null) {
 			Element fileElement = missing.parent(); 
@@ -79,7 +79,7 @@ public class Activation extends ElementMap {
 				}
 			}
 			if (file == null || (exists == null && missing == null)) {
-				_element.remove(fileElement);
+				element.remove(fileElement);
 			}
 		} else if (file != null) {
 			if (file.exists != null) {
@@ -96,7 +96,7 @@ public class Activation extends ElementMap {
 				if (missing != null) {
 					fileElement.add(missing);
 				}
-				_element.add(fileElement);
+				element.add(fileElement);
 			}
 		}
 	}

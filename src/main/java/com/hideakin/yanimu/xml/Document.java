@@ -24,6 +24,15 @@ import static com.hideakin.yanimu.xml.NullElement.NULL_ELEMENT;
 public class Document extends NodeList {
 
 	/**
+	 * Creates a new {@code Document} object with a path.
+	 * @param path the file path to set
+	 * @return a newly created {@code Document} object
+	 */
+	public static Document of(Path path) {
+		return new Document(path);
+	}
+
+	/**
 	 * The file path
 	 */
 	protected Path _path;

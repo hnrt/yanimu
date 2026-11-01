@@ -12,6 +12,25 @@ import static com.hideakin.yanimu.xml.NullElement.NULL_ELEMENT;
 public class Element extends NodeList {
 
 	/**
+	 * Creates a new {@code Element} with the specified tag name.
+	 * @param name a tag name to set
+	 * @return a newly created {@code Element}
+	 */
+	public static Element of(String name) {
+		return new Element(name);
+	}
+
+	/**
+	 * Creates a new {@code Element} with the specified tag name.
+	 * @param name a tag name to set
+	 * @param innerText a {@code String} to set as its content
+	 * @return a newly created {@code Element}
+	 */
+	public static Element of(String name, String innerText) {
+		return new Element(name);
+	}
+
+	/**
 	 * The tag name of this element.
 	 */
 	public final String name;
@@ -20,6 +39,18 @@ public class Element extends NodeList {
 	 * The parent of this element.
 	 */
 	protected Node _parent;
+
+	/**
+	 * Constructs a new {@code Element} by coping nodes from the specified {@code Element}.
+	 * <p>
+	 * The newly created {@code Element} has no parent (its parent is initialized to {@code null}).
+	 * @param source an {@code Element} object to copy
+	 */
+	public Element(Element source) {
+		super(ELEMENT, source._nodeList);
+		this.name = source.name;
+		_parent = null;
+	}
 
 	/**
 	 * Constructs a new {@code Element} that has an empty content.
@@ -75,13 +106,32 @@ public class Element extends NodeList {
 	 * @param nodeList the list of nodes to be assigned to this Element
 	 */
 	public void set(List<Node> nodeList) {
-		if (_nodeList.size() == 0 &&
-			((nodeList.size() == 1 && nodeList.get(0).type == EETAG) ||
-			 (nodeList.size() >= 2 && nodeList.get(0).type == STAG && nodeList.get(nodeList.size() - 1).type == ETAG))) {
+		if (_nodeList.size() == 0 && validate(nodeList)) {
 			_nodeList.addAll(nodeList);
 		} else {
 			throw new RuntimeException(getClass().getSimpleName() + "::set: INCORRECT USE!");
 		}
+	}
+
+	private boolean validate(List<Node> nodeList) {
+		int size = nodeList.size();
+		if (size == 1) {
+			Node node = nodeList.get(0);
+			if (node.type == EETAG && node instanceof EmptyElementTag eet) {
+				return eet.name.equals(name);
+			}
+		} else if (size >= 2) {
+			Node node1 = nodeList.get(0);
+			if (node1.type == STAG && node1 instanceof StartTag st) {
+				if (st.name.equals(name)) {
+					Node node2 = nodeList.get(nodeList.size() - 1);
+					if (node2.type == ETAG && node2 instanceof EndTag et) {
+						return et.name.equals(name);
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	/**

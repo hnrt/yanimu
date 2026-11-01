@@ -1,36 +1,69 @@
 package com.hideakin.yanimu.xml.util;
 
+import java.util.Arrays;
+
 import com.hideakin.yanimu.xml.AttributeTag;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.EndTag;
 import com.hideakin.yanimu.xml.Node;
 import com.hideakin.yanimu.xml.NodeList;
 
+import static com.hideakin.yanimu.xml.Character.LF;
+import static com.hideakin.yanimu.xml.Character.CR;
+import static com.hideakin.yanimu.xml.Character.SP;
 import static com.hideakin.yanimu.xml.Node.S;
-
-import java.util.Arrays;
-
 import static com.hideakin.yanimu.xml.Node.CHAR_DATA;
 import static com.hideakin.yanimu.xml.Node.ELEMENT;
 
+/**
+ * A helper class for formatting an XML document.
+ */
 public class FormatHelper {
 
-	public static final int LF = 10;
-	public static final int CR = 13;
-	public static final int SP = 32;
+	/**
+	 * LF (\n, UNIX style line separator) string
+	 */
 	public static final String LF_STRING = "\n";
-	public static final String CRLF_STRING = "\r\n";
-	public static final byte[] LF_SEQUENCE = { 10 };
-	public static final byte[] CRLF_SEQUENCE = { 13, 10 };
 
+	/**
+	 * CRLF (\r\n, Windows style line separator) string
+	 */
+	public static final String CRLF_STRING = "\r\n";
+
+	/**
+	 * LF (\n, UNIX style line separator) byte sequence
+	 */
+	public static final byte[] LF_BYTE_SEQUENCE = { LF };
+
+	/**
+	 * CRLF (\r\n, Windows style line separator) byte sequence
+	 */
+	public static final byte[] CRLF_BYTE_SEQUENCE = { CR, LF };
+
+	/**
+	 * Default indentation unit width
+	 */
 	public static final int INDENTATION_DEFAULT = 2;
 
+	private FormatHelper() {
+	}
+
+	/**
+	 * Returns a byte sequence of the line separator used in the specified node list.
+	 * @param nonTerminalNode the node list to determine the line separator style from
+	 * @return a byte sequence of the line separator
+	 */
 	public static byte[] lineSeparator(NodeList nonTerminalNode) {
 		LineSeparatorCounter counter = new LineSeparatorCounter();
 		countLineSeparators(nonTerminalNode, counter);
-		return counter.isLF() ? LF_SEQUENCE : CRLF_SEQUENCE;
+		return counter.isLF() ? LF_BYTE_SEQUENCE : CRLF_BYTE_SEQUENCE;
 	}
 
+	/**
+	 * Counts the line separators in the node list.
+	 * @param nonTerminalNode the node list to examine
+	 * @param counter an object to receive the resulting line separator counts
+	 */
 	public static void countLineSeparators(NodeList nonTerminalNode, LineSeparatorCounter counter) {
 		for (Node node : nonTerminalNode.copy()) {
 			if (node.type == S || node.type == CHAR_DATA) {
@@ -61,24 +94,75 @@ public class FormatHelper {
 
 	private static int _indentationUnitWidth = INDENTATION_DEFAULT;
 
+	/**
+	 * Returns the default indentation unit width currently set in this class.
+	 * @return the default indentation unit width currently set in this class
+	 */
 	public static int defaultIndentationUnitWidth() {
 		return _indentationUnitWidth;
 	}
 
+	/**
+	 * Sets the default indentation unit width to the specified value.
+	 * @param width the value to set
+	 */
 	public static void setDefaultIndentationUnitWidth(int width) {
 		_indentationUnitWidth = width;
 	}
 
+	/**
+	 * Adjusts the indentation properly for the specified node list.
+	 * <ul>
+	 * <li>The adjustment uses the indentation unit width currently set in this class.</li>
+	 * <li>The adjustment takes the nesting level for the top level node in the list as zero.</li> 
+	 * </ul>
+	 * @param nonTerminalNode a node list to adjust the indentation
+	 */
 	public static void indent(NodeList nonTerminalNode) {
 		byte[] lineSeparator = lineSeparator(nonTerminalNode);
 		indent(nonTerminalNode, lineSeparator, _indentationUnitWidth, 0);
 	}
 
+	/**
+	 * Adjusts the indentation properly for the specified node list.
+	 * <ul>
+	 * <li>The adjustment uses the specified indentation unit width, instead of the default one set in this class.</li>
+	 * <li>The adjustment takes zero as the nesting level for the top level node in the list.</li> 
+	 * </ul>
+	 * @param nonTerminalNode a node list to adjust the indentation
+	 * @param unitWidth the indentation unit width to use
+	 */
 	public static void indent(NodeList nonTerminalNode, int unitWidth) {
 		byte[] lineSeparator = lineSeparator(nonTerminalNode);
 		indent(nonTerminalNode, lineSeparator, unitWidth, 0);
 	}
 
+	/**
+	 * Adjusts the indentation properly for the specified node list.
+	 * <ul>
+	 * <li>The adjustment uses the specified indentation unit width, instead of the default one set in this class.</li>
+	 * <li>The adjustment takes zero as the nesting level for the top level node in the list.</li> 
+	 * </ul>
+	 * @param nonTerminalNode a node list to adjust the indentation
+	 * @param unitWidth the indentation unit width to use
+	 * @param level the nesting level to use
+	 */
+	public static void indent(NodeList nonTerminalNode, int unitWidth, int level) {
+		byte[] lineSeparator = lineSeparator(nonTerminalNode);
+		indent(nonTerminalNode, lineSeparator, unitWidth, level);
+	}
+
+	/**
+	 * Adjusts the indentation properly for the specified node list.
+	 * <ul>
+	 * <li>The adjustment uses the specified indentation unit width, instead of the default one set in this class.</li>
+	 * <li>The adjustment takes the specified value as the nesting level for the top level node in the list.</li> 
+	 * </ul>
+	 * @param nonTerminalNode a node list to adjust the indentation
+	 * @param lineSeparator a byte sequence of the line separator to use
+	 * @param unitWidth the indentation unit width to use
+	 * @param level the nesting level to use
+	 */
 	public static void indent(NodeList nonTerminalNode, byte[] lineSeparator, int unitWidth, int level) {
 		if (nonTerminalNode.type == ELEMENT) {
 			Element element = (Element)nonTerminalNode;

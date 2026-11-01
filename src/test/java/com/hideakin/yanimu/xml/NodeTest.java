@@ -141,7 +141,7 @@ public class NodeTest {
 
 	@Test
 	void test101() {
-		Node node = Node.of(Node.CHAR_DATA, FormatHelper.lineSeparatorAndIndentation(FormatHelper.LF_SEQUENCE, 2, 3));
+		Node node = Node.of(Node.CHAR_DATA, FormatHelper.lineSeparatorAndIndentation(FormatHelper.LF_BYTE_SEQUENCE, 2, 3));
 		assertEquals(Node.CHAR_DATA, node.type);
 		assertEquals(true, node instanceof ImmutableNode);
 		assertEquals("\n      ", node.toString());
@@ -149,7 +149,7 @@ public class NodeTest {
 
 	@Test
 	void test102() {
-		Node node = Node.of(Node.S, FormatHelper.lineSeparatorAndIndentation(FormatHelper.CRLF_SEQUENCE, 3, 3));
+		Node node = Node.of(Node.S, FormatHelper.lineSeparatorAndIndentation(FormatHelper.CRLF_BYTE_SEQUENCE, 3, 3));
 		assertEquals(Node.S, node.type);
 		assertEquals(true, node instanceof ImmutableNode);
 		assertEquals("\r\n         ", node.toString());
