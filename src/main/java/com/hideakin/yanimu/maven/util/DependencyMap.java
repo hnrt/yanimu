@@ -17,13 +17,12 @@ public class DependencyMap extends ArtifactMap<Dependency> {
 		super();
 	}
 
-	public void load(Element element) {
-		super.load(element, "dependency", e -> new Dependency(e));
+	public DependencyMap(Element element) {
+		super(element, element.getElements("/dependency"), e -> new Dependency(e));
 	}
 
-	public void load(Element element, RepositoryMap repositories, Function<String, String> translator) {
-		super.load(element, "dependency", e -> new Dependency(e));
-		_poms.clear();
+	public DependencyMap(Element element, RepositoryMap repositories, Function<String, String> translator) {
+		super(element, element.getElements("/dependency"), e -> new Dependency(e));
 		for (Dependency dependency : super.values()) {
 			if (dependency.scope() == DependencyScope.IMPORT && dependency.type() == ArtifactType.POM) {
 				boolean successful = false;

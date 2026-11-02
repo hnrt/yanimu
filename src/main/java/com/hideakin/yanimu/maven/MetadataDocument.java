@@ -1,5 +1,6 @@
 package com.hideakin.yanimu.maven;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -21,7 +22,11 @@ public class MetadataDocument extends Document {
 	public static final String FILENAME = "maven-metadata.xml";
 	public static final String LOCAL_FILENAME = "maven-metadata-local.xml";
 
-	public static final long DEFAULT_GRACE_PERIOD = 3600000L;
+	public static final long DEFAULT_GRACE_PERIOD = 86400000L; // 24 hours
+
+	public static MetadataDocument of(Path path) {
+		return new MetadataDocument(path);
+	}
 
 	public static MetadataDocument of(String groupId, String artifactId) {
 		return new MetadataDocument(groupId, artifactId);
@@ -42,15 +47,6 @@ public class MetadataDocument extends Document {
 		super(LocalRepository.pathOf(groupId, artifactId, LOCAL_FILENAME));
 		_groupId = groupId;
 		_artifactId = artifactId;
-	}
-
-	private MetadataDocument(byte[] content) {
-		super();
-		try {
-			load(content);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 	public String groupId() {
@@ -147,7 +143,7 @@ public class MetadataDocument extends Document {
 		}
 	}
 
-	private MetadataDocument load(String baseUrl, long gracePeriod) throws Exception {
+	private MetadataDocument load(String baseUrl, long gracePeriod) throws IOException, InterruptedException {
 		Path path = LocalRepository.pathOf(baseUrl, _groupId, _artifactId, FILENAME);
 		try {
 			FileTime ft = Files.getLastModifiedTime(path());

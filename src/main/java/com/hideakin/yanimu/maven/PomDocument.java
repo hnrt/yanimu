@@ -38,13 +38,13 @@ public class PomDocument extends Document implements Artifact {
 	private String _groupId;
 	private String _artifactId;
 	private String _version;
-	private final PropertyMap _properties = new PropertyMap();
-	private final PluginMap _pluginManagement = new PluginMap();
-	private final PluginMap _plugins = new PluginMap();
-	private final DependencyMap _dependencyManagement = new DependencyMap();
-	private final DependencyMap _dependencies = new DependencyMap();
-	private final RepositoryMap _repositories = new RepositoryMap();
-	private final RepositoryMap _pluginRepositories = new RepositoryMap();
+	private PropertyMap _properties = new PropertyMap();
+	private PluginMap _pluginManagement = new PluginMap();
+	private PluginMap _plugins = new PluginMap();
+	private DependencyMap _dependencyManagement = new DependencyMap();
+	private DependencyMap _dependencies = new DependencyMap();
+	private RepositoryMap _repositories = new RepositoryMap();
+	private RepositoryMap _pluginRepositories = new RepositoryMap();
 
 	private PomDocument(Path path) {
 		super(path);
@@ -174,22 +174,24 @@ public class PomDocument extends Document implements Artifact {
 		map.put("groupId", e -> _groupId = e.innerText());
 		map.put("artifactId", e -> _artifactId = e.innerText());
 		map.put("version", e -> _version = e.innerText());
-		map.put("properties", e -> _properties.load(e));
-		map.put("repositories", e -> _repositories.load(e, e.getElements("/repository")));
-		map.put("pluginRepositories", e -> _pluginRepositories.load(e, e.getElements("/pluginRepository")));
-		map.put("dependencies", e -> _dependencies.load(e));
+		map.put("properties", e -> _properties = new PropertyMap(e));
+		map.put("build", e -> {
+			_pluginManagement = new PluginMap(e.getElement("/pluginManagement/plugins"));
+			_plugins = new PluginMap(e.getElement("/plugins"));
+		});
+		map.put("repositories", e -> _repositories = new RepositoryMap(e, e.getElements("/repository")));
+		map.put("pluginRepositories", e -> _pluginRepositories = new RepositoryMap(e, e.getElements("/pluginRepository")));
+		map.put("dependencies", e -> _dependencies = new DependencyMap(e));
 		for (Element e : _root.getElements("/*")) {
 			Consumer<Element> c = map.get(e.name);
 			if (c != null) {
 				c.accept(e);
 			}
 		}
-		_pluginManagement.load(_root.getElement("/build/pluginManagement/plugins"));
-		_plugins.load(_root.getElement("/build/plugins"));
-		_dependencyManagement.load(_root.getElement("/dependencyManagement/dependencies"), _repositories, x -> _properties.translate(x));
+		_dependencyManagement = new DependencyMap(_root.getElement("/dependencyManagement/dependencies"), _repositories, x -> _properties.translate(x));
 	}
 
-	public void load(RepositoryMap repositories) throws Exception {
+	public void load(RepositoryMap repositories) throws IOException {
 		for (Repository repository : repositories.values()) {
 			try {
 				load(repository.url());
@@ -208,7 +210,7 @@ public class PomDocument extends Document implements Artifact {
 		throw new IOException("Failed to download.");
 	}
 
-	public void load(String baseUrl) throws Exception {
+	public void load(String baseUrl) throws IOException, InterruptedException {
 		String url = RemoteRepository.urlOfPom(baseUrl, _groupId, _artifactId, _version);
 		byte[] content = RemoteRepository.download(url);
 		load(content);

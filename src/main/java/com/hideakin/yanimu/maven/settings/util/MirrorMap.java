@@ -10,8 +10,8 @@ public class MirrorMap extends SettingMap<Mirror> {
 		super();
 	}
 
-	public void load(Element element) {
-		super.load(element, element != null ? element.getElements("/mirror") : null, e -> Mirror.of(e));
+	public MirrorMap(Element element) {
+		super(element, element.getElements("/mirror"), e -> Mirror.of(e));
 	}
 
 }

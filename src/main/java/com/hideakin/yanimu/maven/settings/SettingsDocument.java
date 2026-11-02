@@ -28,10 +28,10 @@ public class SettingsDocument extends Document {
 	private boolean _interactiveMode = true;
 	private boolean _offline = false;
 	private final List<String> _pluginGroups = new ArrayList<>();
-	private final ServerMap _servers = new ServerMap();
-	private final MirrorMap _mirrors = new MirrorMap();
-	private final ProxyMap _proxies = new ProxyMap();
-	private final ProfileMap _profiles = new ProfileMap();
+	private ServerMap _servers = new ServerMap();
+	private MirrorMap _mirrors = new MirrorMap();
+	private ProxyMap _proxies = new ProxyMap();
+	private ProfileMap _profiles = new ProfileMap();
 	private final List<String> _activeProfiles = new ArrayList<>();
 	
 	private SettingsDocument(Path path) {
@@ -79,25 +79,10 @@ public class SettingsDocument extends Document {
 		if (_root == null) {
 			return;
 		}
-		Element e;
-		e = _root.getElement("/localRepository");
-		if (e != null) {
-			_localRepository = e.innerText(DEFAULT_LOCAL_REPOSITORY);
-		} else {
-			_localRepository = DEFAULT_LOCAL_REPOSITORY;
-		}
-		e = _root.getElement("/interactiveMode");
-		if (e != null) {
-			_interactiveMode = FormatHelper.toBoolean(e.innerText("true"), true);
-		} else {
-			_interactiveMode = true;
-		}
-		e = _root.getElement("/offline");
-		if (e != null) {
-			_offline = FormatHelper.toBoolean(e.innerText("false"), false);
-		} else {
-			_offline = false;
-		}
+		_localRepository = _root.getElement("/localRepository").innerText(DEFAULT_LOCAL_REPOSITORY);
+		_interactiveMode = FormatHelper.toBoolean(_root.getElement("/interactiveMode").innerText("true"), true);
+		_offline = FormatHelper.toBoolean(_root.getElement("/offline").innerText("false"), false);
+		_pluginGroups.clear();
 		for (Element element : _root.getElements("/pluginGroups/pluginGroup")) {
 			String g = element.innerText();
 			if (g != null) {
@@ -106,10 +91,11 @@ public class SettingsDocument extends Document {
 		}
 		MavenHelper.addIfNotExist(_pluginGroups, "org.apache.maven.plugins");
 		MavenHelper.addIfNotExist(_pluginGroups, "org.codehaus.mojo");
-		_servers.load(_root.getElement("/servers"));
-		_mirrors.load(_root.getElement("/mirrors"));
-		_proxies.load(_root.getElement("/proxies"));
-		_profiles.load(_root.getElement("/profiles"));
+		_servers = new ServerMap(_root.getElement("/servers"));
+		_mirrors = new MirrorMap(_root.getElement("/mirrors"));
+		_proxies = new ProxyMap(_root.getElement("/proxies"));
+		_profiles = new ProfileMap(_root.getElement("/profiles"));
+		_activeProfiles.clear();
 		for (Element element : _root.getElements("/activeProfiles/activeProfile")) {
 			String p = element.innerText();
 			if (p != null) {

@@ -12,6 +12,9 @@ import com.hideakin.yanimu.xml.Document;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.Node;
 
+import static com.hideakin.yanimu.xml.Node.ELEMENT;
+import static com.hideakin.yanimu.xml.NullElement.NULL_ELEMENT;
+
 import static com.hideakin.yanimu.xml.Character.*;
 
 /**
@@ -26,27 +29,28 @@ public class PropertyMap extends LinkedHashMap<String, String> {
 	 */
 	public static final int MAX_TRANSLATION_ITERATIONS = 10;
 
-	private Element _properties;
+	public final Element element;
 
 	/**
 	 * Constructs a new object.
 	 */
 	public PropertyMap() {
 		super();
+		element = NULL_ELEMENT;
 	}
 
 	/**
 	 * Initializes this object with an {@code Element} object of properties.
-	 * @param properties an {@code Element} object to be used for initializing this object
+	 * @param element an {@code Element} object to be used for initializing this object
 	 */
-	public void load(Element properties) {
-		super.clear();
-		_properties = properties;
-		if (_properties != null) {
-			Element parent = _properties.parent(); 
-			if (parent != null && "project".equals(parent.name)) {
+	public PropertyMap(Element element) {
+		super();
+		this.element = element;
+		Element parent = element.parent(); 
+		if (parent != null) {
+			if ("project".equals(parent.name)) {
 				super.put("project.packaging", "jar");
-				Document document = _properties.document();
+				Document document = this.element.document();
 				if (document != null) {
 					Path path = document.path();
 					if (path != null) {
@@ -63,20 +67,15 @@ public class PropertyMap extends LinkedHashMap<String, String> {
 				super.put("project.build.testResources", "src/test/resources");
 				super.put("project.build.finalName", "${project.artifactId}-${project.version}");
 				super.put("settings.localRepository", "${user.home}/.m2/repository");
-				//super.put("maven.version", "0.0.0");
-				//super.put("settings.interactiveMode", "true");
-				//super.put("settings.offline", "false");
-				for (Node child : parent.children()) {
-					if (child instanceof Element childElement) {
-						if (!childElement.hasElement()) {
-							super.put(parent.name + "." + childElement.name, childElement.innerText());
-						}
-					}
+			}
+			for (Node childNode : parent.children()) {
+				if (childNode instanceof Element childElement && !childElement.hasElement()) {
+					super.put(parent.name + "." + childElement.name, childElement.innerText());
 				}
 			}
-			for (Element element : _properties.getElements("/*")) {
-				super.put(element.name, element.innerText());
-			}
+		}
+		for (Element propertyElement : element.getElements("/*")) {
+			super.put(propertyElement.name, propertyElement.innerText());
 		}
 	}
 
@@ -95,18 +94,12 @@ public class PropertyMap extends LinkedHashMap<String, String> {
 	@Override
 	public String put(String key, String value) {
 		String old = super.put(key, value);
-		if (_properties != null) {
-			Element element = _properties.getElement("/" + key);
-			if (element != null) {
-				element.setInnerText(value);
-			} else {
-				element = new Element(key, value);
-				_properties.add(element);
-			}
+		Element child = element.getElement("/" + key);
+		if (child.type == ELEMENT) {
+			child.setInnerText(value);
 		} else {
-			Element element = new Element(key, value);
-			_properties = new Element("properties");
-			_properties.add(element);
+			child = new Element(key, value);
+			element.add(child);
 		}
 		return old;
 	}

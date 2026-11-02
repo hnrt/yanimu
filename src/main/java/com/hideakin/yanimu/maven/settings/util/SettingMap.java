@@ -5,31 +5,27 @@ import java.util.List;
 import java.util.function.Function;
 
 import com.hideakin.yanimu.xml.Element;
-import com.hideakin.yanimu.xml.Node;
+
+import static com.hideakin.yanimu.xml.NullElement.NULL_ELEMENT;
 
 public class SettingMap<T extends SimpleSetting> extends LinkedHashMap<String, T> {
 
 	private static final long serialVersionUID = 1184146726733155804L;
 
-	protected Element _element;
+	public final Element element;
 
 	protected SettingMap() {
 		super();
+		element = NULL_ELEMENT;
 	}
 
-	public Element element() {
-		return _element;
-	}
-
-	public void load(Element element, List<Element> children, Function<Element, T> creator) {
-		super.clear();
-		_element = element;
-		if (_element != null) {
-			for (Element child : children) {
-				T setting = creator.apply(child);
-				if (setting.id() != null && !super.containsKey(setting.id())) {
-					super.put(setting.id(), setting);
-				}
+	protected SettingMap(Element element, List<Element> children, Function<Element, T> creator) {
+		super();
+		this.element = element;
+		for (Element child : children) {
+			T setting = creator.apply(child);
+			if (setting.id() != null && !super.containsKey(setting.id())) {
+				super.put(setting.id(), setting);
 			}
 		}
 	}
@@ -43,17 +39,16 @@ public class SettingMap<T extends SimpleSetting> extends LinkedHashMap<String, T
 		if (key != null) {
 			T existing = super.put(key, setting);
 			if (existing != null) {
-				for (int i = 0; i < _element.size(); i++) {
-					Node node = _element.get(i);
-					if (node.type == Node.ELEMENT && (Element)node == existing.element) {
-						_element.set(i, setting.element);
+				for (int i = 0; i < element.size(); i++) {
+					if (element.get(i) instanceof Element childElement && childElement == existing.element) {
+						element.set(i, setting.element);
 						return existing;
 					}
 				}
 				//NEVER REACH HERE BUT PASS THROUGH JUST IN CASE
 			}
 		}
-		_element.add(setting.element);
+		element.add(setting.element);
 		return null;
 	}
 

@@ -10,8 +10,8 @@ public class ServerMap extends SettingMap<Server> {
 		super();
 	}
 
-	public void load(Element element) {
-		super.load(element, element != null ? element.getElements("/server") : null, e -> Server.of(e));
+	public ServerMap(Element element) {
+		super(element, element.getElements("/server"), e -> Server.of(e));
 	}
 
 }

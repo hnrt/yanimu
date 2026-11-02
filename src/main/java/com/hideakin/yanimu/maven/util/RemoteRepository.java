@@ -47,7 +47,7 @@ public class RemoteRepository {
 		}
 	}
 
-	public static byte[] download(String url) throws Exception {
+	public static byte[] download(String url) throws IOException, InterruptedException {
 		URI uri = URI.create(url);
 		HttpRequest request = HttpRequest.newBuilder()
 				.uri(uri)

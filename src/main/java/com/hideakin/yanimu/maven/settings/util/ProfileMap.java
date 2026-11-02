@@ -10,8 +10,8 @@ public class ProfileMap extends SettingMap<Profile> {
 		super();
 	}
 
-	public void load(Element element) {
-		super.load(element, element != null ? element.getElements("/profile") : null, e -> Profile.of(e));
+	public ProfileMap(Element element) {
+		super(element, element.getElements("/profile"), e -> Profile.of(e));
 	}
 
 }

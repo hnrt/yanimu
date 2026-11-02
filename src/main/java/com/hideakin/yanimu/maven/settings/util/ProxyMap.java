@@ -10,8 +10,8 @@ public class ProxyMap extends SettingMap<Proxy> {
 		super();
 	}
 
-	public void load(Element element) {
-		super.load(element, element != null ? element.getElements("/proxy") : null, e -> Proxy.of(e));
+	public ProxyMap(Element element) {
+		super(element, element.getElements("/proxy"), e -> Proxy.of(e));
 	}
 	
 }

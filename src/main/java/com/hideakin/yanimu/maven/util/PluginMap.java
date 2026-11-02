@@ -10,8 +10,8 @@ public class PluginMap extends ArtifactMap<Plugin> {
 		super();
 	}
 
-	public void load(Element element) {
-		super.load(element, "plugin", e -> new Plugin(e));
+	public PluginMap(Element element) {
+		super(element, element.getElements("/plugin"), e -> new Plugin(e));
 	}
 
 }

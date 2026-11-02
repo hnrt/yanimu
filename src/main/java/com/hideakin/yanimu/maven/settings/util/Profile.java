@@ -5,6 +5,9 @@ import com.hideakin.yanimu.maven.util.RepositoryMap;
 import com.hideakin.yanimu.xml.Element;
 import com.hideakin.yanimu.xml.Node;
 
+import static com.hideakin.yanimu.xml.Node.ELEMENT;
+import static com.hideakin.yanimu.xml.NullElement.NULL_ELEMENT;
+
 public class Profile extends SimpleSetting {
 
 	private static final long serialVersionUID = -6197013045378235602L;
@@ -24,6 +27,7 @@ public class Profile extends SimpleSetting {
 
 	public Profile() {
 		super("profile");
+		_activation = NULL_ELEMENT;
 		_properties = new PropertyMap();
 		_repositories = new RepositoryMap();
 		_pluginRepositories = new RepositoryMap();
@@ -31,25 +35,18 @@ public class Profile extends SimpleSetting {
 
 	public Profile(Element element) {
 		super(element);
-		_properties = new PropertyMap();
-		_repositories = new RepositoryMap();
-		_pluginRepositories = new RepositoryMap();
-		initialize();
-	}
-
-	private void initialize() {
 		Element id = element.getElement("id");
 		if (id != null) {
 			super.put("id", id);
 		}
 		_activation = element.getElement("activation");
-		_properties.load(element.getElement("/properties"));
-		_repositories.load(element.getElement("/repositories"), element.getElements("/repositories/repository"));
-		_pluginRepositories.load(element.getElement("/pluginRepositories"), element.getElements("/pluginRepositories/pluginRepository"));
+		_properties = new PropertyMap(element.getElement("/properties"));
+		_repositories = new RepositoryMap(element.getElement("/repositories"), element.getElements("/repositories/repository"));
+		_pluginRepositories = new RepositoryMap(element.getElement("/pluginRepositories"), element.getElements("/pluginRepositories/pluginRepository"));
 	}
 
 	public Activation activation() {
-		if (_activation != null) {
+		if (_activation.type == ELEMENT) {
 			return new Activation(_activation);
 		} else {
 			return null;
@@ -57,15 +54,15 @@ public class Profile extends SimpleSetting {
 	}
 
 	public void setActivation(Activation activation) {
-		if (_activation != null) {
+		if (_activation.type == ELEMENT) {
 			for (int i = 0; i < element.size(); i++) {
 				Node node = element.get(i);
-				if (node.type == Node.ELEMENT && "activation".equals(((Element)node).name)) {
+				if (node instanceof Element childElement && "activation".equals(childElement.name)) {
 					if (activation != null) {
 						_activation = activation.element;
 						element.set(i, activation.element);
 					} else {
-						_activation = null;
+						_activation = NULL_ELEMENT;
 						element.remove(i);
 					}
 					break;
