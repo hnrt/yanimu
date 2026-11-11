@@ -5,9 +5,18 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-// cf. https://semver.org
+/**
+ * A version format of X.Y.Z (Major.Minor.Patch).
+ * <p>
+ * cf. https://semver.org
+ */
 public class SemanticVersion {
 
+	/**
+	 * Creates a new object from the specified text.
+	 * @param text a version {@code String}
+	 * @return a newly created object
+	 */
 	public static SemanticVersion of(String text) {
 		return new SemanticVersion(text != null ? text : "0.0.0");
 	}
@@ -30,45 +39,71 @@ public class SemanticVersion {
 		return _original;
 	}
 
+	/**
+	 * Returns true if the text this object created from is formatted as a valid semantic version.
+	 * @return true if the text this object created from is formatted as a valid semantic version, or false otherwise
+	 */
 	public boolean isValid() {
 		return _valid;
 	}
 
+	/**
+	 * Returns the major number of this version.
+	 * @return the major number of this version
+	 */
 	public int major() {
 		return _major;
 	}
 
+	/**
+	 * Returns the minor number of this version.
+	 * @return the minor number of this version
+	 */
 	public int minor() {
 		return _minor;
 	}
 
+	/**
+	 * Returns the patch number of this version.
+	 * @return the patch number of this version
+	 */
 	public int patch() {
 		return _patch;
 	}
 
+	/**
+	 * Returns a {@code List} of {@code String} or {@code Long} that contains all the parts of the pre-release. 
+	 * @return a {@code List} of {@code String} or {@code Long} that contains all the parts of the pre-release
+	 */
 	public List<Object> preRelease() {
 		return _preRelease != null ? List.copyOf(_preRelease) : null;
 	}
 
+	/**
+	 * Returns the build metadata of this version.
+	 * @return the build metadata of this version
+	 */
 	public String build() {
 		return _build;
 	}
 
+	/**
+	 * Compares this version to the specified one in the manner of the semantic version.
+	 * @param other an object to compare this version to
+	 * @return a value of zero if this version is equal to the other,
+	 * a positive integer if this version is greater than the other,
+	 * or a negative integer if this version is less than the other 
+	 */
 	public int compareTo(SemanticVersion other) {
+		int d;
 		if (_valid && other._valid) {
-			int d = _major - other._major;
-			if (d != 0) {
+			if ((d = _major - other._major) != 0) {
 				return d;
-			}
-			d = _minor - other._minor;
-			if (d != 0) {
+			} else if ((d = _minor - other._minor) != 0) {
 				return d;
-			}
-			d = _patch - other._patch;
-			if (d != 0) {
+			} else if ((d = _patch - other._patch) != 0) {
 				return d;
-			}
-			if (_preRelease == null) {
+			} else if (_preRelease == null) {
 				return other._preRelease == null ? 0 : 1; 
 			} else if (other._preRelease == null) {
 				return -1;
@@ -99,6 +134,18 @@ public class SemanticVersion {
 					}
 				}
 			}
+		} else if ((d = _major - other._major) != 0) {
+			return d;
+		} else if (_major == -1) {
+			return 0;
+		} else if ((d = _minor - other._minor) != 0) {
+			return d;
+		} else if (_minor == -1) {
+			return 0;
+		} else if ((d = _patch - other._patch) != 0) {
+			return d;
+		} else if (_patch == -1) {
+			return 0;
 		} else if (_valid) {
 			return 1;
 		} else if (other._valid) {

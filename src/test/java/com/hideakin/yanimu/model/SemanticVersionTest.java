@@ -45,6 +45,10 @@ public class SemanticVersionTest {
 				"1.0.0-beta.2",
 				"1.0.0-alpha.beta",
 				"1.0.0-beta.11",
+				"1.3",
+				"1.1.2",
+				"1.2.1",
+				"1.1",
 				"1.0.0",
 				"1.0.0-alpha",
 				"1.0.0-beta"));
@@ -92,7 +96,11 @@ public class SemanticVersionTest {
 		assertEquals("1.0.0-beta.11", sorted.get(5).toString());
 		assertEquals("1.0.0-rc.1", sorted.get(6).toString());
 		assertEquals("1.0.0", sorted.get(7).toString());
-		assertEquals(8, sorted.size());
+		assertEquals("1.1", sorted.get(8).toString());
+		assertEquals("1.1.2", sorted.get(9).toString());
+		assertEquals("1.2.1", sorted.get(10).toString());
+		assertEquals("1.3", sorted.get(11).toString());
+		assertEquals(12, sorted.size());
 	}
 
 }

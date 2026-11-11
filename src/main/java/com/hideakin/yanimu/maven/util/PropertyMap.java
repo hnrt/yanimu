@@ -222,6 +222,8 @@ public class PropertyMap extends LinkedHashMap<String, String> {
 									if (names != null) {
 										names.add(name);
 									}
+								} else if (name.startsWith("env.")) {
+									value = System.getenv(name.substring(4));
 								} else {
 									value = System.getProperty(name);
 								}
